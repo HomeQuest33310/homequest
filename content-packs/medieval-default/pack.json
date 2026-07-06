@@ -38,21 +38,85 @@
       "title": "Nettoyer les cuisines royales",
       "xp": 20,
       "gold": 10,
-      "damage": 15
+      "damage": 15,
+      "skills": {
+        "cooking": 5,
+        "organization": 2
+      }
     },
     {
       "base_task": "ranger sa chambre",
       "title": "Repousser les gobelins du dortoir",
       "xp": 15,
       "gold": 5,
-      "damage": 10
+      "damage": 10,
+      "skills": {
+        "daily_life": 4,
+        "organization": 4
+      }
     },
     {
       "base_task": "passer l'aspirateur",
       "title": "Chasser les monstres de poussière",
       "xp": 30,
       "gold": 10,
-      "damage": 20
+      "damage": 20,
+      "skills": {
+        "organization": 5,
+        "endurance": 2
+      }
+    }
+  ],
+  "skills": [
+    {
+      "id": "daily_life",
+      "name": "Vie quotidienne",
+      "icon": "🏠"
+    },
+    {
+      "id": "cooking",
+      "name": "Cuisine",
+      "icon": "🍳"
+    },
+    {
+      "id": "nature",
+      "name": "Nature",
+      "icon": "🌿"
+    },
+    {
+      "id": "knowledge",
+      "name": "Savoir",
+      "icon": "📚"
+    },
+    {
+      "id": "creativity",
+      "name": "Créativité",
+      "icon": "🎨"
+    },
+    {
+      "id": "endurance",
+      "name": "Endurance",
+      "icon": "💪"
+    },
+    {
+      "id": "helpfulness",
+      "name": "Entraide",
+      "icon": "❤️"
+    },
+    {
+      "id": "organization",
+      "name": "Organisation",
+      "icon": "🧹"
+    },
+    {
+      "id": "animals",
+      "name": "Animaux",
+      "icon": "🐾"
+    },
+    {
+      "id": "crafting",
+      "name": "Bricolage",
+      "icon": "🔧"
     }
   ]
 }
