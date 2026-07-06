@@ -22,10 +22,21 @@ HomeQuest est un RPG familial open source où les parents, enfants et invités d
 - Firebase Cloud Messaging
 - GitHub
 
+## Structure
+
+```text
+app/              Application Flutter
+supabase/         Migrations, fonctions et données initiales
+content-packs/    Campagnes et contenus du jeu
+docs/             Documentation projet
+assets/           Illustrations, icônes et audio
+.github/          Templates et automatisations GitHub
+```
+
 ## Statut
 
 Projet en phase de conception MVP.
 
 ## Licence
 
-Apache 2.0# homequest
+Apache 2.0

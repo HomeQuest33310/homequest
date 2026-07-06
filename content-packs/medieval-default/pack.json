@@ -1,0 +1,58 @@
+{
+  "id": "medieval_default",
+  "name": "Royaume médiéval",
+  "language": "fr",
+  "version": "0.1.0",
+  "regions": [
+    {
+      "room_type": "kitchen",
+      "name": "La Taverne",
+      "monsters": [
+        "Dragon de la Vaisselle",
+        "Gobelin des Miettes"
+      ]
+    },
+    {
+      "room_type": "living_room",
+      "name": "La Grande Salle",
+      "monsters": [
+        "Gobelin des Jouets",
+        "Spectre de la Poussière"
+      ]
+    }
+  ],
+  "bosses": [
+    {
+      "id": "dust_dragon",
+      "name": "Dragon de la Poussière",
+      "hp": 300,
+      "rewards": {
+        "xp": 25,
+        "gold": 10
+      }
+    }
+  ],
+  "quest_templates": [
+    {
+      "base_task": "faire la vaisselle",
+      "title": "Nettoyer les cuisines royales",
+      "xp": 20,
+      "gold": 10,
+      "damage": 15
+    },
+    {
+      "base_task": "ranger sa chambre",
+      "title": "Repousser les gobelins du dortoir",
+      "xp": 15,
+      "gold": 5,
+      "damage": 10
+    },
+    {
+      "base_task": "passer l'aspirateur",
+      "title": "Chasser les monstres de poussière",
+      "xp": 30,
+      "gold": 10,
+      "damage": 20
+    }
+  ]
+}
