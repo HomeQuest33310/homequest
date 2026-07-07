@@ -4,8 +4,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../chronicles/domain/chronicle.dart';
 import '../../chronicles/providers/chronicles_provider.dart';
+import '../../domains/domain/domain.dart';
 import '../../domains/providers/domains_provider.dart';
+import '../domain/family.dart' as domain;
 import '../providers/family_provider.dart';
+import '../providers/family_stats_provider.dart';
 
 class FamilyDashboardPage extends ConsumerWidget {
   const FamilyDashboardPage({super.key});
@@ -15,11 +18,22 @@ class FamilyDashboardPage extends ConsumerWidget {
     final familyAsync = ref.watch(currentFamilyProvider);
     final domainsAsync = ref.watch(currentFamilyDomainsProvider);
     final chroniclesAsync = ref.watch(recentChroniclesProvider);
+    final statsAsync = ref.watch(currentFamilyStatsProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('HomeQuest'),
         actions: [
+          IconButton(
+            tooltip: 'Rafraîchir',
+            onPressed: () {
+              ref.invalidate(currentFamilyProvider);
+              ref.invalidate(currentFamilyDomainsProvider);
+              ref.invalidate(recentChroniclesProvider);
+              ref.invalidate(currentFamilyStatsProvider);
+            },
+            icon: const Icon(Icons.refresh),
+          ),
           IconButton(
             tooltip: 'Déconnexion',
             onPressed: () async {
@@ -31,119 +45,64 @@ class FamilyDashboardPage extends ConsumerWidget {
         ],
       ),
       body: familyAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Erreur : $error')),
+        loading: () => const _LoadingDashboard(),
+        error: (error, stackTrace) => _DashboardError(
+          error: error,
+          onRetry: () => ref.invalidate(currentFamilyProvider),
+        ),
         data: (family) {
           if (family == null) {
             return const Center(child: Text('Aucun royaume trouvé.'));
           }
 
-          return ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '🏰 ${family.kingdomName}',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text('Guilde familiale : ${family.name}'),
-                    ],
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(currentFamilyProvider);
+              ref.invalidate(currentFamilyDomainsProvider);
+              ref.invalidate(recentChroniclesProvider);
+              ref.invalidate(currentFamilyStatsProvider);
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                _HeroHeader(family: family),
+                const SizedBox(height: 16),
+                statsAsync.when(
+                  loading: () => const _StatsSkeleton(),
+                  error: (error, stackTrace) => _SoftErrorCard(
+                    title: 'Statistiques indisponibles',
+                    error: error,
+                  ),
+                  data: (stats) => _StatsRow(stats: stats),
+                ),
+                const SizedBox(height: 16),
+                _SectionCard(
+                  title: '📜 Chronique du Royaume',
+                  subtitle: 'Les premiers souvenirs de votre aventure familiale.',
+                  child: chroniclesAsync.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (error, stackTrace) => _InlineError(error: error),
+                    data: (chronicles) => _ChroniclesList(chronicles: chronicles),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '🌍 Domaines du Royaume',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 12),
-                      domainsAsync.when(
-                        loading: () => const LinearProgressIndicator(),
-                        error: (error, stackTrace) => Text('Erreur : $error'),
-                        data: (domains) {
-                          if (domains.isEmpty) {
-                            return const Text('Aucun domaine pour le moment.');
-                          }
-                          return Column(
-                            children: domains
-                                .map(
-                                  (domain) => ListTile(
-                                    leading: const Icon(Icons.home),
-                                    title: Text(domain.name),
-                                    subtitle: Text(
-                                      domain.isPrimary
-                                          ? 'Domaine principal'
-                                          : 'Domaine secondaire',
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          );
-                        },
-                      ),
-                    ],
+                const SizedBox(height: 16),
+                _SectionCard(
+                  title: '🌍 Domaines',
+                  subtitle: 'Les lieux où votre guilde vit ses aventures.',
+                  child: domainsAsync.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (error, stackTrace) => _InlineError(error: error),
+                    data: (domains) => _DomainsList(domains: domains),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '📜 Chronique du Royaume',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 12),
-                      chroniclesAsync.when(
-                        loading: () => const LinearProgressIndicator(),
-                        error: (error, stackTrace) => Text('Erreur : $error'),
-                        data: (chronicles) {
-                          if (chronicles.isEmpty) {
-                            return const Column(
-                              children: [
-                                _ChronicleItem(
-                                  emoji: '✨',
-                                  text: 'Le royaume vient de naître. Les premières quêtes attendent la guilde.',
-                                ),
-                                _ChronicleItem(
-                                  emoji: '⚔️',
-                                  text: 'Bientôt, les aventuriers pourront accomplir leurs premières missions.',
-                                ),
-                              ],
-                            );
-                          }
-
-                          return Column(
-                            children: chronicles.map(_ChronicleTile.new).toList(),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                const SizedBox(height: 16),
+                const _SectionCard(
+                  title: '⚔️ Prochaine étape',
+                  subtitle: 'Sprint 2.2',
+                  child: _NextStepPanel(),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
@@ -151,22 +110,255 @@ class FamilyDashboardPage extends ConsumerWidget {
   }
 }
 
-class _ChronicleTile extends StatelessWidget {
-  const _ChronicleTile(this.chronicle);
+class _HeroHeader extends StatelessWidget {
+  const _HeroHeader({required this.family});
 
-  final Chronicle chronicle;
+  final domain.Family family;
 
   @override
   Widget build(BuildContext context) {
-    return _ChronicleItem(
-      emoji: _emojiForType(chronicle.type),
-      text: chronicle.body == null || chronicle.body!.isEmpty
-          ? chronicle.title
-          : '${chronicle.title}\n${chronicle.body}',
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primaryContainer,
+            theme.colorScheme.secondaryContainer,
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '🏰 ${family.kingdomName}',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Guilde familiale : ${family.name}',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _Badge(label: 'Livre des Chroniques ouvert'),
+                _Badge(label: 'Premier Domaine fondé'),
+                _Badge(label: 'Gardien niveau 1'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text(label, style: theme.textTheme.labelMedium),
+      ),
+    );
+  }
+}
+
+class _StatsRow extends StatelessWidget {
+  const _StatsRow({required this.stats});
+
+  final FamilyStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 720;
+    final cards = [
+      _StatCard(icon: '🧙', value: '${stats.memberCount}', label: 'Aventurier'),
+      _StatCard(icon: '🌍', value: '${stats.domainCount}', label: 'Domaine'),
+      _StatCard(icon: '📜', value: '${stats.chronicleCount}', label: 'Chronique'),
+    ];
+
+    if (compact) {
+      return Column(
+        children: cards
+            .map(
+              (card) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: card,
+              ),
+            )
+            .toList(),
+      );
+    }
+
+    return Row(
+      children: cards
+          .map(
+            (card) => Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: card,
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _StatsSkeleton extends StatelessWidget {
+  const _StatsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: LinearProgressIndicator(),
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  final String icon;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 28)),
+            const SizedBox(width: 14),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(label),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(subtitle, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 18),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChroniclesList extends StatelessWidget {
+  const _ChroniclesList({required this.chronicles});
+
+  final List<Chronicle> chronicles;
+
+  @override
+  Widget build(BuildContext context) {
+    if (chronicles.isEmpty) {
+      return const Column(
+        children: [
+          _ChronicleItem(
+            emoji: '✨',
+            title: 'Les Chroniques commencent',
+            body: 'Les premiers événements apparaîtront ici.',
+          ),
+          _ChronicleItem(
+            emoji: '⚔️',
+            title: 'Les premières quêtes arrivent bientôt',
+            body: 'Sprint 2.2 ouvrira le registre des missions.',
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      children: chronicles
+          .map(
+            (chronicle) => _ChronicleItem(
+              emoji: _emojiForChronicleType(chronicle.type),
+              title: chronicle.title,
+              body: chronicle.body,
+            ),
+          )
+          .toList(),
     );
   }
 
-  String _emojiForType(String type) {
+  String _emojiForChronicleType(String type) {
     switch (type) {
       case 'kingdom_created':
         return '🏰';
@@ -189,22 +381,218 @@ class _ChronicleTile extends StatelessWidget {
 }
 
 class _ChronicleItem extends StatelessWidget {
-  const _ChronicleItem({required this.emoji, required this.text});
+  const _ChronicleItem({
+    required this.emoji,
+    required this.title,
+    this.body,
+  });
 
   final String emoji;
-  final String text;
+  final String title;
+  final String? body;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 9),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 22)),
+          Text(emoji, style: const TextStyle(fontSize: 24)),
           const SizedBox(width: 12),
-          Expanded(child: Text(text)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (body != null && body!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(body!),
+                ],
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _DomainsList extends StatelessWidget {
+  const _DomainsList({required this.domains});
+
+  final List<Domain> domains;
+
+  @override
+  Widget build(BuildContext context) {
+    if (domains.isEmpty) {
+      return const Text('Aucun domaine pour le moment.');
+    }
+
+    return Column(
+      children: domains.map((domain) => _DomainTile(domain: domain)).toList(),
+    );
+  }
+}
+
+class _DomainTile extends StatelessWidget {
+  const _DomainTile({required this.domain});
+
+  final Domain domain;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        child: Text(_emojiForDomain(domain.domainKind)),
+      ),
+      title: Text(domain.name),
+      subtitle: Text(
+        domain.isPrimary ? 'Domaine principal' : _labelForDomain(domain.domainKind),
+      ),
+      trailing: domain.isPrimary
+          ? const Icon(Icons.workspace_premium_outlined)
+          : const Icon(Icons.chevron_right),
+    );
+  }
+
+  String _emojiForDomain(String kind) {
+    switch (kind) {
+      case 'vacation':
+        return '🏖';
+      case 'grandparent':
+        return '👵';
+      case 'camp':
+        return '🏕';
+      case 'custom':
+        return '✨';
+      case 'home':
+      default:
+        return '🏠';
+    }
+  }
+
+  String _labelForDomain(String kind) {
+    switch (kind) {
+      case 'vacation':
+        return 'Maison de vacances';
+      case 'grandparent':
+        return 'Maison de grand-parent';
+      case 'camp':
+        return 'Camp ou lieu temporaire';
+      case 'custom':
+        return 'Domaine personnalisé';
+      case 'home':
+      default:
+        return 'Maison';
+    }
+  }
+}
+
+class _NextStepPanel extends StatelessWidget {
+  const _NextStepPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Le Royaume est créé. La prochaine mécanique sera le registre des quêtes.'),
+        SizedBox(height: 8),
+        Text(
+          'Objectif : permettre au Gardien de créer une quête ménagère transformée en mission héroïque.',
+        ),
+      ],
+    );
+  }
+}
+
+class _LoadingDashboard extends StatelessWidget {
+  const _LoadingDashboard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('Ouverture du Livre des Chroniques...'),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashboardError extends StatelessWidget {
+  const _DashboardError({required this.error, required this.onRetry});
+
+  final Object error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Impossible d’ouvrir le Royaume',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(error.toString(), textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Réessayer'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InlineError extends StatelessWidget {
+  const _InlineError({required this.error});
+
+  final Object error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('Erreur : $error');
+  }
+}
+
+class _SoftErrorCard extends StatelessWidget {
+  const _SoftErrorCard({required this.title, required this.error});
+
+  final String title;
+  final Object error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text('$title : $error'),
       ),
     );
   }
