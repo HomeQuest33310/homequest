@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'shared/routing/app_router.dart';
-import 'shared/theme/homequest_theme.dart';
+import 'core/router/app_router.dart';
+import 'core/theme/app_theme.dart';
 
-class HomeQuestApp extends StatelessWidget {
+class HomeQuestApp extends ConsumerWidget {
   const HomeQuestApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterProvider);
+
     return MaterialApp.router(
       title: 'HomeQuest',
       debugShowCheckedModeBanner: false,
-      theme: HomeQuestTheme.light,
-      routerConfig: appRouter,
-      supportedLocales: const [Locale('fr'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      theme: AppTheme.light,
+      routerConfig: router,
     );
   }
 }

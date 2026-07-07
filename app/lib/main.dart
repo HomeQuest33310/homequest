@@ -8,11 +8,12 @@ import 'src/config/env.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Env.supabaseUrl.isNotEmpty && Env.supabaseAnonKey.isNotEmpty) {
+  if (Env.hasSupabaseConfig) {
     await Supabase.initialize(
       url: Env.supabaseUrl,
       anonKey: Env.supabaseAnonKey,
     );
   }
+
   runApp(const ProviderScope(child: HomeQuestApp()));
 }
