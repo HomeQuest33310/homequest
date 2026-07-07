@@ -6,9 +6,13 @@ import '../../chronicles/domain/chronicle.dart';
 import '../../chronicles/providers/chronicles_provider.dart';
 import '../../domains/domain/domain.dart';
 import '../../domains/providers/domains_provider.dart';
+import '../../quests/domain/quest.dart';
+import '../../quests/presentation/quest_form_dialog.dart';
+import '../../quests/providers/quests_provider.dart';
 import '../domain/family.dart' as domain;
 import '../providers/family_provider.dart';
 import '../providers/family_stats_provider.dart';
+import '../../quests/presentation/widgets/quest_card.dart';
 
 class FamilyDashboardPage extends ConsumerWidget {
   const FamilyDashboardPage({super.key});
@@ -19,6 +23,15 @@ class FamilyDashboardPage extends ConsumerWidget {
     final domainsAsync = ref.watch(currentFamilyDomainsProvider);
     final chroniclesAsync = ref.watch(recentChroniclesProvider);
     final statsAsync = ref.watch(currentFamilyStatsProvider);
+    final questsAsync = ref.watch(currentFamilyQuestsProvider);
+
+    Future<void> refreshAll() async {
+      ref.invalidate(currentFamilyProvider);
+      ref.invalidate(currentFamilyDomainsProvider);
+      ref.invalidate(recentChroniclesProvider);
+      ref.invalidate(currentFamilyStatsProvider);
+      ref.invalidate(currentFamilyQuestsProvider);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -26,12 +39,7 @@ class FamilyDashboardPage extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Rafraîchir',
-            onPressed: () {
-              ref.invalidate(currentFamilyProvider);
-              ref.invalidate(currentFamilyDomainsProvider);
-              ref.invalidate(recentChroniclesProvider);
-              ref.invalidate(currentFamilyStatsProvider);
-            },
+            onPressed: refreshAll,
             icon: const Icon(Icons.refresh),
           ),
           IconButton(
@@ -56,12 +64,7 @@ class FamilyDashboardPage extends ConsumerWidget {
           }
 
           return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(currentFamilyProvider);
-              ref.invalidate(currentFamilyDomainsProvider);
-              ref.invalidate(recentChroniclesProvider);
-              ref.invalidate(currentFamilyStatsProvider);
-            },
+            onRefresh: refreshAll,
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
@@ -77,7 +80,30 @@ class FamilyDashboardPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 _SectionCard(
-                  title: '📜 Chronique du Royaume',
+                  title: '📜 Registre des Quêtes',
+                  subtitle: 'Transformez les tâches du quotidien en missions héroïques.',
+                  action: FilledButton.icon(
+                    onPressed: () async {
+                      final created = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => const QuestFormDialog(),
+                      );
+                      if (created == true) {
+                        await refreshAll();
+                      }
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Créer une quête'),
+                  ),
+                  child: questsAsync.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (error, stackTrace) => _InlineError(error: error),
+                    data: (quests) => _QuestsList(quests: quests),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _SectionCard(
+                  title: '📖 Chronique du Royaume',
                   subtitle: 'Les premiers souvenirs de votre aventure familiale.',
                   child: chroniclesAsync.when(
                     loading: () => const LinearProgressIndicator(),
@@ -98,7 +124,7 @@ class FamilyDashboardPage extends ConsumerWidget {
                 const SizedBox(height: 16),
                 const _SectionCard(
                   title: '⚔️ Prochaine étape',
-                  subtitle: 'Sprint 2.2',
+                  subtitle: 'Sprint 2.3',
                   child: _NextStepPanel(),
                 ),
               ],
@@ -157,7 +183,7 @@ class _HeroHeader extends StatelessWidget {
               children: [
                 _Badge(label: 'Livre des Chroniques ouvert'),
                 _Badge(label: 'Premier Domaine fondé'),
-                _Badge(label: 'Gardien niveau 1'),
+                _Badge(label: 'Registre des Quêtes actif'),
               ],
             ),
           ],
@@ -205,26 +231,14 @@ class _StatsRow extends StatelessWidget {
     if (compact) {
       return Column(
         children: cards
-            .map(
-              (card) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: card,
-              ),
-            )
+            .map((card) => Padding(padding: const EdgeInsets.only(bottom: 10), child: card))
             .toList(),
       );
     }
 
     return Row(
       children: cards
-          .map(
-            (card) => Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: card,
-              ),
-            ),
-          )
+          .map((card) => Expanded(child: Padding(padding: const EdgeInsets.only(right: 10), child: card)))
           .toList(),
     );
   }
@@ -245,11 +259,7 @@ class _StatsSkeleton extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.icon,
-    required this.value,
-    required this.label,
-  });
+  const _StatCard({required this.icon, required this.value, required this.label});
 
   final String icon;
   final String value;
@@ -268,12 +278,7 @@ class _StatCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  value,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(value, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                 Text(label),
               ],
             ),
@@ -285,15 +290,12 @@ class _StatCard extends StatelessWidget {
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.title,
-    required this.subtitle,
-    required this.child,
-  });
+  const _SectionCard({required this.title, required this.subtitle, required this.child, this.action});
 
   final String title;
   final String subtitle;
   final Widget child;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -304,14 +306,56 @@ class _SectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 560;
+
+                final header = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: theme.textTheme.bodyMedium),
+                  ],
+                );
+
+                if (action == null) return header;
+
+                if (compact) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      header,
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: action!,
+                      ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: header),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: action!,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: 4),
-            Text(subtitle, style: theme.textTheme.bodyMedium),
             const SizedBox(height: 18),
             child,
           ],
@@ -320,6 +364,51 @@ class _SectionCard extends StatelessWidget {
     );
   }
 }
+
+class _QuestsList extends ConsumerWidget {
+  const _QuestsList({required this.quests});
+
+  final List<Quest> quests;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (quests.isEmpty) {
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Aucune quête pour le moment.'),
+          SizedBox(height: 8),
+          Text('Créez votre première quête pour ouvrir le registre des missions.'),
+        ],
+      );
+    }
+
+    return Column(
+      children: quests
+          .map(
+            (quest) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: QuestCard(
+                quest: quest,
+                onEdit: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => QuestFormDialog(quest: quest),
+                  );
+                },
+                onArchive: () async {
+                  await ref
+                      .read(updateQuestControllerProvider.notifier)
+                      .archiveQuest(quest.id);
+                },
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
 
 class _ChroniclesList extends StatelessWidget {
   const _ChroniclesList({required this.chronicles});
@@ -331,29 +420,19 @@ class _ChroniclesList extends StatelessWidget {
     if (chronicles.isEmpty) {
       return const Column(
         children: [
-          _ChronicleItem(
-            emoji: '✨',
-            title: 'Les Chroniques commencent',
-            body: 'Les premiers événements apparaîtront ici.',
-          ),
-          _ChronicleItem(
-            emoji: '⚔️',
-            title: 'Les premières quêtes arrivent bientôt',
-            body: 'Sprint 2.2 ouvrira le registre des missions.',
-          ),
+          _ChronicleItem(emoji: '✨', title: 'Les Chroniques commencent', body: 'Les premiers événements apparaîtront ici.'),
+          _ChronicleItem(emoji: '⚔️', title: 'Les premières quêtes arrivent bientôt', body: 'Le registre des missions est maintenant ouvert.'),
         ],
       );
     }
 
     return Column(
       children: chronicles
-          .map(
-            (chronicle) => _ChronicleItem(
-              emoji: _emojiForChronicleType(chronicle.type),
-              title: chronicle.title,
-              body: chronicle.body,
-            ),
-          )
+          .map((chronicle) => _ChronicleItem(
+                emoji: _emojiForChronicleType(chronicle.type),
+                title: chronicle.title,
+                body: chronicle.body,
+              ))
           .toList(),
     );
   }
@@ -364,6 +443,8 @@ class _ChroniclesList extends StatelessWidget {
         return '🏰';
       case 'domain_created':
         return '🏠';
+      case 'quest_created':
+        return '📜';
       case 'quest_completed':
         return '⚔️';
       case 'boss_defeated':
@@ -381,11 +462,7 @@ class _ChroniclesList extends StatelessWidget {
 }
 
 class _ChronicleItem extends StatelessWidget {
-  const _ChronicleItem({
-    required this.emoji,
-    required this.title,
-    this.body,
-  });
+  const _ChronicleItem({required this.emoji, required this.title, this.body});
 
   final String emoji;
   final String title;
@@ -405,12 +482,7 @@ class _ChronicleItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                 if (body != null && body!.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(body!),
@@ -431,13 +503,8 @@ class _DomainsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (domains.isEmpty) {
-      return const Text('Aucun domaine pour le moment.');
-    }
-
-    return Column(
-      children: domains.map((domain) => _DomainTile(domain: domain)).toList(),
-    );
+    if (domains.isEmpty) return const Text('Aucun domaine pour le moment.');
+    return Column(children: domains.map((domain) => _DomainTile(domain: domain)).toList());
   }
 }
 
@@ -450,16 +517,10 @@ class _DomainTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        child: Text(_emojiForDomain(domain.domainKind)),
-      ),
+      leading: CircleAvatar(child: Text(_emojiForDomain(domain.domainKind))),
       title: Text(domain.name),
-      subtitle: Text(
-        domain.isPrimary ? 'Domaine principal' : _labelForDomain(domain.domainKind),
-      ),
-      trailing: domain.isPrimary
-          ? const Icon(Icons.workspace_premium_outlined)
-          : const Icon(Icons.chevron_right),
+      subtitle: Text(domain.isPrimary ? 'Domaine principal' : _labelForDomain(domain.domainKind)),
+      trailing: domain.isPrimary ? const Icon(Icons.workspace_premium_outlined) : const Icon(Icons.chevron_right),
     );
   }
 
@@ -504,11 +565,9 @@ class _NextStepPanel extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Le Royaume est créé. La prochaine mécanique sera le registre des quêtes.'),
+        Text('Le registre des quêtes est ouvert.'),
         SizedBox(height: 8),
-        Text(
-          'Objectif : permettre au Gardien de créer une quête ménagère transformée en mission héroïque.',
-        ),
+        Text('Prochain objectif : terminer une quête, gagner XP/or, puis alimenter les compétences.'),
       ],
     );
   }
@@ -549,18 +608,11 @@ class _DashboardError extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Impossible d’ouvrir le Royaume',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
+                Text('Impossible d’ouvrir le Royaume', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Text(error.toString(), textAlign: TextAlign.center),
                 const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: onRetry,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Réessayer'),
-                ),
+                FilledButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh), label: const Text('Réessayer')),
               ],
             ),
           ),
