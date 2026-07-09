@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/quests_provider.dart';
 import 'quest_form_dialog.dart';
 import 'widgets/quest_card.dart';
+import 'assign_quest_dialog.dart';
 
 class QuestsScreen extends ConsumerWidget {
   const QuestsScreen({super.key});
@@ -41,6 +42,12 @@ class QuestsScreen extends ConsumerWidget {
                   showDialog(
                     context: context,
                     builder: (_) => QuestFormDialog(quest: quest),
+                  );
+                },
+                onAssign: () {
+                    showDialog(
+                    context: context,
+                    builder: (_) => AssignQuestDialog(quest: quest),
                   );
                 },
                 onArchive: () async {

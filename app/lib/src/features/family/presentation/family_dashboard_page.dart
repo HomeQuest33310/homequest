@@ -13,6 +13,7 @@ import '../domain/family.dart' as domain;
 import '../providers/family_provider.dart';
 import '../providers/family_stats_provider.dart';
 import '../../quests/presentation/widgets/quest_card.dart';
+import '../../quests/presentation/assign_quest_dialog.dart';
 
 class FamilyDashboardPage extends ConsumerWidget {
   const FamilyDashboardPage({super.key});
@@ -394,6 +395,12 @@ class _QuestsList extends ConsumerWidget {
                   showDialog(
                     context: context,
                     builder: (_) => QuestFormDialog(quest: quest),
+                  );
+                },
+                onAssign: () {
+                   showDialog(
+                    context: context,
+                    builder: (_) => AssignQuestDialog(quest: quest),
                   );
                 },
                 onArchive: () async {

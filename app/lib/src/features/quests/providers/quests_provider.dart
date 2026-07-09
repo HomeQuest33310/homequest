@@ -28,6 +28,11 @@ final updateQuestControllerProvider =
   return UpdateQuestController(ref);
 });
 
+final assignQuestControllerProvider =
+    StateNotifierProvider<AssignQuestController, AsyncValue<void>>((ref) {
+  return AssignQuestController(ref);
+});
+
 class CreateQuestController extends StateNotifier<AsyncValue<void>> {
   CreateQuestController(this._ref) : super(const AsyncData(null));
 
@@ -120,6 +125,31 @@ class UpdateQuestController extends StateNotifier<AsyncValue<void>> {
 
       _ref.invalidate(currentFamilyQuestsProvider);
       _ref.invalidate(recentChroniclesProvider);
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+    }
+  }
+}
+
+class AssignQuestController extends StateNotifier<AsyncValue<void>> {
+  AssignQuestController(this._ref) : super(const AsyncData(null));
+
+  final Ref _ref;
+
+  Future<void> assignQuest({
+    required String questId,
+    required String memberId,
+  }) async {
+    state = const AsyncLoading();
+
+    try {
+      await _ref.read(questsRepositoryProvider).assignQuest(
+            questId: questId,
+            memberId: memberId,
+          );
+
+      _ref.invalidate(currentFamilyQuestsProvider);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);

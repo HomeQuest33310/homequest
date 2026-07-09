@@ -1,4 +1,5 @@
 import '../domain/family.dart';
+import '../domain/family_member.dart';
 
 abstract class FamilyRepository {
   Future<Family> createFamily({
@@ -9,4 +10,5 @@ abstract class FamilyRepository {
   });
 
   Future<Family?> getCurrentUserFamily(String userId);
+  Future<List<FamilyMember>> getMembers(String familyId);
 }

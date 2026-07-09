@@ -7,11 +7,13 @@ class QuestCard extends StatelessWidget {
     super.key,
     required this.quest,
     required this.onEdit,
+    required this.onAssign,
     required this.onArchive,
   });
 
   final Quest quest;
   final VoidCallback onEdit;
+  final VoidCallback onAssign;
   final VoidCallback onArchive;
 
   @override
@@ -57,6 +59,11 @@ class QuestCard extends StatelessWidget {
                   onPressed: onEdit,
                   icon: const Icon(Icons.edit),
                   label: const Text('Modifier'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onAssign,
+                  icon: const Icon(Icons.person_add_alt_1),
+                  label: const Text('Assigner'),
                 ),
                 OutlinedButton.icon(
                   onPressed: onArchive,

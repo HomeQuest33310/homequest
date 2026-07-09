@@ -94,4 +94,18 @@ class SupabaseQuestsRepository implements QuestsRepository {
 
     return Quest.fromMap(Map<String, dynamic>.from(data));
   }
+    
+  @override
+Future<void> assignQuest({
+  required String questId,
+  required String memberId,
+}) async {
+  await _client.rpc(
+    'assign_quest',
+    params: {
+      'p_quest_id': questId,
+      'p_member_id': memberId,
+    },
+  );
+}
 }

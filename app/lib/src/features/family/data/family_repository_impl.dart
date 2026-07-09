@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/family.dart';
 import 'family_repository.dart';
+import '../domain/family_member.dart';
 
 class SupabaseFamilyRepository implements FamilyRepository {
   SupabaseFamilyRepository(this._client);
@@ -47,5 +48,29 @@ class SupabaseFamilyRepository implements FamilyRepository {
 
     if (data == null) return null;
     return Family.fromMap(data);
+  }
+
+  @override
+Future<List<FamilyMember>> getMembers(String familyId) async {
+  final data = await _client
+      .from('family_members')
+      .select('''
+        role,
+        profiles!inner(
+          id,
+          display_name
+        )
+      ''')
+      .eq('family_id', familyId);
+
+  return (data as List).map((item) {
+    final profile = item['profiles'];
+
+    return FamilyMember(
+      id: profile['id'],
+      displayName: profile['display_name'],
+      role: item['role'],
+    );
+  }).toList();
   }
 }
