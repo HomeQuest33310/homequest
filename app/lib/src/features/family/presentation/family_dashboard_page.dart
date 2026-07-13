@@ -7,6 +7,7 @@ import '../../chronicles/providers/chronicles_provider.dart';
 import '../../domains/domain/domain.dart';
 import '../../domains/providers/domains_provider.dart';
 import '../../quests/domain/quest.dart';
+import '../../notifications/providers/notifications_provider.dart';
 import '../../quests/presentation/dialogs/quest_form_dialog.dart';
 import '../../quests/providers/quests_provider.dart';
 import '../domain/family.dart' as domain;
@@ -30,6 +31,7 @@ class FamilyDashboardPage extends ConsumerWidget {
     final questsAsync = ref.watch(currentFamilyQuestsProvider);
     final currentMember = ref.watch(currentFamilyMemberProvider).asData?.value;
     final canManageQuests = currentMember?.role == 'guardian';
+    final unreadNotifications = ref.watch(unreadGuardianNotificationsProvider);
 
     Future<void> refreshAll() async {
       ref.invalidate(currentFamilyProvider);
@@ -37,6 +39,7 @@ class FamilyDashboardPage extends ConsumerWidget {
       ref.invalidate(recentChroniclesProvider);
       ref.invalidate(currentFamilyStatsProvider);
       ref.invalidate(currentFamilyQuestsProvider);
+      ref.invalidate(guardianNotificationsProvider);
     }
 
     return Scaffold(
@@ -58,6 +61,16 @@ class FamilyDashboardPage extends ConsumerWidget {
             onPressed: () => context.go('/missions'),
             icon: const Icon(Icons.assignment_turned_in_outlined),
           ),
+          if (canManageQuests)
+            IconButton(
+              tooltip: 'Notifications du royaume',
+              onPressed: () => context.go('/notifications'),
+              icon: Badge(
+                isLabelVisible: unreadNotifications > 0,
+                label: Text('$unreadNotifications'),
+                child: const Icon(Icons.notifications_outlined),
+              ),
+            ),
           if (canManageQuests)
             IconButton(
               tooltip: 'Validations en attente',

@@ -7,6 +7,7 @@ import '../../features/completions/providers/completions_provider.dart';
 import '../../features/family/providers/family_members_provider.dart';
 import '../../features/family/providers/family_provider.dart';
 import '../../features/family/providers/family_stats_provider.dart';
+import '../../features/notifications/providers/notifications_provider.dart';
 import '../../features/quests/providers/quests_provider.dart';
 
 final gameplayRealtimeProvider = Provider<void>((ref) {
@@ -26,6 +27,7 @@ final gameplayRealtimeProvider = Provider<void>((ref) {
     ref.invalidate(currentFamilyMembersProvider);
     ref.invalidate(currentFamilyStatsProvider);
     ref.invalidate(recentChroniclesProvider);
+    ref.invalidate(guardianNotificationsProvider);
   }
 
   for (final table in const [
@@ -37,6 +39,7 @@ final gameplayRealtimeProvider = Provider<void>((ref) {
     'bosses',
     'boss_damage_events',
     'chronicles',
+    'guardian_notifications',
   ]) {
     channel.onPostgresChanges(
       event: PostgresChangeEvent.all,

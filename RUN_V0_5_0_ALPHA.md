@@ -8,6 +8,8 @@ Dans Supabase, ouvrir **SQL Editor**, puis exécuter le contenu de :
 supabase/migrations/0014_quest_completion_workflow.sql
 supabase/migrations/0015_guardian_self_approval.sql
 supabase/migrations/0016_gameplay_realtime.sql
+supabase/migrations/0017_available_quests_and_guardian_notifications.sql
+supabase/migrations/0018_revoke_anonymous_privileged_rpcs.sql
 ```
 
 Le résultat attendu est :
@@ -36,6 +38,11 @@ flutter run -d chrome
 5. Après approbation, vérifier l'XP, l'or, les dégâts au boss et la chronique.
 6. Garder deux sessions ouvertes et vérifier qu'une nouvelle assignation apparaît
    automatiquement dans **Mes missions** sans recharger la page.
+7. Envoyer une mission : elle disparaît des quêtes disponibles pendant sa
+   validation. Une mission quotidienne ou hebdomadaire reviendra à sa prochaine
+   période après validation.
+8. Avec un autre membre, prendre une quête déjà assignée. Le Gardien doit voir
+   un badge dans **Notifications du royaume** sans recharger la page.
 
 Un Gardien peut approuver sa propre mission. Cette règle permet aux familles
 qui ne possèdent qu'un seul Gardien de faire progresser également ce membre.

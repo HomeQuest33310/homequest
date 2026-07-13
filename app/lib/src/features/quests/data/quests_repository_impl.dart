@@ -10,12 +10,10 @@ class SupabaseQuestsRepository implements QuestsRepository {
 
   @override
   Future<List<Quest>> listQuests(String familyId) async {
-    final data = await _client
-        .from('quests')
-        .select()
-        .eq('family_id', familyId)
-        .neq('status', 'archived')
-        .order('created_at', ascending: false);
+    final data = await _client.rpc(
+      'list_available_quests',
+      params: {'p_family_id': familyId},
+    );
 
     return (data as List)
         .map(
