@@ -25,9 +25,8 @@ dependencies:
   # Supabase Backend
   supabase_flutter: ^2.6.0
 
-  # Firebase
-  firebase_core: ^2.24.0
-  firebase_messaging: ^14.6.0
+  # Local environment configuration
+  flutter_dotenv: ^6.0.1
 
   # Navigation
   go_router: ^13.2.0
@@ -70,13 +69,14 @@ dev_dependencies:
 
   # Testing
   mocktail: ^1.0.0
-  fake_cloud_firestore: ^2.5.0
-
   # Code Coverage
   coverage: ^1.15.1
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - .env
 
   # TODO: Add assets later when directories exist
   # assets:

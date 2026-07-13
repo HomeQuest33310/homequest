@@ -27,10 +27,12 @@ abstract class QuestsRepository {
     required String frequency,
   });
 
-    Future<void> assignQuest({
-      required String questId,
-      required String memberId,
-  });
   Future<Quest> archiveQuest(String questId);
 
+  Future<void> assignQuest({
+    required String questId,
+    required String memberId,
+  });
+
+  Future<void> selfAssignQuest(String questId);
 }

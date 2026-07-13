@@ -14,7 +14,9 @@ class HomeQuestApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'HomeQuest',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light,
       routerConfig: router,
     );
   }

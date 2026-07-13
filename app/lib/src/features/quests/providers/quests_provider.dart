@@ -33,6 +33,11 @@ final assignQuestControllerProvider =
   return AssignQuestController(ref);
 });
 
+final selfAssignQuestControllerProvider =
+    StateNotifierProvider<SelfAssignQuestController, AsyncValue<void>>((ref) {
+  return SelfAssignQuestController(ref);
+});
+
 class CreateQuestController extends StateNotifier<AsyncValue<void>> {
   CreateQuestController(this._ref) : super(const AsyncData(null));
 
@@ -153,6 +158,25 @@ class AssignQuestController extends StateNotifier<AsyncValue<void>> {
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
+    }
+  }
+}
+
+class SelfAssignQuestController extends StateNotifier<AsyncValue<void>> {
+  SelfAssignQuestController(this._ref) : super(const AsyncData(null));
+
+  final Ref _ref;
+
+  Future<bool> selfAssignQuest(String questId) async {
+    state = const AsyncLoading();
+    try {
+      await _ref.read(questsRepositoryProvider).selfAssignQuest(questId);
+      _ref.invalidate(currentFamilyQuestsProvider);
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
     }
   }
 }

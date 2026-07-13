@@ -18,7 +18,11 @@ class SupabaseQuestsRepository implements QuestsRepository {
         .order('created_at', ascending: false);
 
     return (data as List)
-        .map((item) => Quest.fromMap(Map<String, dynamic>.from(item)))
+        .map(
+          (item) => Quest.fromMap(
+            Map<String, dynamic>.from(item),
+          ),
+        )
         .toList();
   }
 
@@ -37,17 +41,16 @@ class SupabaseQuestsRepository implements QuestsRepository {
     final data = await _client.rpc(
       'create_quest',
       params: {
-  'p_family_id': familyId,
-  'p_domain_id': domainId,
-  'p_title': title,
-  'p_real_task': realTask,
-  'p_description': description,
-  'p_xp_reward': xpReward,
-  'p_gold_reward': goldReward,
-  'p_boss_damage': bossDamage,
-  'p_frequency': frequency,
-},
-      
+        'p_family_id': familyId,
+        'p_domain_id': domainId,
+        'p_title': title,
+        'p_real_task': realTask,
+        'p_description': description,
+        'p_xp_reward': xpReward,
+        'p_gold_reward': goldReward,
+        'p_boss_damage': bossDamage,
+        'p_frequency': frequency,
+      },
     );
 
     return Quest.fromMap(Map<String, dynamic>.from(data));
@@ -94,18 +97,28 @@ class SupabaseQuestsRepository implements QuestsRepository {
 
     return Quest.fromMap(Map<String, dynamic>.from(data));
   }
-    
+
   @override
-Future<void> assignQuest({
-  required String questId,
-  required String memberId,
-}) async {
-  await _client.rpc(
-    'assign_quest',
-    params: {
-      'p_quest_id': questId,
-      'p_member_id': memberId,
-    },
-  );
-}
+  Future<void> assignQuest({
+    required String questId,
+    required String memberId,
+  }) async {
+    await _client.rpc(
+      'assign_quest',
+      params: {
+        'p_quest_id': questId,
+        'p_member_id': memberId,
+      },
+    );
+  }
+
+  @override
+  Future<void> selfAssignQuest(String questId) async {
+    await _client.rpc(
+      'self_assign_quest',
+      params: {
+        'p_quest_id': questId,
+      },
+    );
+  }
 }

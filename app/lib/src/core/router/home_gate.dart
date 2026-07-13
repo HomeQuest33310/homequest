@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/presentation/auth_page.dart';
 import '../../features/auth/providers/auth_provider.dart';
-import '../../features/family/presentation/pages/create_family_page.dart';
-import '../../features/family/presentation/pages/family_dashboard_page.dart';
+import '../../features/family/presentation/create_family_page.dart';
+import '../../features/family/presentation/family_dashboard_page.dart';
 import '../../features/family/providers/family_provider.dart';
 
 class HomeGate extends ConsumerWidget {

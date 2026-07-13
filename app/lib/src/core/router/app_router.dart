@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import '../../features/family/presentation/create_family_page.dart';
+import '../../features/family/presentation/family_dashboard_page.dart';
+import '../../features/family/presentation/accept_invitation_page.dart';
+import '../../features/family/presentation/members_management_page.dart';
 import '../../features/auth/presentation/auth_page.dart';
-import '../../features/family/presentation/pages/create_family_page.dart';
-import '../../features/family/presentation/pages/family_dashboard_page.dart';
 import '../../features/devtools/presentation/devtools_page.dart';
 import 'home_gate.dart';
 
@@ -26,6 +27,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const FamilyDashboardPage(),
+      ),
+      GoRoute(
+        path: '/members',
+        builder: (context, state) => const MembersManagementPage(),
+      ),
+      GoRoute(
+        path: '/invite/:token',
+        builder: (context, state) => AcceptInvitationPage(
+          token: state.pathParameters['token']!,
+        ),
       ),
       GoRoute(
         path: '/devtools',

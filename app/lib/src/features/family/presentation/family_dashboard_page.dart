@@ -10,13 +10,13 @@ import '../../quests/domain/quest.dart';
 import '../../quests/presentation/dialogs/quest_form_dialog.dart';
 import '../../quests/providers/quests_provider.dart';
 import '../domain/family.dart' as domain;
+import '../providers/family_members_provider.dart';
 import '../providers/family_provider.dart';
 import '../providers/family_stats_provider.dart';
 import '../../quests/presentation/widgets/quest_card.dart';
 import '../../quests/presentation/dialogs/assign_quest_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
-
 
 class FamilyDashboardPage extends ConsumerWidget {
   const FamilyDashboardPage({super.key});
@@ -28,6 +28,8 @@ class FamilyDashboardPage extends ConsumerWidget {
     final chroniclesAsync = ref.watch(recentChroniclesProvider);
     final statsAsync = ref.watch(currentFamilyStatsProvider);
     final questsAsync = ref.watch(currentFamilyQuestsProvider);
+    final currentMember = ref.watch(currentFamilyMemberProvider).asData?.value;
+    final canManageQuests = currentMember?.role == 'guardian';
 
     Future<void> refreshAll() async {
       ref.invalidate(currentFamilyProvider);
@@ -45,13 +47,18 @@ class FamilyDashboardPage extends ConsumerWidget {
             tooltip: 'Rafraîchir',
             onPressed: refreshAll,
             icon: const Icon(Icons.refresh),
-            ),
-            if (kDebugMode)
+          ),
           IconButton(
-            tooltip: 'Developer Tools',
-            onPressed: () => context.go('/devtools'),
-            icon: const Icon(Icons.bug_report),
-             ),
+            tooltip: 'Membres du royaume',
+            onPressed: () => context.go('/members'),
+            icon: const Icon(Icons.groups),
+          ),
+          if (kDebugMode)
+            IconButton(
+              tooltip: 'Developer Tools',
+              onPressed: () => context.go('/devtools'),
+              icon: const Icon(Icons.bug_report),
+            ),
           IconButton(
             tooltip: 'Déconnexion',
             onPressed: () async {
@@ -91,34 +98,40 @@ class FamilyDashboardPage extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _SectionCard(
                   title: '📜 Registre des Quêtes',
-                  subtitle: 'Transformez les tâches du quotidien en missions héroïques.',
-                  action: FilledButton.icon(
-                    onPressed: () async {
-                      final created = await showDialog<bool>(
-                        context: context,
-                        builder: (_) => const QuestFormDialog(),
-                      );
-                      if (created == true) {
-                        await refreshAll();
-                      }
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Créer une quête'),
-                  ),
+                  subtitle:
+                      'Transformez les tâches du quotidien en missions héroïques.',
+                  action: canManageQuests
+                      ? FilledButton.icon(
+                          onPressed: () async {
+                            final created = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => const QuestFormDialog(),
+                            );
+                            if (created == true) await refreshAll();
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Créer une quête'),
+                        )
+                      : null,
                   child: questsAsync.when(
                     loading: () => const LinearProgressIndicator(),
                     error: (error, stackTrace) => _InlineError(error: error),
-                    data: (quests) => _QuestsList(quests: quests),
+                    data: (quests) => _QuestsList(
+                      quests: quests,
+                      canManage: canManageQuests,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 _SectionCard(
                   title: '📖 Chronique du Royaume',
-                  subtitle: 'Les premiers souvenirs de votre aventure familiale.',
+                  subtitle:
+                      'Les premiers souvenirs de votre aventure familiale.',
                   child: chroniclesAsync.when(
                     loading: () => const LinearProgressIndicator(),
                     error: (error, stackTrace) => _InlineError(error: error),
-                    data: (chronicles) => _ChroniclesList(chronicles: chronicles),
+                    data: (chronicles) =>
+                        _ChroniclesList(chronicles: chronicles),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -235,20 +248,24 @@ class _StatsRow extends StatelessWidget {
     final cards = [
       _StatCard(icon: '🧙', value: '${stats.memberCount}', label: 'Aventurier'),
       _StatCard(icon: '🌍', value: '${stats.domainCount}', label: 'Domaine'),
-      _StatCard(icon: '📜', value: '${stats.chronicleCount}', label: 'Chronique'),
+      _StatCard(
+          icon: '📜', value: '${stats.chronicleCount}', label: 'Chronique'),
     ];
 
     if (compact) {
       return Column(
         children: cards
-            .map((card) => Padding(padding: const EdgeInsets.only(bottom: 10), child: card))
+            .map((card) => Padding(
+                padding: const EdgeInsets.only(bottom: 10), child: card))
             .toList(),
       );
     }
 
     return Row(
       children: cards
-          .map((card) => Expanded(child: Padding(padding: const EdgeInsets.only(right: 10), child: card)))
+          .map((card) => Expanded(
+              child: Padding(
+                  padding: const EdgeInsets.only(right: 10), child: card)))
           .toList(),
     );
   }
@@ -269,7 +286,8 @@ class _StatsSkeleton extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.icon, required this.value, required this.label});
+  const _StatCard(
+      {required this.icon, required this.value, required this.label});
 
   final String icon;
   final String value;
@@ -288,7 +306,9 @@ class _StatCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                Text(value,
+                    style: theme.textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.bold)),
                 Text(label),
               ],
             ),
@@ -300,7 +320,11 @@ class _StatCard extends StatelessWidget {
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.subtitle, required this.child, this.action});
+  const _SectionCard(
+      {required this.title,
+      required this.subtitle,
+      required this.child,
+      this.action});
 
   final String title;
   final String subtitle;
@@ -376,9 +400,10 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _QuestsList extends ConsumerWidget {
-  const _QuestsList({required this.quests});
+  const _QuestsList({required this.quests, required this.canManage});
 
   final List<Quest> quests;
+  final bool canManage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -388,7 +413,8 @@ class _QuestsList extends ConsumerWidget {
         children: [
           Text('Aucune quête pour le moment.'),
           SizedBox(height: 8),
-          Text('Créez votre première quête pour ouvrir le registre des missions.'),
+          Text(
+              'Créez votre première quête pour ouvrir le registre des missions.'),
         ],
       );
     }
@@ -400,31 +426,59 @@ class _QuestsList extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 12),
               child: QuestCard(
                 quest: quest,
-                onEdit: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => QuestFormDialog(quest: quest),
-                  );
-                },
-                onAssign: () {
-                   showDialog(
-                    context: context,
-                    builder: (_) => AssignQuestDialog(quest: quest),
-                  );
-                },
-                onArchive: () async {
-                  await ref
-                      .read(updateQuestControllerProvider.notifier)
-                      .archiveQuest(quest.id);
-                },
+                onSelfAssign: () => _selfAssign(context, ref, quest),
+                onEdit: canManage
+                    ? () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => QuestFormDialog(quest: quest),
+                        );
+                      }
+                    : null,
+                onAssign: canManage
+                    ? () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AssignQuestDialog(quest: quest),
+                        );
+                      }
+                    : null,
+                onArchive: canManage
+                    ? () async {
+                        await ref
+                            .read(updateQuestControllerProvider.notifier)
+                            .archiveQuest(quest.id);
+                      }
+                    : null,
               ),
             ),
           )
           .toList(),
     );
   }
-}
 
+  Future<void> _selfAssign(
+    BuildContext context,
+    WidgetRef ref,
+    Quest quest,
+  ) async {
+    final success = await ref
+        .read(selfAssignQuestControllerProvider.notifier)
+        .selfAssignQuest(quest.id);
+    if (!context.mounted) return;
+
+    final state = ref.read(selfAssignQuestControllerProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Mission ajoutée à vos quêtes.'
+              : 'Impossible de prendre la mission : ${state.error}',
+        ),
+      ),
+    );
+  }
+}
 
 class _ChroniclesList extends StatelessWidget {
   const _ChroniclesList({required this.chronicles});
@@ -436,8 +490,14 @@ class _ChroniclesList extends StatelessWidget {
     if (chronicles.isEmpty) {
       return const Column(
         children: [
-          _ChronicleItem(emoji: '✨', title: 'Les Chroniques commencent', body: 'Les premiers événements apparaîtront ici.'),
-          _ChronicleItem(emoji: '⚔️', title: 'Les premières quêtes arrivent bientôt', body: 'Le registre des missions est maintenant ouvert.'),
+          _ChronicleItem(
+              emoji: '✨',
+              title: 'Les Chroniques commencent',
+              body: 'Les premiers événements apparaîtront ici.'),
+          _ChronicleItem(
+              emoji: '⚔️',
+              title: 'Les premières quêtes arrivent bientôt',
+              body: 'Le registre des missions est maintenant ouvert.'),
         ],
       );
     }
@@ -498,7 +558,9 @@ class _ChronicleItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                Text(title,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700)),
                 if (body != null && body!.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(body!),
@@ -520,7 +582,9 @@ class _DomainsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (domains.isEmpty) return const Text('Aucun domaine pour le moment.');
-    return Column(children: domains.map((domain) => _DomainTile(domain: domain)).toList());
+    return Column(
+        children:
+            domains.map((domain) => _DomainTile(domain: domain)).toList());
   }
 }
 
@@ -535,8 +599,12 @@ class _DomainTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(child: Text(_emojiForDomain(domain.domainKind))),
       title: Text(domain.name),
-      subtitle: Text(domain.isPrimary ? 'Domaine principal' : _labelForDomain(domain.domainKind)),
-      trailing: domain.isPrimary ? const Icon(Icons.workspace_premium_outlined) : const Icon(Icons.chevron_right),
+      subtitle: Text(domain.isPrimary
+          ? 'Domaine principal'
+          : _labelForDomain(domain.domainKind)),
+      trailing: domain.isPrimary
+          ? const Icon(Icons.workspace_premium_outlined)
+          : const Icon(Icons.chevron_right),
     );
   }
 
@@ -583,7 +651,8 @@ class _NextStepPanel extends StatelessWidget {
       children: [
         Text('Le registre des quêtes est ouvert.'),
         SizedBox(height: 8),
-        Text('Prochain objectif : terminer une quête, gagner XP/or, puis alimenter les compétences.'),
+        Text(
+            'Prochain objectif : terminer une quête, gagner XP/or, puis alimenter les compétences.'),
       ],
     );
   }
@@ -624,11 +693,15 @@ class _DashboardError extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Impossible d’ouvrir le Royaume', style: Theme.of(context).textTheme.titleLarge),
+                Text('Impossible d’ouvrir le Royaume',
+                    style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Text(error.toString(), textAlign: TextAlign.center),
                 const SizedBox(height: 16),
-                FilledButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh), label: const Text('Réessayer')),
+                FilledButton.icon(
+                    onPressed: onRetry,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Réessayer')),
               ],
             ),
           ),

@@ -9,12 +9,14 @@ class QuestCard extends StatelessWidget {
     required this.onEdit,
     required this.onAssign,
     required this.onArchive,
+    this.onSelfAssign,
   });
 
   final Quest quest;
-  final VoidCallback onEdit;
-  final VoidCallback onAssign;
-  final VoidCallback onArchive;
+  final VoidCallback? onEdit;
+  final VoidCallback? onAssign;
+  final VoidCallback? onArchive;
+  final VoidCallback? onSelfAssign;
 
   @override
   Widget build(BuildContext context) {
@@ -45,8 +47,11 @@ class QuestCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _StatBadge(icon: Icons.star, label: '${quest.xpReward} XP'),
-                _StatBadge(icon: Icons.monetization_on, label: '${quest.goldReward} Or'),
-                _StatBadge(icon: Icons.gps_fixed, label: '${quest.bossDamage} dégâts'),
+                _StatBadge(
+                    icon: Icons.monetization_on,
+                    label: '${quest.goldReward} Or'),
+                _StatBadge(
+                    icon: Icons.gps_fixed, label: '${quest.bossDamage} dégâts'),
                 _StatBadge(icon: Icons.repeat, label: quest.frequency),
               ],
             ),
@@ -55,21 +60,30 @@ class QuestCard extends StatelessWidget {
               spacing: 12,
               runSpacing: 12,
               children: [
-                FilledButton.icon(
-                  onPressed: onEdit,
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Modifier'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: onAssign,
-                  icon: const Icon(Icons.person_add_alt_1),
-                  label: const Text('Assigner'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: onArchive,
-                  icon: const Icon(Icons.archive_outlined),
-                  label: const Text('Archiver'),
-                ),
+                if (onSelfAssign != null)
+                  FilledButton.icon(
+                    onPressed: onSelfAssign,
+                    icon: const Icon(Icons.back_hand_outlined),
+                    label: const Text('Prendre cette mission'),
+                  ),
+                if (onEdit != null)
+                  FilledButton.tonalIcon(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Modifier'),
+                  ),
+                if (onAssign != null)
+                  OutlinedButton.icon(
+                    onPressed: onAssign,
+                    icon: const Icon(Icons.person_add_alt_1),
+                    label: const Text('Assigner'),
+                  ),
+                if (onArchive != null)
+                  OutlinedButton.icon(
+                    onPressed: onArchive,
+                    icon: const Icon(Icons.archive_outlined),
+                    label: const Text('Archiver'),
+                  ),
               ],
             ),
           ],

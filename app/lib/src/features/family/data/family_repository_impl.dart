@@ -1,8 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/family.dart';
-import 'family_repository.dart';
+import '../domain/family_invitation.dart';
 import '../domain/family_member.dart';
+import 'family_repository.dart';
 
 class SupabaseFamilyRepository implements FamilyRepository {
   SupabaseFamilyRepository(this._client);
@@ -23,20 +24,28 @@ class SupabaseFamilyRepository implements FamilyRepository {
         'p_kingdom_name': kingdomName,
         'p_primary_domain_name': primaryDomainName,
       },
-    ) as Map<String, dynamic>;
+    );
 
-    return Family.fromMap(data);
+    return Family.fromMap(
+      Map<String, dynamic>.from(data as Map),
+    );
   }
 
   @override
   Future<Family?> getCurrentUserFamily(String userId) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+
     final memberships = await _client
         .from('family_members')
         .select('family_id')
         .eq('user_id', userId)
+        .eq('is_active', true)
+        .or('expires_at.is.null,expires_at.gt.$now')
         .limit(1);
 
-    if (memberships.isEmpty) return null;
+    if (memberships.isEmpty) {
+      return null;
+    }
 
     final familyId = memberships.first['family_id'] as String;
 
@@ -46,31 +55,170 @@ class SupabaseFamilyRepository implements FamilyRepository {
         .eq('id', familyId)
         .maybeSingle();
 
-    if (data == null) return null;
-    return Family.fromMap(data);
+    if (data == null) {
+      return null;
+    }
+
+    return Family.fromMap(
+      Map<String, dynamic>.from(data),
+    );
   }
 
   @override
-Future<List<FamilyMember>> getMembers(String familyId) async {
-  final data = await _client
-      .from('family_members')
-      .select('''
-        role,
-        profiles!inner(
+  Future<List<FamilyMember>> getMembers(String familyId) async {
+    final data = await _client.from('family_members').select('''
           id,
-          display_name
-        )
-      ''')
-      .eq('family_id', familyId);
+          user_id,
+          role,
+          level,
+          xp,
+          gold,
+          membership_scope,
+          domain_id,
+          expires_at,
+          is_active,
+          profile:profiles!family_members_user_id_fkey(
+            id,
+            display_name,
+            avatar_key
+          )
+        ''').eq('family_id', familyId).eq('is_active', true).order('joined_at');
 
-  return (data as List).map((item) {
-    final profile = item['profiles'];
+    return (data as List).map((item) {
+      final memberData = Map<String, dynamic>.from(item as Map);
+      final profileData = Map<String, dynamic>.from(
+        memberData['profile'] as Map,
+      );
 
-    return FamilyMember(
-      id: profile['id'],
-      displayName: profile['display_name'],
-      role: item['role'],
+      return _memberFromData(
+        memberData: memberData,
+        profileData: profileData,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<FamilyMember> changeMemberRole({
+    required String memberId,
+    required String newRole,
+  }) async {
+    final data = await _client.rpc(
+      'change_family_member_role',
+      params: {
+        'p_member_id': memberId,
+        'p_new_role': newRole,
+      },
     );
-  }).toList();
+
+    return _loadMemberFromRpcResult(data);
+  }
+
+  @override
+  Future<FamilyMember> deactivateMember(String memberId) async {
+    final data = await _client.rpc(
+      'deactivate_family_member',
+      params: {
+        'p_member_id': memberId,
+      },
+    );
+
+    return _loadMemberFromRpcResult(data);
+  }
+
+  Future<FamilyMember> _loadMemberFromRpcResult(dynamic data) async {
+    final memberData = Map<String, dynamic>.from(data as Map);
+
+    final profileData = await _client
+        .from('profiles')
+        .select('display_name, avatar_key')
+        .eq('id', memberData['user_id'])
+        .single();
+
+    return _memberFromData(
+      memberData: memberData,
+      profileData: Map<String, dynamic>.from(profileData),
+    );
+  }
+
+  FamilyMember _memberFromData({
+    required Map<String, dynamic> memberData,
+    required Map<String, dynamic> profileData,
+  }) {
+    return FamilyMember(
+      id: memberData['id'] as String,
+      userId: memberData['user_id'] as String,
+      displayName: profileData['display_name'] as String,
+      avatarKey: profileData['avatar_key'] as String?,
+      role: memberData['role'] as String,
+      level: memberData['level'] as int,
+      xp: memberData['xp'] as int,
+      gold: memberData['gold'] as int,
+      isActive: memberData['is_active'] as bool,
+      membershipScope: memberData['membership_scope'] as String? ?? 'kingdom',
+      domainId: memberData['domain_id'] as String?,
+      expiresAt: memberData['expires_at'] == null
+          ? null
+          : DateTime.parse(memberData['expires_at'] as String),
+    );
+  }
+
+  @override
+  Future<List<FamilyInvitation>> getInvitations(String familyId) async {
+    final data = await _client
+        .from('family_invitations')
+        .select()
+        .eq('family_id', familyId)
+        .eq('status', 'pending')
+        .order('created_at', ascending: false);
+
+    return (data as List)
+        .map(
+          (item) => FamilyInvitation.fromMap(
+            Map<String, dynamic>.from(item as Map),
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<FamilyInvitation> inviteMember({
+    required String familyId,
+    required String email,
+    required String role,
+    required String membershipScope,
+    String? domainId,
+    int expiresInDays = 7,
+  }) async {
+    final data = await _client.rpc(
+      'invite_family_member',
+      params: {
+        'p_family_id': familyId,
+        'p_email': email,
+        'p_role': role,
+        'p_membership_scope': membershipScope,
+        'p_domain_id': domainId,
+        'p_expires_in_days': expiresInDays,
+      },
+    );
+
+    return FamilyInvitation.fromMap(
+      Map<String, dynamic>.from(data as Map),
+    );
+  }
+
+  @override
+  Future<void> cancelInvitation(String invitationId) async {
+    await _client.rpc(
+      'cancel_family_invitation',
+      params: {'p_invitation_id': invitationId},
+    );
+  }
+
+  @override
+  Future<void> acceptInvitation(String token) async {
+    await _client.rpc(
+      'accept_family_invitation',
+      params: {'p_token': token},
+    );
   }
 }

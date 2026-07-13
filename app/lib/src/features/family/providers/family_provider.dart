@@ -6,7 +6,6 @@ import '../../domains/providers/domains_provider.dart';
 import '../data/family_repository.dart';
 import '../data/family_repository_impl.dart';
 import '../domain/family.dart' as domain;
-import '../domain/family_member.dart';
 
 final familyRepositoryProvider = Provider<FamilyRepository>((ref) {
   return SupabaseFamilyRepository(ref.watch(supabaseProvider));
@@ -55,14 +54,4 @@ class CreateFamilyController extends StateNotifier<AsyncValue<void>> {
       state = AsyncError(error, stackTrace);
     }
   }
-  final currentFamilyMembersProvider =
-    FutureProvider<List<FamilyMember>>((ref) async {
-  final family = await ref.watch(currentFamilyProvider.future);
-
-  if (family == null) return [];
-
-  return ref
-      .watch(familyRepositoryProvider)
-      .getMembers(family.id);
-});
 }

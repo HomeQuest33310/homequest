@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../family/providers/family_members_provider.dart';
 import '../../providers/quests_provider.dart';
 import '../dialogs/assign_quest_dialog.dart';
 import '../dialogs/quest_form_dialog.dart';
@@ -12,6 +13,8 @@ class QuestsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final questsAsync = ref.watch(currentFamilyQuestsProvider);
+    final currentMember = ref.watch(currentFamilyMemberProvider).asData?.value;
+    final canManage = currentMember?.role == 'guardian';
 
     return Scaffold(
       appBar: AppBar(
@@ -38,38 +41,62 @@ class QuestsScreen extends ConsumerWidget {
 
               return QuestCard(
                 quest: quest,
-                onEdit: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => QuestFormDialog(quest: quest),
+                onSelfAssign: () async {
+                  final success = await ref
+                      .read(selfAssignQuestControllerProvider.notifier)
+                      .selfAssignQuest(quest.id);
+                  if (!context.mounted) return;
+                  final state = ref.read(selfAssignQuestControllerProvider);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        success
+                            ? 'Mission ajoutée à vos quêtes.'
+                            : 'Erreur : ${state.error}',
+                      ),
+                    ),
                   );
                 },
-                onAssign: () {
-                    showDialog(
-                    context: context,
-                    builder: (_) => AssignQuestDialog(quest: quest),
-                  );
-                },
-                onArchive: () async {
-                  await ref
-                      .read(updateQuestControllerProvider.notifier)
-                      .archiveQuest(quest.id);
-                },
+                onEdit: canManage
+                    ? () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => QuestFormDialog(quest: quest),
+                        );
+                      }
+                    : null,
+                onAssign: canManage
+                    ? () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AssignQuestDialog(quest: quest),
+                        );
+                      }
+                    : null,
+                onArchive: canManage
+                    ? () async {
+                        await ref
+                            .read(updateQuestControllerProvider.notifier)
+                            .archiveQuest(quest.id);
+                      }
+                    : null,
               );
             },
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (_) => const QuestFormDialog(),
-          );
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Nouvelle mission'),
-      ),
+      floatingActionButton: canManage
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => const QuestFormDialog(),
+                );
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Nouvelle mission'),
+            )
+          : null,
     );
   }
-} 
+}
