@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../family/providers/family_members_provider.dart';
-import '../domain/quest.dart';
-import '../providers/quests_provider.dart';
+
+import '../../../family/providers/family_members_provider.dart';
+import '../../domain/quest.dart';
+import '../../providers/quests_provider.dart';
 
 
 class AssignQuestDialog extends ConsumerStatefulWidget {

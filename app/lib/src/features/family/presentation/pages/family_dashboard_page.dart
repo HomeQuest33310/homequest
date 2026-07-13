@@ -7,13 +7,16 @@ import '../../chronicles/providers/chronicles_provider.dart';
 import '../../domains/domain/domain.dart';
 import '../../domains/providers/domains_provider.dart';
 import '../../quests/domain/quest.dart';
-import '../../quests/presentation/quest_form_dialog.dart';
+import '../../quests/presentation/dialogs/quest_form_dialog.dart';
 import '../../quests/providers/quests_provider.dart';
 import '../domain/family.dart' as domain;
 import '../providers/family_provider.dart';
 import '../providers/family_stats_provider.dart';
 import '../../quests/presentation/widgets/quest_card.dart';
-import '../../quests/presentation/assign_quest_dialog.dart';
+import '../../quests/presentation/dialogs/assign_quest_dialog.dart';
+import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
+
 
 class FamilyDashboardPage extends ConsumerWidget {
   const FamilyDashboardPage({super.key});
@@ -42,7 +45,13 @@ class FamilyDashboardPage extends ConsumerWidget {
             tooltip: 'Rafraîchir',
             onPressed: refreshAll,
             icon: const Icon(Icons.refresh),
-          ),
+            ),
+            if (kDebugMode)
+          IconButton(
+            tooltip: 'Developer Tools',
+            onPressed: () => context.go('/devtools'),
+            icon: const Icon(Icons.bug_report),
+             ),
           IconButton(
             tooltip: 'Déconnexion',
             onPressed: () async {

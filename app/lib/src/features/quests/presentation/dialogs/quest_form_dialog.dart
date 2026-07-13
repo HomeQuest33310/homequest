@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domains/providers/domains_provider.dart';
-import '../domain/quest.dart';
-import '../providers/quests_provider.dart';
+import '../../../domains/providers/domains_provider.dart';
+import '../../domain/quest.dart';
+import '../../providers/quests_provider.dart';
 
 class QuestFormDialog extends ConsumerStatefulWidget {
   const QuestFormDialog({super.key, this.quest});

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../providers/quests_provider.dart';
-import 'quest_form_dialog.dart';
-import 'widgets/quest_card.dart';
-import 'assign_quest_dialog.dart';
+import '../../providers/quests_provider.dart';
+import '../dialogs/assign_quest_dialog.dart';
+import '../dialogs/quest_form_dialog.dart';
+import '../widgets/quest_card.dart';
 
 class QuestsScreen extends ConsumerWidget {
   const QuestsScreen({super.key});
