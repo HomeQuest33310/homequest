@@ -6,6 +6,8 @@ Dans Supabase, ouvrir **SQL Editor**, puis exécuter le contenu de :
 
 ```text
 supabase/migrations/0014_quest_completion_workflow.sql
+supabase/migrations/0015_guardian_self_approval.sql
+supabase/migrations/0016_gameplay_realtime.sql
 ```
 
 Le résultat attendu est :
@@ -32,6 +34,8 @@ flutter run -d chrome
 3. Un autre Gardien ouvre **Conseil des validations**.
 4. Il approuve ou demande de reprendre la mission.
 5. Après approbation, vérifier l'XP, l'or, les dégâts au boss et la chronique.
+6. Garder deux sessions ouvertes et vérifier qu'une nouvelle assignation apparaît
+   automatiquement dans **Mes missions** sans recharger la page.
 
 Un Gardien peut approuver sa propre mission. Cette règle permet aux familles
 qui ne possèdent qu'un seul Gardien de faire progresser également ce membre.
