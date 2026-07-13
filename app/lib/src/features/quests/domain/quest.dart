@@ -15,6 +15,7 @@ class Quest {
     this.description,
     this.regionKey,
     this.domainId,
+    this.assignees = const [],
   });
 
   final String id;
@@ -32,6 +33,7 @@ class Quest {
   final bool requiresApproval;
   final String status;
   final DateTime createdAt;
+  final List<QuestAssignee> assignees;
 
   factory Quest.fromMap(Map<String, dynamic> map) {
     return Quest(
@@ -50,6 +52,36 @@ class Quest {
       requiresApproval: map['requires_approval'] as bool,
       status: map['status'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
+      assignees: (map['assignees'] as List? ?? const [])
+          .map(
+            (item) => QuestAssignee.fromMap(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class QuestAssignee {
+  const QuestAssignee({
+    required this.memberId,
+    required this.userId,
+    required this.displayName,
+    required this.role,
+  });
+
+  final String memberId;
+  final String userId;
+  final String displayName;
+  final String role;
+
+  factory QuestAssignee.fromMap(Map<String, dynamic> map) {
+    return QuestAssignee(
+      memberId: map['member_id'] as String,
+      userId: map['user_id'] as String,
+      displayName: map['display_name'] as String,
+      role: map['role'] as String,
     );
   }
 }

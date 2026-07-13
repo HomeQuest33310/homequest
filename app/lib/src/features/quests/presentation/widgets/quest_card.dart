@@ -41,6 +41,8 @@ class QuestCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(quest.description!),
             ],
+            const SizedBox(height: 12),
+            _AssignmentBadge(assignees: quest.assignees),
             const SizedBox(height: 14),
             Wrap(
               spacing: 8,
@@ -85,6 +87,49 @@ class QuestCard extends StatelessWidget {
                     label: const Text('Archiver'),
                   ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AssignmentBadge extends StatelessWidget {
+  const _AssignmentBadge({required this.assignees});
+
+  final List<QuestAssignee> assignees;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isRecruiting = assignees.isEmpty;
+    final label = isRecruiting
+        ? 'Recrutement · Mission libre'
+        : 'Assignée à ${assignees.map((member) => member.displayName).join(', ')}';
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isRecruiting
+            ? theme.colorScheme.tertiaryContainer
+            : theme.colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        child: Row(
+          children: [
+            Icon(
+              isRecruiting ? Icons.campaign_outlined : Icons.people_outline,
+              size: 19,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge,
+              ),
             ),
           ],
         ),

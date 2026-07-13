@@ -10,6 +10,7 @@ supabase/migrations/0015_guardian_self_approval.sql
 supabase/migrations/0016_gameplay_realtime.sql
 supabase/migrations/0017_available_quests_and_guardian_notifications.sql
 supabase/migrations/0018_revoke_anonymous_privileged_rpcs.sql
+supabase/migrations/0019_quest_assignment_visibility.sql
 ```
 
 Le résultat attendu est :
@@ -43,6 +44,8 @@ flutter run -d chrome
    période après validation.
 8. Avec un autre membre, prendre une quête déjà assignée. Le Gardien doit voir
    un badge dans **Notifications du royaume** sans recharger la page.
+9. Vérifier qu'une nouvelle quête affiche **Recrutement · Mission libre**, puis
+   que le nom du membre apparaît immédiatement après son auto-assignation.
 
 Un Gardien peut approuver sa propre mission. Cette règle permet aux familles
 qui ne possèdent qu'un seul Gardien de faire progresser également ce membre.
