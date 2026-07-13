@@ -33,6 +33,6 @@ flutter run -d chrome
 4. Il approuve ou demande de reprendre la mission.
 5. Après approbation, vérifier l'XP, l'or, les dégâts au boss et la chronique.
 
-Un Gardien ne peut pas approuver sa propre mission. Pour tester avec un seul
-Gardien, attribuer la mission à un Aventurier ou désactiver la validation sur
-la quête concernée.
+Un Gardien peut approuver sa propre mission. Cette règle permet aux familles
+qui ne possèdent qu'un seul Gardien de faire progresser également ce membre.
+La récompense ne peut être attribuée qu'une seule fois.
