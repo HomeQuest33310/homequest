@@ -53,6 +53,17 @@ class FamilyDashboardPage extends ConsumerWidget {
             onPressed: () => context.go('/members'),
             icon: const Icon(Icons.groups),
           ),
+          IconButton(
+            tooltip: 'Mes missions',
+            onPressed: () => context.go('/missions'),
+            icon: const Icon(Icons.assignment_turned_in_outlined),
+          ),
+          if (canManageQuests)
+            IconButton(
+              tooltip: 'Validations en attente',
+              onPressed: () => context.go('/validations'),
+              icon: const Icon(Icons.fact_check_outlined),
+            ),
           if (kDebugMode)
             IconButton(
               tooltip: 'Developer Tools',

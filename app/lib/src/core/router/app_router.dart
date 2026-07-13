@@ -6,6 +6,8 @@ import '../../features/family/presentation/accept_invitation_page.dart';
 import '../../features/family/presentation/members_management_page.dart';
 import '../../features/auth/presentation/auth_page.dart';
 import '../../features/devtools/presentation/devtools_page.dart';
+import '../../features/completions/presentation/my_missions_page.dart';
+import '../../features/completions/presentation/validations_page.dart';
 import 'home_gate.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -31,6 +33,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/members',
         builder: (context, state) => const MembersManagementPage(),
+      ),
+      GoRoute(
+        path: '/missions',
+        builder: (context, state) => const MyMissionsPage(),
+      ),
+      GoRoute(
+        path: '/validations',
+        builder: (context, state) => const ValidationsPage(),
       ),
       GoRoute(
         path: '/invite/:token',

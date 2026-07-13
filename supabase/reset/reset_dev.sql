@@ -3,6 +3,7 @@
 
 truncate table
   chronicles,
+  boss_damage_events,
   quest_assignments,
   quest_completions,
   quest_skill_rewards,
