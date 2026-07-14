@@ -10,6 +10,7 @@ import '../../features/completions/presentation/my_missions_page.dart';
 import '../../features/completions/presentation/validations_page.dart';
 import '../../features/notifications/presentation/guardian_notifications_page.dart';
 import '../../features/profile/presentation/rpg_profile_page.dart';
+import '../../features/profile/presentation/heroes_hall_page.dart';
 import '../../features/boss/presentation/boss_screen.dart';
 import '../../features/rewards/presentation/reward_suggestions_page.dart';
 import '../../features/chronicles/presentation/kingdom_legend_page.dart';
@@ -54,6 +55,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const RpgProfilePage(),
+      ),
+      GoRoute(
+        path: '/heroes',
+        builder: (context, state) => const HeroesHallPage(),
       ),
       GoRoute(
         path: '/bosses',

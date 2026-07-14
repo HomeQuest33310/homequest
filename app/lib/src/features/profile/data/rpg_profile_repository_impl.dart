@@ -13,9 +13,30 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
     final user = _client.auth.currentUser;
     if (user == null) throw StateError('Utilisateur non connecté.');
 
-    final memberResponse = await _client
-        .from('family_members')
-        .select('''
+    return _getProfile(familyId: familyId, userId: user.id);
+  }
+
+  @override
+  Future<RpgProfile> getMemberProfile({
+    required String familyId,
+    required String memberId,
+  }) {
+    return _getProfile(familyId: familyId, targetMemberId: memberId);
+  }
+
+  Future<RpgProfile> _getProfile({
+    required String familyId,
+    String? userId,
+    String? targetMemberId,
+  }) async {
+    if (_client.auth.currentUser == null) {
+      throw StateError('Utilisateur non connecté.');
+    }
+    if (userId == null && targetMemberId == null) {
+      throw ArgumentError('Un aventurier doit être sélectionné.');
+    }
+
+    var memberQuery = _client.from('family_members').select('''
             id,
             user_id,
             role,
@@ -30,11 +51,15 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
               owner_id,
               kingdom_name
             )
-          ''')
-        .eq('family_id', familyId)
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single();
+          ''').eq('family_id', familyId).eq('is_active', true);
+
+    if (targetMemberId != null) {
+      memberQuery = memberQuery.eq('id', targetMemberId);
+    } else {
+      memberQuery = memberQuery.eq('user_id', userId!);
+    }
+
+    final memberResponse = await memberQuery.single();
 
     final memberData = Map<String, dynamic>.from(memberResponse);
     final memberId = memberData['id'] as String;
@@ -146,7 +171,7 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
       xp: (memberData['xp'] as num).toInt(),
       gold: (memberData['gold'] as num).toInt(),
       kingdomName: familyData['kingdom_name'] as String,
-      isOwner: familyData['owner_id'] == user.id,
+      isOwner: familyData['owner_id'] == memberData['user_id'],
       skills: skills,
       recentAdventures: (results[2] as List)
           .where((item) {

@@ -17,6 +17,22 @@ final currentRpgProfileProvider = FutureProvider<RpgProfile>((ref) async {
   return ref.watch(rpgProfileRepositoryProvider).getMyProfile(family.id);
 });
 
+final familyRpgProfilesProvider = FutureProvider<List<RpgProfile>>((ref) async {
+  final family = await ref.watch(currentFamilyProvider.future);
+  if (family == null) return const [];
+
+  final members = await ref.watch(currentFamilyMembersProvider.future);
+  final repository = ref.watch(rpgProfileRepositoryProvider);
+  return Future.wait(
+    members.map(
+      (member) => repository.getMemberProfile(
+        familyId: family.id,
+        memberId: member.id,
+      ),
+    ),
+  );
+});
+
 final rpgProfileControllerProvider =
     StateNotifierProvider<RpgProfileController, AsyncValue<void>>((ref) {
   return RpgProfileController(ref);

@@ -68,6 +68,11 @@ class FamilyDashboardPage extends ConsumerWidget {
             icon: const Icon(Icons.groups),
           ),
           IconButton(
+            tooltip: 'Hall des Héros',
+            onPressed: () => context.go('/heroes'),
+            icon: const Icon(Icons.workspace_premium_outlined),
+          ),
+          IconButton(
             tooltip: 'Mes missions',
             onPressed: () => context.go('/missions'),
             icon: const Icon(Icons.assignment_turned_in_outlined),
