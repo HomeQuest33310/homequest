@@ -7,6 +7,7 @@ class RewardSuggestion {
     required this.suggestedQuestCount,
     required this.status,
     required this.createdAt,
+    this.createdByGuardian = false,
     this.guardianTitle,
     this.guardianDescription,
     this.guardianQuestCount,
@@ -27,6 +28,7 @@ class RewardSuggestion {
       suggestedQuestCount: (map['suggested_quest_count'] as num).toInt(),
       status: map['status'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
+      createdByGuardian: map['created_by_guardian'] as bool? ?? false,
       guardianTitle: map['guardian_title'] as String?,
       guardianDescription: map['guardian_description'] as String?,
       guardianQuestCount: (map['guardian_quest_count'] as num?)?.toInt(),
@@ -46,6 +48,7 @@ class RewardSuggestion {
   final int suggestedQuestCount;
   final String status;
   final DateTime createdAt;
+  final bool createdByGuardian;
   final String? guardianTitle;
   final String? guardianDescription;
   final int? guardianQuestCount;

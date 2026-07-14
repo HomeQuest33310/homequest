@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../boss/domain/boss.dart';
 import '../../boss/domain/boss_suggestion.dart';
 import '../../boss/presentation/boss_suggestions_dialog.dart';
 import '../../boss/providers/boss_provider.dart';
@@ -42,8 +43,13 @@ class RewardSuggestionsPage extends ConsumerWidget {
     final suggestionsAsync = ref.watch(currentRewardSuggestionsProvider);
     final bossesAsync = ref.watch(currentFamilyBossesProvider);
     final busy = ref.watch(rewardSuggestionsControllerProvider).isLoading;
-    final hasActiveBoss =
-        bossesAsync.valueOrNull?.any((boss) => boss.isActive) ?? false;
+    Boss? activeBoss;
+    for (final boss in bossesAsync.valueOrNull ?? const <Boss>[]) {
+      if (boss.isActive) {
+        activeBoss = boss;
+        break;
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -55,13 +61,19 @@ class RewardSuggestionsPage extends ConsumerWidget {
         title: const Text('Souhaits de récompenses'),
       ),
       floatingActionButton: profileAsync.maybeWhen(
-        data: (profile) => profile.role == 'guardian'
-            ? null
-            : FloatingActionButton.extended(
-                onPressed: busy ? null : () => _proposeReward(context, ref),
-                icon: const Icon(Icons.add),
-                label: const Text('Faire un souhait'),
-              ),
+        data: (profile) => FloatingActionButton.extended(
+          onPressed: busy ? null : () => _proposeReward(context, ref),
+          icon: Icon(
+            profile.role == 'guardian'
+                ? Icons.emoji_events_outlined
+                : Icons.add,
+          ),
+          label: Text(
+            profile.role == 'guardian'
+                ? 'Créer une récompense'
+                : 'Faire un souhait',
+          ),
+        ),
         orElse: () => null,
       ),
       body: profileAsync.when(
@@ -100,7 +112,7 @@ class RewardSuggestionsPage extends ConsumerWidget {
                         context,
                         ref,
                         suggestion,
-                        hasActiveBoss,
+                        activeBoss,
                       ),
                     ),
               ],
@@ -112,6 +124,13 @@ class RewardSuggestionsPage extends ConsumerWidget {
   }
 
   Future<void> _proposeReward(BuildContext context, WidgetRef ref) async {
+    final profile = await ref.read(currentRpgProfileProvider.future);
+    if (!context.mounted) return;
+    if (profile.role == 'guardian') {
+      await _createGuardianGoal(context, ref);
+      return;
+    }
+
     final result = await showDialog<_RewardDraft>(
       context: context,
       builder: (_) => const _RewardDraftDialog(),
@@ -132,13 +151,13 @@ class RewardSuggestionsPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     RewardSuggestion suggestion,
-    bool hasActiveBoss,
+    Boss? activeBoss,
   ) async {
     final result = await showDialog<_ReviewDraft>(
       context: context,
       builder: (_) => _ReviewDialog(
         suggestion: suggestion,
-        hasActiveBoss: hasActiveBoss,
+        activeBoss: activeBoss,
       ),
     );
     if (result == null || !context.mounted) return;
@@ -150,23 +169,7 @@ class RewardSuggestionsPage extends ConsumerWidget {
               title: result.title,
               description: result.description,
               questCount: result.questCount,
-              boss: result.boss == null
-                  ? null
-                  : {
-                      'name': result.boss!.fullName,
-                      'emoji': result.boss!.emoji,
-                      'element': result.boss!.element,
-                      'domain_label': result.boss!.domainLabel,
-                      'description': result.boss!.description,
-                      'max_hp': result.boss!.maxHp,
-                      'difficulty': result.boss!.difficulty,
-                      'required_level': result.boss!.requiredLevel,
-                      'xp_reward': result.boss!.xpReward,
-                      'special_item': result.boss!.specialItem,
-                      'skill_rewards': result.boss!.skillRewards
-                          .map((reward) => reward.toRpcMap())
-                          .toList(),
-                    },
+              boss: _bossPayload(result),
               replaceActiveBoss: result.replaceActiveBoss,
             );
     if (!context.mounted) return;
@@ -178,6 +181,68 @@ class RewardSuggestionsPage extends ConsumerWidget {
           ? 'Souhait approuvé et défi défini.'
           : 'Souhait refusé.',
     );
+  }
+
+  Future<void> _createGuardianGoal(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final bosses = await ref.read(currentFamilyBossesProvider.future);
+    Boss? activeBoss;
+    for (final boss in bosses) {
+      if (boss.isActive) {
+        activeBoss = boss;
+        break;
+      }
+    }
+    if (!context.mounted) return;
+
+    final result = await showDialog<_ReviewDraft>(
+      context: context,
+      builder: (_) => _ReviewDialog(activeBoss: activeBoss),
+    );
+    if (result == null || !context.mounted) return;
+
+    final success = await ref
+        .read(rewardSuggestionsControllerProvider.notifier)
+        .createGuardianGoal(
+          title: result.title,
+          description: result.description,
+          questCount: result.questCount,
+          boss: _bossPayload(result),
+          replaceActiveBoss: result.replaceActiveBoss,
+        );
+    if (!context.mounted) return;
+    _showResult(
+      context,
+      ref,
+      success,
+      'Nouvel objectif de récompense lancé pour le Royaume.',
+    );
+  }
+
+  Map<String, dynamic>? _bossPayload(_ReviewDraft result) {
+    if (result.existingBoss != null) {
+      return {
+        'existing_boss_id': result.existingBoss!.id,
+        'name': result.existingBoss!.name,
+      };
+    }
+    if (result.boss == null) return null;
+    return {
+      'name': result.boss!.fullName,
+      'emoji': result.boss!.emoji,
+      'element': result.boss!.element,
+      'domain_label': result.boss!.domainLabel,
+      'description': result.boss!.description,
+      'max_hp': result.boss!.maxHp,
+      'difficulty': result.boss!.difficulty,
+      'required_level': result.boss!.requiredLevel,
+      'xp_reward': result.boss!.xpReward,
+      'special_item': result.boss!.specialItem,
+      'skill_rewards':
+          result.boss!.skillRewards.map((reward) => reward.toRpcMap()).toList(),
+    };
   }
 
   void _showResult(
@@ -221,8 +286,9 @@ class _IntroductionCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     isGuardian
-                        ? 'Examinez les souhaits, adaptez leur objectif et '
-                            'choisissez le boss qui protégera la récompense.'
+                        ? 'Validez plusieurs souhaits en parallèle ou créez '
+                            'directement une récompense officielle avec un '
+                            'objectif de quêtes et/ou un boss.'
                         : 'Suggérez une récompense et un nombre de quêtes. '
                             'Les Gardiens restent seuls décisionnaires.',
                   ),
@@ -270,7 +336,7 @@ class _SuggestionCard extends StatelessWidget {
               ],
             ),
             Text(
-              'Proposé par ${suggestion.proposerName} · '
+              '${suggestion.createdByGuardian ? 'Objectif fixé par les Gardiens' : 'Proposé par ${suggestion.proposerName}'} · '
               '${DateFormat('dd/MM/yyyy').format(suggestion.createdAt.toLocal())}',
             ),
             if (suggestion.description.isNotEmpty) ...[
@@ -278,7 +344,8 @@ class _SuggestionCard extends StatelessWidget {
               Text(suggestion.description),
             ],
             const SizedBox(height: 10),
-            Text('Souhait : ${suggestion.suggestedQuestCount} quêtes'),
+            if (!suggestion.createdByGuardian)
+              Text('Souhait : ${suggestion.suggestedQuestCount} quêtes'),
             if (approved) ...[
               const Divider(height: 28),
               Text(
@@ -418,12 +485,12 @@ class _RewardDraftDialogState extends State<_RewardDraftDialog> {
 
 class _ReviewDialog extends StatefulWidget {
   const _ReviewDialog({
-    required this.suggestion,
-    required this.hasActiveBoss,
+    this.suggestion,
+    this.activeBoss,
   });
 
-  final RewardSuggestion suggestion;
-  final bool hasActiveBoss;
+  final RewardSuggestion? suggestion;
+  final Boss? activeBoss;
 
   @override
   State<_ReviewDialog> createState() => _ReviewDialogState();
@@ -435,6 +502,7 @@ class _ReviewDialogState extends State<_ReviewDialog> {
   late int _questCount;
   bool _useQuestGoal = true;
   bool _useBoss = false;
+  bool _attachActiveBoss = false;
   bool _replaceActiveBoss = false;
   BossSuggestion? _selectedBoss;
   String? _validationError;
@@ -442,9 +510,10 @@ class _ReviewDialogState extends State<_ReviewDialog> {
   @override
   void initState() {
     super.initState();
-    _title = TextEditingController(text: widget.suggestion.title);
-    _description = TextEditingController(text: widget.suggestion.description);
-    _questCount = widget.suggestion.suggestedQuestCount;
+    _title = TextEditingController(text: widget.suggestion?.title ?? '');
+    _description =
+        TextEditingController(text: widget.suggestion?.description ?? '');
+    _questCount = widget.suggestion?.suggestedQuestCount ?? 10;
   }
 
   @override
@@ -457,7 +526,11 @@ class _ReviewDialogState extends State<_ReviewDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Souhait collectif de ${widget.suggestion.proposerName}'),
+      title: Text(
+        widget.suggestion == null
+            ? 'Créer une récompense du Royaume'
+            : 'Souhait collectif de ${widget.suggestion!.proposerName}',
+      ),
       content: SizedBox(
         width: 560,
         child: SingleChildScrollView(
@@ -516,23 +589,46 @@ class _ReviewDialogState extends State<_ReviewDialog> {
                 value: _useBoss,
                 onChanged: (value) => setState(() {
                   _useBoss = value;
-                  if (!value) _selectedBoss = null;
+                  _attachActiveBoss = value && widget.activeBoss != null;
+                  if (!value) {
+                    _selectedBoss = null;
+                    _replaceActiveBoss = false;
+                  }
                 }),
               ),
               if (_useBoss) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.tonalIcon(
-                    onPressed: _chooseBoss,
-                    icon: const Icon(Icons.menu_book),
-                    label: Text(
-                      _selectedBoss == null
-                          ? 'Choisir dans le bestiaire'
-                          : '${_selectedBoss!.emoji} ${_selectedBoss!.fullName}',
+                if (widget.activeBoss != null)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      'Rattacher au boss actif : ${widget.activeBoss!.name}',
+                    ),
+                    subtitle: const Text(
+                      'Plusieurs récompenses peuvent dépendre du même combat.',
+                    ),
+                    value: _attachActiveBoss,
+                    onChanged: (value) => setState(() {
+                      _attachActiveBoss = value;
+                      if (value) {
+                        _selectedBoss = null;
+                        _replaceActiveBoss = false;
+                      }
+                    }),
+                  ),
+                if (!_attachActiveBoss)
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.tonalIcon(
+                      onPressed: _chooseBoss,
+                      icon: const Icon(Icons.menu_book),
+                      label: Text(
+                        _selectedBoss == null
+                            ? 'Choisir dans le bestiaire'
+                            : '${_selectedBoss!.emoji} ${_selectedBoss!.fullName}',
+                      ),
                     ),
                   ),
-                ),
-                if (widget.hasActiveBoss)
+                if (widget.activeBoss != null && !_attachActiveBoss)
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Remplacer le boss actuellement actif'),
@@ -563,20 +659,22 @@ class _ReviewDialogState extends State<_ReviewDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Annuler'),
         ),
-        TextButton(
-          onPressed: () => Navigator.pop(
-            context,
-            _ReviewDraft(
-              status: 'rejected',
-              title: _title.text.trim(),
-              description: _description.text.trim(),
-              questCount: null,
-              boss: null,
-              replaceActiveBoss: false,
+        if (widget.suggestion != null)
+          TextButton(
+            onPressed: () => Navigator.pop(
+              context,
+              _ReviewDraft(
+                status: 'rejected',
+                title: _title.text.trim(),
+                description: _description.text.trim(),
+                questCount: null,
+                boss: null,
+                existingBoss: null,
+                replaceActiveBoss: false,
+              ),
             ),
+            child: const Text('Refuser'),
           ),
-          child: const Text('Refuser'),
-        ),
         FilledButton.icon(
           onPressed: _approve,
           icon: const Icon(Icons.check),
@@ -604,9 +702,12 @@ class _ReviewDialogState extends State<_ReviewDialog> {
       error = 'Donnez un nom à la récompense collective.';
     } else if (!_useQuestGoal && !_useBoss) {
       error = 'Choisissez un nombre de quêtes, un boss, ou les deux.';
-    } else if (_useBoss && _selectedBoss == null) {
+    } else if (_useBoss && !_attachActiveBoss && _selectedBoss == null) {
       error = 'Choisissez le boss à invoquer dans le bestiaire.';
-    } else if (_useBoss && widget.hasActiveBoss && !_replaceActiveBoss) {
+    } else if (_useBoss &&
+        !_attachActiveBoss &&
+        widget.activeBoss != null &&
+        !_replaceActiveBoss) {
       error =
           'Un boss est déjà actif. Autorisez son remplacement ou retirez-le.';
     }
@@ -623,7 +724,8 @@ class _ReviewDialogState extends State<_ReviewDialog> {
         title: _title.text.trim(),
         description: _description.text.trim(),
         questCount: _useQuestGoal ? _questCount : null,
-        boss: _useBoss ? _selectedBoss : null,
+        boss: _useBoss && !_attachActiveBoss ? _selectedBoss : null,
+        existingBoss: _useBoss && _attachActiveBoss ? widget.activeBoss : null,
         replaceActiveBoss: _replaceActiveBoss,
       ),
     );
@@ -649,6 +751,7 @@ class _ReviewDraft {
     required this.description,
     required this.questCount,
     required this.boss,
+    required this.existingBoss,
     required this.replaceActiveBoss,
   });
 
@@ -657,6 +760,7 @@ class _ReviewDraft {
   final String description;
   final int? questCount;
   final BossSuggestion? boss;
+  final Boss? existingBoss;
   final bool replaceActiveBoss;
 }
 

@@ -24,6 +24,7 @@ class SupabaseRewardSuggestionsRepository
           boss_id,
           completed_quest_count,
           fulfilled_at,
+          created_by_guardian,
           created_at,
           proposer:family_members!reward_suggestions_proposed_by_fkey(
             id,
@@ -72,6 +73,28 @@ class SupabaseRewardSuggestionsRepository
       params: {
         'p_suggestion_id': suggestionId,
         'p_status': status,
+        'p_title': title.trim(),
+        'p_description': description.trim(),
+        'p_quest_count': questCount,
+        'p_boss': boss,
+        'p_replace_active_boss': replaceActiveBoss,
+      },
+    );
+  }
+
+  @override
+  Future<void> createGuardianGoal({
+    required String familyId,
+    required String title,
+    required String description,
+    required int? questCount,
+    required Map<String, dynamic>? boss,
+    required bool replaceActiveBoss,
+  }) async {
+    await _client.rpc(
+      'create_guardian_reward_goal',
+      params: {
+        'p_family_id': familyId,
         'p_title': title.trim(),
         'p_description': description.trim(),
         'p_quest_count': questCount,

@@ -155,4 +155,34 @@ class RewardSuggestionsController extends StateNotifier<AsyncValue<void>> {
       return false;
     }
   }
+
+  Future<bool> createGuardianGoal({
+    required String title,
+    required String description,
+    required int? questCount,
+    required Map<String, dynamic>? boss,
+    required bool replaceActiveBoss,
+  }) async {
+    final family = await _ref.read(currentFamilyProvider.future);
+    if (family == null) return false;
+
+    state = const AsyncLoading();
+    try {
+      await _ref.read(rewardSuggestionsRepositoryProvider).createGuardianGoal(
+            familyId: family.id,
+            title: title,
+            description: description,
+            questCount: questCount,
+            boss: boss,
+            replaceActiveBoss: replaceActiveBoss,
+          );
+      _ref.invalidate(currentRewardSuggestionsProvider);
+      _ref.invalidate(currentFamilyBossesProvider);
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
 }

@@ -367,7 +367,9 @@ class _CollectiveWishTile extends StatelessWidget {
                   Text(
                     suggestion.isFulfilled
                         ? 'Souhait accompli pour tout le Royaume'
-                        : 'Souhait proposé par ${suggestion.proposerName}',
+                        : suggestion.createdByGuardian
+                            ? 'Objectif officiel fixé par les Gardiens'
+                            : 'Souhait proposé par ${suggestion.proposerName}',
                     style: theme.textTheme.bodySmall,
                   ),
                 ],

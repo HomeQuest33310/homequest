@@ -20,4 +20,13 @@ abstract class RewardSuggestionsRepository {
     required Map<String, dynamic>? boss,
     required bool replaceActiveBoss,
   });
+
+  Future<void> createGuardianGoal({
+    required String familyId,
+    required String title,
+    required String description,
+    required int? questCount,
+    required Map<String, dynamic>? boss,
+    required bool replaceActiveBoss,
+  });
 }

@@ -16,6 +16,7 @@ void main() {
       'boss_id': 'boss-1',
       'completed_quest_count': 7,
       'fulfilled_at': '2026-07-15T12:00:00Z',
+      'created_by_guardian': true,
       'created_at': '2026-07-14T12:00:00Z',
       'proposer': {
         'profile': {'display_name': 'Lina'},
@@ -29,5 +30,6 @@ void main() {
     expect(suggestion.isCollective, isTrue);
     expect(suggestion.isFulfilled, isTrue);
     expect(suggestion.completedQuestCount, 7);
+    expect(suggestion.createdByGuardian, isTrue);
   });
 }
