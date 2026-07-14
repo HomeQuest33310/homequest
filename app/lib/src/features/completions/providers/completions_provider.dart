@@ -6,6 +6,7 @@ import '../../family/providers/family_members_provider.dart';
 import '../../family/providers/family_provider.dart';
 import '../../family/providers/family_stats_provider.dart';
 import '../../quests/providers/quests_provider.dart';
+import '../../profile/providers/rpg_profile_provider.dart';
 import '../data/completions_repository.dart';
 import '../data/completions_repository_impl.dart';
 import '../domain/mission_assignment.dart';
@@ -97,5 +98,6 @@ class CompletionController extends StateNotifier<AsyncValue<void>> {
     _ref.invalidate(currentFamilyMembersProvider);
     _ref.invalidate(currentFamilyStatsProvider);
     _ref.invalidate(recentChroniclesProvider);
+    _ref.invalidate(currentRpgProfileProvider);
   }
 }

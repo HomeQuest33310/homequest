@@ -61,6 +61,11 @@ class FamilyDashboardPage extends ConsumerWidget {
             onPressed: () => context.go('/missions'),
             icon: const Icon(Icons.assignment_turned_in_outlined),
           ),
+          IconButton(
+            tooltip: 'Mon profil d’aventurier',
+            onPressed: () => context.go('/profile'),
+            icon: const Icon(Icons.account_circle_outlined),
+          ),
           if (canManageQuests)
             IconButton(
               tooltip: 'Notifications du royaume',

@@ -9,6 +9,7 @@ import '../../features/family/providers/family_provider.dart';
 import '../../features/family/providers/family_stats_provider.dart';
 import '../../features/notifications/providers/notifications_provider.dart';
 import '../../features/quests/providers/quests_provider.dart';
+import '../../features/profile/providers/rpg_profile_provider.dart';
 
 final gameplayRealtimeProvider = Provider<void>((ref) {
   final family = ref.watch(currentFamilyProvider).asData?.value;
@@ -28,6 +29,7 @@ final gameplayRealtimeProvider = Provider<void>((ref) {
     ref.invalidate(currentFamilyStatsProvider);
     ref.invalidate(recentChroniclesProvider);
     ref.invalidate(guardianNotificationsProvider);
+    ref.invalidate(currentRpgProfileProvider);
   }
 
   for (final table in const [
