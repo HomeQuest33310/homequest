@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../chronicles/domain/chronicle.dart';
 import '../../chronicles/providers/chronicles_provider.dart';
+import '../../boss/providers/boss_provider.dart';
 import '../../domains/domain/domain.dart';
 import '../../domains/providers/domains_provider.dart';
 import '../../quests/domain/quest.dart';
@@ -39,6 +40,7 @@ class FamilyDashboardPage extends ConsumerWidget {
       ref.invalidate(recentChroniclesProvider);
       ref.invalidate(currentFamilyStatsProvider);
       ref.invalidate(currentFamilyQuestsProvider);
+      ref.invalidate(currentFamilyBossesProvider);
       ref.invalidate(guardianNotificationsProvider);
     }
 
@@ -65,6 +67,11 @@ class FamilyDashboardPage extends ConsumerWidget {
             tooltip: 'Mon profil d’aventurier',
             onPressed: () => context.go('/profile'),
             icon: const Icon(Icons.account_circle_outlined),
+          ),
+          IconButton(
+            tooltip: 'Antre des Boss',
+            onPressed: () => context.go('/bosses'),
+            icon: const Icon(Icons.local_fire_department_outlined),
           ),
           if (canManageQuests)
             IconButton(
