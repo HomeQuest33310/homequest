@@ -11,6 +11,9 @@ class RewardSuggestion {
     this.guardianDescription,
     this.guardianQuestCount,
     this.guardianBossTheme,
+    this.bossId,
+    this.completedQuestCount = 0,
+    this.fulfilledAt,
   });
 
   factory RewardSuggestion.fromMap(Map<String, dynamic> map) {
@@ -28,6 +31,11 @@ class RewardSuggestion {
       guardianDescription: map['guardian_description'] as String?,
       guardianQuestCount: (map['guardian_quest_count'] as num?)?.toInt(),
       guardianBossTheme: map['guardian_boss_theme'] as String?,
+      bossId: map['boss_id'] as String?,
+      completedQuestCount: (map['completed_quest_count'] as num?)?.toInt() ?? 0,
+      fulfilledAt: map['fulfilled_at'] == null
+          ? null
+          : DateTime.parse(map['fulfilled_at'] as String),
     );
   }
 
@@ -42,6 +50,12 @@ class RewardSuggestion {
   final String? guardianDescription;
   final int? guardianQuestCount;
   final String? guardianBossTheme;
+  final String? bossId;
+  final int completedQuestCount;
+  final DateTime? fulfilledAt;
+
+  bool get isCollective => status == 'approved';
+  bool get isFulfilled => fulfilledAt != null;
 
   String get statusLabel {
     switch (status) {

@@ -21,6 +21,9 @@ class SupabaseRewardSuggestionsRepository
           guardian_description,
           guardian_quest_count,
           guardian_boss_theme,
+          boss_id,
+          completed_quest_count,
+          fulfilled_at,
           created_at,
           proposer:family_members!reward_suggestions_proposed_by_fkey(
             id,
@@ -60,15 +63,21 @@ class SupabaseRewardSuggestionsRepository
     required String status,
     required String title,
     required String description,
-    required int questCount,
-    required String bossTheme,
+    required int? questCount,
+    required Map<String, dynamic>? boss,
+    required bool replaceActiveBoss,
   }) async {
-    await _client.from('reward_suggestions').update({
-      'status': status,
-      'guardian_title': title.trim(),
-      'guardian_description': description.trim(),
-      'guardian_quest_count': questCount,
-      'guardian_boss_theme': bossTheme.trim().isEmpty ? null : bossTheme.trim(),
-    }).eq('id', suggestionId);
+    await _client.rpc(
+      'review_reward_suggestion',
+      params: {
+        'p_suggestion_id': suggestionId,
+        'p_status': status,
+        'p_title': title.trim(),
+        'p_description': description.trim(),
+        'p_quest_count': questCount,
+        'p_boss': boss,
+        'p_replace_active_boss': replaceActiveBoss,
+      },
+    );
   }
 }

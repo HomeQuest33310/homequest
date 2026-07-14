@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../boss/providers/boss_provider.dart';
 import '../../family/providers/family_provider.dart';
 import '../../profile/providers/rpg_profile_provider.dart';
 import '../data/reward_suggestions_repository.dart';
@@ -63,8 +64,9 @@ class RewardSuggestionsController extends StateNotifier<AsyncValue<void>> {
     required String status,
     required String title,
     required String description,
-    required int questCount,
-    required String bossTheme,
+    required int? questCount,
+    required Map<String, dynamic>? boss,
+    required bool replaceActiveBoss,
   }) async {
     state = const AsyncLoading();
     try {
@@ -74,9 +76,11 @@ class RewardSuggestionsController extends StateNotifier<AsyncValue<void>> {
             title: title,
             description: description,
             questCount: questCount,
-            bossTheme: bossTheme,
+            boss: boss,
+            replaceActiveBoss: replaceActiveBoss,
           );
       _ref.invalidate(currentRewardSuggestionsProvider);
+      _ref.invalidate(currentFamilyBossesProvider);
       state = const AsyncData(null);
       return true;
     } catch (error, stackTrace) {

@@ -13,6 +13,9 @@ void main() {
       'guardian_description': 'Après le défi',
       'guardian_quest_count': 7,
       'guardian_boss_theme': 'Dragon du Cinéma',
+      'boss_id': 'boss-1',
+      'completed_quest_count': 7,
+      'fulfilled_at': '2026-07-15T12:00:00Z',
       'created_at': '2026-07-14T12:00:00Z',
       'proposer': {
         'profile': {'display_name': 'Lina'},
@@ -23,5 +26,8 @@ void main() {
     expect(suggestion.statusLabel, 'Acceptée');
     expect(suggestion.guardianQuestCount, 7);
     expect(suggestion.guardianBossTheme, 'Dragon du Cinéma');
+    expect(suggestion.isCollective, isTrue);
+    expect(suggestion.isFulfilled, isTrue);
+    expect(suggestion.completedQuestCount, 7);
   });
 }

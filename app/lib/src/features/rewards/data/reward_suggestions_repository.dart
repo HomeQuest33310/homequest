@@ -16,7 +16,8 @@ abstract class RewardSuggestionsRepository {
     required String status,
     required String title,
     required String description,
-    required int questCount,
-    required String bossTheme,
+    required int? questCount,
+    required Map<String, dynamic>? boss,
+    required bool replaceActiveBoss,
   });
 }
