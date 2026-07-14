@@ -5,14 +5,18 @@ import 'package:go_router/go_router.dart';
 import '../../family/providers/family_provider.dart';
 import '../../family/providers/family_stats_provider.dart';
 import '../domain/kingdom_progress.dart';
+import '../domain/kingdom_resources.dart';
+import '../providers/kingdom_resources_provider.dart';
 
 class KingdomProgressPage extends ConsumerWidget {
   const KingdomProgressPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(kingdomResourcesRealtimeProvider);
     final family = ref.watch(currentFamilyProvider).asData?.value;
     final stats = ref.watch(currentFamilyStatsProvider);
+    final resources = ref.watch(currentKingdomResourcesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -41,7 +45,11 @@ class KingdomProgressPage extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(currentFamilyStatsProvider);
-              await ref.read(currentFamilyStatsProvider.future);
+              ref.invalidate(currentKingdomResourcesProvider);
+              await Future.wait([
+                ref.read(currentFamilyStatsProvider.future),
+                ref.read(currentKingdomResourcesProvider.future),
+              ]);
             },
             child: ListView(
               padding: const EdgeInsets.all(20),
@@ -50,6 +58,17 @@ class KingdomProgressPage extends ConsumerWidget {
                   kingdomName: family?.kingdomName ?? 'Votre Royaume',
                   stats: value,
                   progress: progress,
+                ),
+                const SizedBox(height: 20),
+                resources.when(
+                  loading: () => const LinearProgressIndicator(),
+                  error: (error, _) => Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text('Ressources indisponibles : $error'),
+                    ),
+                  ),
+                  data: (value) => _ResourceChest(resources: value),
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -87,6 +106,118 @@ class KingdomProgressPage extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ResourceChest extends StatelessWidget {
+  const _ResourceChest({required this.resources});
+
+  final KingdomResources resources;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text('🧰', style: TextStyle(fontSize: 34)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Réserves du Royaume',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const Text(
+                        'Chaque quête validée enrichit automatiquement '
+                        'les réserves selon son élément et sa difficulté.',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _ResourceTile(
+                  emoji: '🪵',
+                  label: 'Bois',
+                  value: resources.wood,
+                ),
+                _ResourceTile(
+                  emoji: '🪨',
+                  label: 'Pierre',
+                  value: resources.stone,
+                ),
+                _ResourceTile(
+                  emoji: '🌾',
+                  label: 'Provisions',
+                  value: resources.provisions,
+                ),
+                _ResourceTile(
+                  emoji: '💎',
+                  label: 'Cristaux',
+                  value: resources.crystals,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResourceTile extends StatelessWidget {
+  const _ResourceTile({
+    required this.emoji,
+    required this.label,
+    required this.value,
+  });
+
+  final String emoji;
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 132),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 26)),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: Theme.of(context).textTheme.bodySmall),
+              Text(
+                '$value',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
