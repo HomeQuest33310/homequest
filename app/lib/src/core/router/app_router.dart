@@ -14,6 +14,7 @@ import '../../features/profile/presentation/heroes_hall_page.dart';
 import '../../features/boss/presentation/boss_screen.dart';
 import '../../features/rewards/presentation/reward_suggestions_page.dart';
 import '../../features/chronicles/presentation/kingdom_legend_page.dart';
+import '../../features/kingdom/presentation/kingdom_progress_page.dart';
 import 'home_gate.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -71,6 +72,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/kingdom-legend',
         builder: (context, state) => const KingdomLegendPage(),
+      ),
+      GoRoute(
+        path: '/kingdom-progress',
+        builder: (context, state) => const KingdomProgressPage(),
       ),
       GoRoute(
         path: '/invite/:token',

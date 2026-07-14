@@ -73,6 +73,11 @@ class FamilyDashboardPage extends ConsumerWidget {
             icon: const Icon(Icons.workspace_premium_outlined),
           ),
           IconButton(
+            tooltip: 'Évolution du Royaume',
+            onPressed: () => context.go('/kingdom-progress'),
+            icon: const Icon(Icons.castle_outlined),
+          ),
+          IconButton(
             tooltip: 'Mes missions',
             onPressed: () => context.go('/missions'),
             icon: const Icon(Icons.assignment_turned_in_outlined),
