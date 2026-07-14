@@ -11,6 +11,7 @@ import '../../features/completions/presentation/validations_page.dart';
 import '../../features/notifications/presentation/guardian_notifications_page.dart';
 import '../../features/profile/presentation/rpg_profile_page.dart';
 import '../../features/boss/presentation/boss_screen.dart';
+import '../../features/rewards/presentation/reward_suggestions_page.dart';
 import 'home_gate.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -56,6 +57,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/bosses',
         builder: (context, state) => const BossScreen(),
+      ),
+      GoRoute(
+        path: '/reward-suggestions',
+        builder: (context, state) => const RewardSuggestionsPage(),
       ),
       GoRoute(
         path: '/invite/:token',

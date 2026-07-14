@@ -22,6 +22,13 @@ class RpgProfilePage extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
         ),
         title: const Text('Profil d’aventurier'),
+        actions: [
+          IconButton(
+            tooltip: 'Souhaits de récompenses',
+            onPressed: () => context.go('/reward-suggestions'),
+            icon: const Icon(Icons.card_giftcard),
+          ),
+        ],
       ),
       body: profile.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -40,6 +47,22 @@ class RpgProfilePage extends ConsumerWidget {
               _HeroCard(
                 profile: value,
                 onEdit: () => _showEditProfileDialog(context, ref, value),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    child: Icon(Icons.card_giftcard),
+                  ),
+                  title: const Text('Souhaits de récompenses'),
+                  subtitle: Text(
+                    value.role == 'guardian'
+                        ? 'Examiner les propositions des aventuriers.'
+                        : 'Proposer une récompense aux Gardiens.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.go('/reward-suggestions'),
+                ),
               ),
               const SizedBox(height: 16),
               _ProgressCard(profile: value),
