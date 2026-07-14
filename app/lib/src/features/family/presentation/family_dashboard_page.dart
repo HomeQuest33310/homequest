@@ -78,6 +78,11 @@ class FamilyDashboardPage extends ConsumerWidget {
             icon: const Icon(Icons.castle_outlined),
           ),
           IconButton(
+            tooltip: 'Liste de ravitaillement',
+            onPressed: () => context.go('/shopping'),
+            icon: const Icon(Icons.shopping_basket_outlined),
+          ),
+          IconButton(
             tooltip: 'Mes missions',
             onPressed: () => context.go('/missions'),
             icon: const Icon(Icons.assignment_turned_in_outlined),
