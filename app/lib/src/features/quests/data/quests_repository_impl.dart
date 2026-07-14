@@ -35,6 +35,11 @@ class SupabaseQuestsRepository implements QuestsRepository {
     required int goldReward,
     required int bossDamage,
     required String frequency,
+    required String emoji,
+    required String element,
+    required int difficulty,
+    required String regionKey,
+    required List<QuestSkillReward> skillRewards,
   }) async {
     final data = await _client.rpc(
       'create_quest',
@@ -48,6 +53,12 @@ class SupabaseQuestsRepository implements QuestsRepository {
         'p_gold_reward': goldReward,
         'p_boss_damage': bossDamage,
         'p_frequency': frequency,
+        'p_emoji': emoji,
+        'p_element': element,
+        'p_difficulty': difficulty,
+        'p_region_key': regionKey,
+        'p_skill_rewards':
+            skillRewards.map((reward) => reward.toRpcMap()).toList(),
       },
     );
 
@@ -65,6 +76,11 @@ class SupabaseQuestsRepository implements QuestsRepository {
     required int goldReward,
     required int bossDamage,
     required String frequency,
+    required String emoji,
+    required String element,
+    required int difficulty,
+    required String regionKey,
+    required List<QuestSkillReward> skillRewards,
   }) async {
     final data = await _client.rpc(
       'update_quest',
@@ -78,6 +94,12 @@ class SupabaseQuestsRepository implements QuestsRepository {
         'new_gold_reward': goldReward,
         'new_boss_damage': bossDamage,
         'new_frequency': frequency,
+        'new_emoji': emoji,
+        'new_element': element,
+        'new_difficulty': difficulty,
+        'new_region_key': regionKey,
+        'new_skill_rewards':
+            skillRewards.map((reward) => reward.toRpcMap()).toList(),
       },
     );
 

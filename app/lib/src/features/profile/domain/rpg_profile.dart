@@ -89,9 +89,10 @@ class RpgSkill {
   final int xp;
   final int level;
 
-  int get currentLevelXp => xpThresholdForLevel(level);
-  int get nextLevelXp => xpThresholdForLevel(level + 1);
+  int get currentLevelXp => skillXpThresholdForLevel(level);
+  int get nextLevelXp => skillXpThresholdForLevel(level + 1);
   double get progress {
+    if (level >= 5) return 1;
     final needed = nextLevelXp - currentLevelXp;
     if (needed <= 0) return 0;
     return ((xp - currentLevelXp) / needed).clamp(0, 1);
@@ -184,4 +185,12 @@ int xpThresholdForLevel(int level) {
   if (level <= 1) return 0;
   if (level <= 10) return thresholds[level];
   return 2700 + ((level - 10) * 500);
+}
+
+int skillXpThresholdForLevel(int level) {
+  if (level <= 1) return 0;
+  if (level == 2) return 100;
+  if (level == 3) return 300;
+  if (level == 4) return 600;
+  return 1000;
 }

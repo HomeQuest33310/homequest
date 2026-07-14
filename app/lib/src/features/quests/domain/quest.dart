@@ -15,6 +15,10 @@ class Quest {
     this.description,
     this.regionKey,
     this.domainId,
+    this.emoji = '📜',
+    this.element = 'Neutre',
+    this.difficulty = 1,
+    this.skillRewards = const [],
     this.assignees = const [],
   });
 
@@ -26,6 +30,9 @@ class Quest {
   final String? description;
   final String? regionKey;
   final String? domainId;
+  final String emoji;
+  final String element;
+  final int difficulty;
   final int xpReward;
   final int goldReward;
   final int bossDamage;
@@ -33,6 +40,7 @@ class Quest {
   final bool requiresApproval;
   final String status;
   final DateTime createdAt;
+  final List<QuestSkillReward> skillRewards;
   final List<QuestAssignee> assignees;
 
   factory Quest.fromMap(Map<String, dynamic> map) {
@@ -45,6 +53,9 @@ class Quest {
       description: map['description'] as String?,
       regionKey: map['region_key'] as String?,
       domainId: map['domain_id'] as String?,
+      emoji: map['emoji'] as String? ?? '📜',
+      element: map['element'] as String? ?? 'Neutre',
+      difficulty: (map['difficulty'] as num?)?.toInt() ?? 1,
       xpReward: map['xp_reward'] as int,
       goldReward: map['gold_reward'] as int,
       bossDamage: map['boss_damage'] as int,
@@ -52,6 +63,13 @@ class Quest {
       requiresApproval: map['requires_approval'] as bool,
       status: map['status'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
+      skillRewards: (map['skill_rewards'] as List? ?? const [])
+          .map(
+            (item) => QuestSkillReward.fromMap(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(),
       assignees: (map['assignees'] as List? ?? const [])
           .map(
             (item) => QuestAssignee.fromMap(
@@ -61,6 +79,34 @@ class Quest {
           .toList(),
     );
   }
+}
+
+class QuestSkillReward {
+  const QuestSkillReward({
+    required this.skillId,
+    required this.name,
+    required this.icon,
+    required this.xpReward,
+  });
+
+  final String skillId;
+  final String name;
+  final String icon;
+  final int xpReward;
+
+  factory QuestSkillReward.fromMap(Map<String, dynamic> map) {
+    return QuestSkillReward(
+      skillId: map['skill_id'] as String,
+      name: map['name'] as String? ?? map['skill_id'] as String,
+      icon: map['icon'] as String? ?? '✨',
+      xpReward: (map['xp_reward'] as num).toInt(),
+    );
+  }
+
+  Map<String, dynamic> toRpcMap() => {
+        'skill_id': skillId,
+        'xp_reward': xpReward,
+      };
 }
 
 class QuestAssignee {

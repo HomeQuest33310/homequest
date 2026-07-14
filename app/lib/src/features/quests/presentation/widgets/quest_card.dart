@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/quest.dart';
+import '../../domain/quest_suggestion.dart';
 
 class QuestCard extends StatelessWidget {
   const QuestCard({
@@ -30,7 +31,7 @@ class QuestCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              quest.title,
+              '${quest.emoji} ${quest.title}',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -40,6 +41,45 @@ class QuestCard extends StatelessWidget {
             if ((quest.description ?? '').isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(quest.description!),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _StatBadge(
+                  icon: Icons.location_on_outlined,
+                  label: questLocationLabels[quest.regionKey] ??
+                      quest.regionKey ??
+                      'Autre lieu',
+                ),
+                _StatBadge(
+                  icon: Icons.auto_awesome,
+                  label: quest.element,
+                ),
+                _StatBadge(
+                  icon: Icons.signal_cellular_alt,
+                  label: List.filled(quest.difficulty, '⭐').join(),
+                ),
+              ],
+            ),
+            if (quest.skillRewards.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: quest.skillRewards
+                    .map(
+                      (reward) => Chip(
+                        avatar: Text(reward.icon),
+                        label: Text(
+                          '${reward.name.isEmpty ? reward.skillId : reward.name} '
+                          '+${reward.xpReward}',
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
             ],
             const SizedBox(height: 12),
             _AssignmentBadge(assignees: quest.assignees),

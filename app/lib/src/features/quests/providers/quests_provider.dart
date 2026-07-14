@@ -51,6 +51,11 @@ class CreateQuestController extends StateNotifier<AsyncValue<void>> {
     required int goldReward,
     required int bossDamage,
     required String frequency,
+    required String emoji,
+    required String element,
+    required int difficulty,
+    required String regionKey,
+    required List<QuestSkillReward> skillRewards,
     String? description,
   }) async {
     final family = await _ref.read(currentFamilyProvider.future);
@@ -72,6 +77,11 @@ class CreateQuestController extends StateNotifier<AsyncValue<void>> {
             goldReward: goldReward,
             bossDamage: bossDamage,
             frequency: frequency,
+            emoji: emoji,
+            element: element,
+            difficulty: difficulty,
+            regionKey: regionKey,
+            skillRewards: skillRewards,
           );
 
       _ref.invalidate(currentFamilyQuestsProvider);
@@ -97,6 +107,11 @@ class UpdateQuestController extends StateNotifier<AsyncValue<void>> {
     required int goldReward,
     required int bossDamage,
     required String frequency,
+    required String emoji,
+    required String element,
+    required int difficulty,
+    required String regionKey,
+    required List<QuestSkillReward> skillRewards,
     String? description,
   }) async {
     state = const AsyncLoading();
@@ -112,6 +127,11 @@ class UpdateQuestController extends StateNotifier<AsyncValue<void>> {
             goldReward: goldReward,
             bossDamage: bossDamage,
             frequency: frequency,
+            emoji: emoji,
+            element: element,
+            difficulty: difficulty,
+            regionKey: regionKey,
+            skillRewards: skillRewards,
           );
 
       _ref.invalidate(currentFamilyQuestsProvider);

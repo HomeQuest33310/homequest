@@ -81,6 +81,7 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
     for (final item in results[0] as List) {
       final skillData = Map<String, dynamic>.from(item as Map);
       final id = _canonicalSkillId(skillData['id'] as String);
+      if (!_heroicSkillIds.contains(id)) continue;
       skillCatalog[id] = {...skillData, 'id': id};
     }
 
@@ -169,3 +170,16 @@ String avatarEmoji(String? key) => rpgAvatars[key] ?? '🧭';
 String _canonicalSkillId(String id) {
   return id == 'organisation' ? 'organization' : id;
 }
+
+const _heroicSkillIds = <String>{
+  'strength',
+  'agility',
+  'intelligence',
+  'leadership',
+  'endurance',
+  'dexterity',
+  'cleaning',
+  'organization',
+  'cooking',
+  'gardening',
+};
