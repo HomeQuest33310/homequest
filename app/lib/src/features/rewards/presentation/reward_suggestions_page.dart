@@ -114,6 +114,11 @@ class RewardSuggestionsPage extends ConsumerWidget {
                         suggestion,
                         activeBoss,
                       ),
+                      onDeliver: () => _deliverReward(
+                        context,
+                        ref,
+                        suggestion,
+                      ),
                     ),
               ],
             ),
@@ -221,6 +226,46 @@ class RewardSuggestionsPage extends ConsumerWidget {
     );
   }
 
+  Future<void> _deliverReward(
+    BuildContext context,
+    WidgetRef ref,
+    RewardSuggestion suggestion,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmer la remise ?'),
+        content: Text(
+          'La récompense « ${suggestion.guardianTitle ?? suggestion.title} » '
+          'a-t-elle bien été remise au Royaume ?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Pas encore'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            icon: const Icon(Icons.redeem),
+            label: const Text('Récompense remise'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final success = await ref
+        .read(rewardSuggestionsControllerProvider.notifier)
+        .deliverCollectiveReward(suggestion.id);
+    if (!context.mounted) return;
+    _showResult(
+      context,
+      ref,
+      success,
+      'Récompense remise et ajoutée aux Chroniques du Royaume.',
+    );
+  }
+
   Map<String, dynamic>? _bossPayload(_ReviewDraft result) {
     if (result.existingBoss != null) {
       return {
@@ -308,12 +353,14 @@ class _SuggestionCard extends StatelessWidget {
     required this.isGuardian,
     required this.busy,
     required this.onReview,
+    required this.onDeliver,
   });
 
   final RewardSuggestion suggestion;
   final bool isGuardian;
   final bool busy;
   final VoidCallback onReview;
+  final VoidCallback onDeliver;
 
   @override
   Widget build(BuildContext context) {
@@ -370,12 +417,32 @@ class _SuggestionCard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 8),
                   child: Text('Boss invoqué : $bossName'),
                 ),
-              if (suggestion.isFulfilled)
+              if (suggestion.isDelivered)
                 const Padding(
                   padding: EdgeInsets.only(top: 10),
                   child: Chip(
-                    avatar: Icon(Icons.celebration, size: 18),
-                    label: Text('Souhait accompli !'),
+                    avatar: Icon(Icons.redeem, size: 18),
+                    label: Text('Récompense remise'),
+                  ),
+                )
+              else if (suggestion.isFulfilled)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      const Chip(
+                        avatar: Icon(Icons.celebration, size: 18),
+                        label: Text('Récompense débloquée !'),
+                      ),
+                      if (isGuardian)
+                        FilledButton.icon(
+                          onPressed: busy ? null : onDeliver,
+                          icon: const Icon(Icons.redeem),
+                          label: const Text('Confirmer la remise'),
+                        ),
+                    ],
                   ),
                 ),
             ],

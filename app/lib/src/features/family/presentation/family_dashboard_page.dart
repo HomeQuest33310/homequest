@@ -348,7 +348,11 @@ class _CollectiveWishTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
-              suggestion.isFulfilled ? Icons.check_circle : Icons.card_giftcard,
+              suggestion.isDelivered
+                  ? Icons.redeem
+                  : suggestion.isFulfilled
+                      ? Icons.check_circle
+                      : Icons.card_giftcard,
               color: suggestion.isFulfilled
                   ? Colors.green
                   : theme.colorScheme.primary,
@@ -365,11 +369,13 @@ class _CollectiveWishTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    suggestion.isFulfilled
-                        ? 'Souhait accompli pour tout le Royaume'
-                        : suggestion.createdByGuardian
-                            ? 'Objectif officiel fixé par les Gardiens'
-                            : 'Souhait proposé par ${suggestion.proposerName}',
+                    suggestion.isDelivered
+                        ? 'Récompense remise au Royaume'
+                        : suggestion.isFulfilled
+                            ? 'Récompense débloquée — remise en attente'
+                            : suggestion.createdByGuardian
+                                ? 'Objectif officiel fixé par les Gardiens'
+                                : 'Souhait proposé par ${suggestion.proposerName}',
                     style: theme.textTheme.bodySmall,
                   ),
                 ],

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../boss/providers/boss_provider.dart';
+import '../../chronicles/providers/chronicles_provider.dart';
 import '../../family/providers/family_provider.dart';
 import '../../profile/providers/rpg_profile_provider.dart';
 import '../data/reward_suggestions_repository.dart';
@@ -178,6 +179,22 @@ class RewardSuggestionsController extends StateNotifier<AsyncValue<void>> {
           );
       _ref.invalidate(currentRewardSuggestionsProvider);
       _ref.invalidate(currentFamilyBossesProvider);
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
+
+  Future<bool> deliverCollectiveReward(String suggestionId) async {
+    state = const AsyncLoading();
+    try {
+      await _ref
+          .read(rewardSuggestionsRepositoryProvider)
+          .deliverCollectiveReward(suggestionId);
+      _ref.invalidate(currentRewardSuggestionsProvider);
+      _ref.invalidate(recentChroniclesProvider);
       state = const AsyncData(null);
       return true;
     } catch (error, stackTrace) {

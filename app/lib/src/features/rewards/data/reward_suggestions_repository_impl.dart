@@ -24,6 +24,7 @@ class SupabaseRewardSuggestionsRepository
           boss_id,
           completed_quest_count,
           fulfilled_at,
+          delivered_at,
           created_by_guardian,
           created_at,
           proposer:family_members!reward_suggestions_proposed_by_fkey(
@@ -101,6 +102,14 @@ class SupabaseRewardSuggestionsRepository
         'p_boss': boss,
         'p_replace_active_boss': replaceActiveBoss,
       },
+    );
+  }
+
+  @override
+  Future<void> deliverCollectiveReward(String suggestionId) async {
+    await _client.rpc(
+      'deliver_collective_reward',
+      params: {'p_suggestion_id': suggestionId},
     );
   }
 }

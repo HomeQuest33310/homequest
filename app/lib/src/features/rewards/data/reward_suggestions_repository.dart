@@ -29,4 +29,6 @@ abstract class RewardSuggestionsRepository {
     required Map<String, dynamic>? boss,
     required bool replaceActiveBoss,
   });
+
+  Future<void> deliverCollectiveReward(String suggestionId);
 }
