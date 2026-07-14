@@ -11,6 +11,7 @@ class RpgProfile {
     required this.isOwner,
     required this.skills,
     required this.recentAdventures,
+    required this.bossVictories,
     this.avatarKey,
   });
 
@@ -26,6 +27,33 @@ class RpgProfile {
   final bool isOwner;
   final List<RpgSkill> skills;
   final List<RpgAdventure> recentAdventures;
+  final List<RpgBossVictory> bossVictories;
+
+  List<ElementalAspect> get elementalAspects {
+    final totals = <String, int>{};
+    for (final victory in bossVictories) {
+      final element = victory.element.trim();
+      if (element.isNotEmpty) {
+        totals[element] = (totals[element] ?? 0) + 1;
+      }
+    }
+    return totals.entries
+        .map((entry) => ElementalAspect(entry.key, entry.value))
+        .toList()
+      ..sort((left, right) => right.count.compareTo(left.count));
+  }
+
+  List<BossTrophy> get bossTrophies => bossVictories
+      .where((victory) => victory.specialItem.trim().isNotEmpty)
+      .map(
+        (victory) => BossTrophy(
+          name: victory.specialItem,
+          bossName: victory.name,
+          bossEmoji: victory.emoji,
+          wonAt: victory.defeatedAt,
+        ),
+      )
+      .toList();
 
   int get currentLevelXp => xpThresholdForLevel(level);
   int get nextLevelXp => xpThresholdForLevel(level + 1);
@@ -126,6 +154,89 @@ class RpgAdventure {
   final int xpReward;
   final int goldReward;
   final int bossDamage;
+}
+
+class RpgBossVictory {
+  const RpgBossVictory({
+    required this.id,
+    required this.name,
+    required this.emoji,
+    required this.element,
+    required this.specialItem,
+    required this.xpReward,
+    required this.defeatedAt,
+    required this.participants,
+  });
+
+  final String id;
+  final String name;
+  final String emoji;
+  final String element;
+  final String specialItem;
+  final int xpReward;
+  final DateTime defeatedAt;
+  final List<RpgBossParticipant> participants;
+}
+
+class RpgBossParticipant {
+  const RpgBossParticipant({
+    required this.memberId,
+    required this.displayName,
+    required this.role,
+  });
+
+  final String memberId;
+  final String displayName;
+  final String role;
+}
+
+class ElementalAspect {
+  const ElementalAspect(this.element, this.count);
+
+  final String element;
+  final int count;
+
+  String get emoji {
+    switch (element.toLowerCase()) {
+      case 'feu':
+        return '🔥';
+      case 'eau':
+        return '💧';
+      case 'air':
+        return '🌪️';
+      case 'terre':
+        return '🪨';
+      case 'nature':
+        return '🌿';
+      case 'lumière':
+      case 'lumiere':
+        return '✨';
+      case 'ombre':
+        return '🌑';
+      case 'glace':
+        return '❄️';
+      case 'foudre':
+        return '⚡';
+      case 'arcane':
+        return '🔮';
+      default:
+        return '💠';
+    }
+  }
+}
+
+class BossTrophy {
+  const BossTrophy({
+    required this.name,
+    required this.bossName,
+    required this.bossEmoji,
+    required this.wonAt,
+  });
+
+  final String name;
+  final String bossName;
+  final String bossEmoji;
+  final DateTime wonAt;
 }
 
 enum HarmonyRank {

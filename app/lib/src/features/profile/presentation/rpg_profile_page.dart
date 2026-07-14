@@ -48,7 +48,14 @@ class RpgProfilePage extends ConsumerWidget {
               const SizedBox(height: 16),
               _SkillsSection(skills: value.skills),
               const SizedBox(height: 16),
-              _AdventuresSection(adventures: value.recentAdventures),
+              _ElementalAspectsSection(aspects: value.elementalAspects),
+              const SizedBox(height: 16),
+              _BossTrophiesSection(trophies: value.bossTrophies),
+              const SizedBox(height: 16),
+              _JournalSection(
+                adventures: value.recentAdventures,
+                bossVictories: value.bossVictories,
+              ),
               const SizedBox(height: 24),
             ],
           ),
@@ -430,10 +437,10 @@ class _SkillsSection extends StatelessWidget {
   }
 }
 
-class _AdventuresSection extends StatelessWidget {
-  const _AdventuresSection({required this.adventures});
+class _ElementalAspectsSection extends StatelessWidget {
+  const _ElementalAspectsSection({required this.aspects});
 
-  final List<RpgAdventure> adventures;
+  final List<ElementalAspect> aspects;
 
   @override
   Widget build(BuildContext context) {
@@ -441,39 +448,220 @@ class _AdventuresSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Dernières aventures',
+          'Aspects élémentaires',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 4),
+        const Text('Chaque boss vaincu renforce son aspect sur votre profil.'),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: aspects.isEmpty
+                ? const ListTile(
+                    leading: Icon(Icons.blur_on_outlined),
+                    title: Text('Aucun aspect éveillé pour le moment.'),
+                  )
+                : Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      for (final aspect in aspects)
+                        Chip(
+                          avatar: Text(aspect.emoji),
+                          label: Text('${aspect.element} ×${aspect.count}'),
+                        ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BossTrophiesSection extends StatelessWidget {
+  const _BossTrophiesSection({required this.trophies});
+
+  final List<BossTrophy> trophies;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Objets remportés',
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 12),
-        if (adventures.isEmpty)
+        if (trophies.isEmpty)
           const Card(
             child: ListTile(
-              leading: Icon(Icons.auto_stories_outlined),
-              title: Text('Votre chronique personnelle commence ici.'),
-              subtitle: Text(
-                'Les missions validées apparaîtront dans cette section.',
-              ),
+              leading: Icon(Icons.inventory_2_outlined),
+              title: Text('Votre collection de trophées est encore vide.'),
+              subtitle: Text('Les objets des boss vaincus apparaîtront ici.'),
             ),
           )
         else
-          for (final adventure in adventures)
+          for (final trophy in trophies)
             Card(
               child: ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.emoji_events)),
-                title: Text(adventure.title),
+                leading: CircleAvatar(child: Text(trophy.bossEmoji)),
+                title: Text(trophy.name),
                 subtitle: Text(
-                  DateFormat('dd/MM/yyyy')
-                      .format(adventure.completedAt.toLocal()),
-                ),
-                trailing: Text(
-                  '+${adventure.xpReward} XP\n+${adventure.goldReward} or',
-                  textAlign: TextAlign.end,
+                  'Remporté contre ${trophy.bossName} · '
+                  '${DateFormat('dd/MM/yyyy').format(trophy.wonAt.toLocal())}',
                 ),
               ),
             ),
       ],
     );
   }
+}
+
+class _JournalSection extends StatelessWidget {
+  const _JournalSection({
+    required this.adventures,
+    required this.bossVictories,
+  });
+
+  final List<RpgAdventure> adventures;
+  final List<RpgBossVictory> bossVictories;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = <_JournalEntry>[
+      for (final adventure in adventures) _JournalEntry.quest(adventure),
+      for (final victory in bossVictories) _JournalEntry.boss(victory),
+    ]..sort((left, right) => right.date.compareTo(left.date));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Journal de l’aventurier',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 12),
+        if (entries.isEmpty)
+          const Card(
+            child: ListTile(
+              leading: Icon(Icons.auto_stories_outlined),
+              title: Text('Votre chronique personnelle commence ici.'),
+              subtitle: Text(
+                'Les quêtes accomplies et les boss vaincus apparaîtront ici.',
+              ),
+            ),
+          )
+        else
+          for (final entry in entries)
+            if (entry.bossVictory case final victory?)
+              _BossJournalCard(victory: victory)
+            else if (entry.adventure case final adventure?)
+              Card(
+                child: ListTile(
+                  leading: const CircleAvatar(child: Icon(Icons.emoji_events)),
+                  title: Text(adventure.title),
+                  subtitle: Text(
+                    DateFormat('dd/MM/yyyy')
+                        .format(adventure.completedAt.toLocal()),
+                  ),
+                  trailing: Text(
+                    '+${adventure.xpReward} XP\n+${adventure.goldReward} or',
+                    textAlign: TextAlign.end,
+                  ),
+                ),
+              ),
+      ],
+    );
+  }
+}
+
+class _BossJournalCard extends StatelessWidget {
+  const _BossJournalCard({required this.victory});
+
+  final RpgBossVictory victory;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                radius: 26,
+                child:
+                    Text(victory.emoji, style: const TextStyle(fontSize: 26)),
+              ),
+              title: Text(
+                '${victory.name} vaincu !',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              subtitle: Text(
+                '${victory.element} · '
+                '${DateFormat('dd/MM/yyyy').format(victory.defeatedAt.toLocal())}',
+              ),
+              trailing: Text('+${victory.xpReward} XP'),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Guilde victorieuse',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final participant in victory.participants)
+                  Chip(
+                    avatar: const Icon(Icons.person, size: 18),
+                    label: Text(participant.displayName),
+                  ),
+              ],
+            ),
+            if (victory.specialItem.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Icon(Icons.inventory_2_outlined, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('Objet : ${victory.specialItem}')),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _JournalEntry {
+  const _JournalEntry._({
+    required this.date,
+    this.adventure,
+    this.bossVictory,
+  });
+
+  factory _JournalEntry.quest(RpgAdventure adventure) => _JournalEntry._(
+        date: adventure.completedAt,
+        adventure: adventure,
+      );
+
+  factory _JournalEntry.boss(RpgBossVictory victory) => _JournalEntry._(
+        date: victory.defeatedAt,
+        bossVictory: victory,
+      );
+
+  final DateTime date;
+  final RpgAdventure? adventure;
+  final RpgBossVictory? bossVictory;
 }
 
 class _EditProfileDialog extends StatefulWidget {

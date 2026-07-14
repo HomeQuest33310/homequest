@@ -60,7 +60,33 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
           .eq('completed_by', memberId)
           .eq('status', 'approved')
           .order('approved_at', ascending: false)
-          .limit(5),
+          .limit(10),
+      _client
+          .from('boss_reward_events')
+          .select('''
+            boss_id,
+            member_id,
+            xp_reward,
+            awarded_at,
+            boss:bosses!boss_reward_events_boss_id_fkey!inner(
+              id,
+              family_id,
+              name,
+              emoji,
+              element,
+              special_item,
+              defeated_at
+            ),
+            member:family_members!boss_reward_events_member_id_fkey(
+              id,
+              role,
+              profile:profiles!family_members_user_id_fkey(
+                display_name
+              )
+            )
+          ''')
+          .eq('boss.family_id', familyId)
+          .order('awarded_at', ascending: false),
     ]);
 
     final progressBySkill = <String, Map<String, dynamic>>{};
@@ -100,6 +126,10 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
 
     final profileData = Map<String, dynamic>.from(memberData['profile'] as Map);
     final familyData = Map<String, dynamic>.from(memberData['family'] as Map);
+    final bossVictories = _buildBossVictories(
+      results[3] as List,
+      currentMemberId: memberId,
+    );
 
     return RpgProfile(
       memberId: memberId,
@@ -122,7 +152,66 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
                 Map<String, dynamic>.from(item as Map),
               ))
           .toList(),
+      bossVictories: bossVictories,
     );
+  }
+
+  List<RpgBossVictory> _buildBossVictories(
+    List<dynamic> rows, {
+    required String currentMemberId,
+  }) {
+    final rowsByBoss = <String, List<Map<String, dynamic>>>{};
+    for (final item in rows) {
+      final row = Map<String, dynamic>.from(item as Map);
+      final bossId = row['boss_id'] as String;
+      rowsByBoss.putIfAbsent(bossId, () => []).add(row);
+    }
+
+    final victories = <RpgBossVictory>[];
+    for (final entry in rowsByBoss.entries) {
+      final participantRows = entry.value;
+      if (!participantRows.any(
+        (row) => row['member_id'] == currentMemberId,
+      )) {
+        continue;
+      }
+
+      final first = participantRows.first;
+      final boss = Map<String, dynamic>.from(first['boss'] as Map);
+      final participants = <RpgBossParticipant>[];
+      for (final row in participantRows) {
+        final member = Map<String, dynamic>.from(row['member'] as Map);
+        final profile = Map<String, dynamic>.from(member['profile'] as Map);
+        participants.add(
+          RpgBossParticipant(
+            memberId: member['id'] as String,
+            displayName: profile['display_name'] as String? ?? 'Aventurier',
+            role: member['role'] as String,
+          ),
+        );
+      }
+
+      final awardedAt = first['awarded_at'] as String;
+      victories.add(
+        RpgBossVictory(
+          id: entry.key,
+          name: boss['name'] as String,
+          emoji: boss['emoji'] as String? ?? '👹',
+          element: boss['element'] as String? ?? 'Neutre',
+          specialItem: boss['special_item'] as String? ?? '',
+          xpReward: (first['xp_reward'] as num?)?.toInt() ?? 0,
+          defeatedAt: DateTime.parse(
+            boss['defeated_at'] as String? ?? awardedAt,
+          ),
+          participants: participants,
+        ),
+      );
+    }
+
+    victories.sort(
+      (left, right) => right.defeatedAt.compareTo(left.defeatedAt),
+    );
+    return victories;
   }
 
   @override
