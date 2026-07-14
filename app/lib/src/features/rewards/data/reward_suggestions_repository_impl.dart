@@ -25,6 +25,7 @@ class SupabaseRewardSuggestionsRepository
           completed_quest_count,
           fulfilled_at,
           delivered_at,
+          archived_at,
           created_by_guardian,
           created_at,
           proposer:family_members!reward_suggestions_proposed_by_fkey(
@@ -109,6 +110,32 @@ class SupabaseRewardSuggestionsRepository
   Future<void> deliverCollectiveReward(String suggestionId) async {
     await _client.rpc(
       'deliver_collective_reward',
+      params: {'p_suggestion_id': suggestionId},
+    );
+  }
+
+  @override
+  Future<void> updateCollectiveReward({
+    required String suggestionId,
+    required String title,
+    required String description,
+    required int? questCount,
+  }) async {
+    await _client.rpc(
+      'update_collective_reward',
+      params: {
+        'p_suggestion_id': suggestionId,
+        'p_title': title.trim(),
+        'p_description': description.trim(),
+        'p_quest_count': questCount,
+      },
+    );
+  }
+
+  @override
+  Future<void> archiveCollectiveReward(String suggestionId) async {
+    await _client.rpc(
+      'archive_collective_reward',
       params: {'p_suggestion_id': suggestionId},
     );
   }

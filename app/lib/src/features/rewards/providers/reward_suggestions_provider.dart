@@ -202,4 +202,44 @@ class RewardSuggestionsController extends StateNotifier<AsyncValue<void>> {
       return false;
     }
   }
+
+  Future<bool> updateCollectiveReward({
+    required String suggestionId,
+    required String title,
+    required String description,
+    required int? questCount,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      await _ref
+          .read(rewardSuggestionsRepositoryProvider)
+          .updateCollectiveReward(
+            suggestionId: suggestionId,
+            title: title,
+            description: description,
+            questCount: questCount,
+          );
+      _ref.invalidate(currentRewardSuggestionsProvider);
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
+
+  Future<bool> archiveCollectiveReward(String suggestionId) async {
+    state = const AsyncLoading();
+    try {
+      await _ref
+          .read(rewardSuggestionsRepositoryProvider)
+          .archiveCollectiveReward(suggestionId);
+      _ref.invalidate(currentRewardSuggestionsProvider);
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
 }

@@ -31,4 +31,13 @@ abstract class RewardSuggestionsRepository {
   });
 
   Future<void> deliverCollectiveReward(String suggestionId);
+
+  Future<void> updateCollectiveReward({
+    required String suggestionId,
+    required String title,
+    required String description,
+    required int? questCount,
+  });
+
+  Future<void> archiveCollectiveReward(String suggestionId);
 }

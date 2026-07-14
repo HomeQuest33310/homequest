@@ -130,7 +130,10 @@ class FamilyDashboardPage extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                _HeroHeader(family: family),
+                _HeroHeader(
+                  family: family,
+                  onTap: () => context.go('/kingdom-legend'),
+                ),
                 const SizedBox(height: 16),
                 statsAsync.when(
                   loading: () => const _StatsSkeleton(),
@@ -179,6 +182,11 @@ class FamilyDashboardPage extends ConsumerWidget {
                   title: '📖 Chronique du Royaume',
                   subtitle:
                       'Les premiers souvenirs de votre aventure familiale.',
+                  action: TextButton.icon(
+                    onPressed: () => context.go('/kingdom-legend'),
+                    icon: const Icon(Icons.auto_stories),
+                    label: const Text('Ouvrir le carnet'),
+                  ),
                   child: chroniclesAsync.when(
                     loading: () => const LinearProgressIndicator(),
                     error: (error, stackTrace) => _InlineError(error: error),
@@ -499,56 +507,81 @@ class _ActiveBossPanel extends StatelessWidget {
 }
 
 class _HeroHeader extends StatelessWidget {
-  const _HeroHeader({required this.family});
+  const _HeroHeader({required this.family, required this.onTap});
 
   final domain.Family family;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.primaryContainer,
-            theme.colorScheme.secondaryContainer,
-          ],
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.primaryContainer,
+              theme.colorScheme.secondaryContainer,
+            ],
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '🏰 ${family.kingdomName}',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Guilde familiale : ${family.name}',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Wrap(
-              spacing: 8,
-              runSpacing: 8,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(28),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Badge(label: 'Livre des Chroniques ouvert'),
-                _Badge(label: 'Premier Domaine fondé'),
-                _Badge(label: 'Registre des Quêtes actif'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '🏰 ${family.kingdomName}',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.menu_book_outlined,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Guilde familiale : ${family.name}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Touchez le Royaume pour ouvrir son Carnet des légendes.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _Badge(label: 'Livre des Chroniques ouvert'),
+                    _Badge(label: 'Premier Domaine fondé'),
+                    _Badge(label: 'Registre des Quêtes actif'),
+                  ],
+                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

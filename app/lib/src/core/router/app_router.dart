@@ -12,6 +12,7 @@ import '../../features/notifications/presentation/guardian_notifications_page.da
 import '../../features/profile/presentation/rpg_profile_page.dart';
 import '../../features/boss/presentation/boss_screen.dart';
 import '../../features/rewards/presentation/reward_suggestions_page.dart';
+import '../../features/chronicles/presentation/kingdom_legend_page.dart';
 import 'home_gate.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -61,6 +62,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reward-suggestions',
         builder: (context, state) => const RewardSuggestionsPage(),
+      ),
+      GoRoute(
+        path: '/kingdom-legend',
+        builder: (context, state) => const KingdomLegendPage(),
       ),
       GoRoute(
         path: '/invite/:token',

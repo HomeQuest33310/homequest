@@ -119,6 +119,16 @@ class RewardSuggestionsPage extends ConsumerWidget {
                         ref,
                         suggestion,
                       ),
+                      onEdit: () => _editReward(
+                        context,
+                        ref,
+                        suggestion,
+                      ),
+                      onArchive: () => _archiveReward(
+                        context,
+                        ref,
+                        suggestion,
+                      ),
                     ),
               ],
             ),
@@ -266,6 +276,69 @@ class RewardSuggestionsPage extends ConsumerWidget {
     );
   }
 
+  Future<void> _editReward(
+    BuildContext context,
+    WidgetRef ref,
+    RewardSuggestion suggestion,
+  ) async {
+    final draft = await showDialog<_RewardEditDraft>(
+      context: context,
+      builder: (_) => _RewardEditDialog(suggestion: suggestion),
+    );
+    if (draft == null || !context.mounted) return;
+
+    final success = await ref
+        .read(rewardSuggestionsControllerProvider.notifier)
+        .updateCollectiveReward(
+          suggestionId: suggestion.id,
+          title: draft.title,
+          description: draft.description,
+          questCount: draft.questCount,
+        );
+    if (!context.mounted) return;
+    _showResult(context, ref, success, 'Récompense mise à jour.');
+  }
+
+  Future<void> _archiveReward(
+    BuildContext context,
+    WidgetRef ref,
+    RewardSuggestion suggestion,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Archiver cette récompense ?'),
+        content: Text(
+          '« ${suggestion.guardianTitle ?? suggestion.title} » quittera les '
+          'objectifs actifs mais restera dans le Carnet des légendes.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton.tonalIcon(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            icon: const Icon(Icons.archive_outlined),
+            label: const Text('Archiver'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final success = await ref
+        .read(rewardSuggestionsControllerProvider.notifier)
+        .archiveCollectiveReward(suggestion.id);
+    if (!context.mounted) return;
+    _showResult(
+      context,
+      ref,
+      success,
+      'Récompense archivée dans le Carnet des légendes.',
+    );
+  }
+
   Map<String, dynamic>? _bossPayload(_ReviewDraft result) {
     if (result.existingBoss != null) {
       return {
@@ -354,6 +427,8 @@ class _SuggestionCard extends StatelessWidget {
     required this.busy,
     required this.onReview,
     required this.onDeliver,
+    required this.onEdit,
+    required this.onArchive,
   });
 
   final RewardSuggestion suggestion;
@@ -361,6 +436,8 @@ class _SuggestionCard extends StatelessWidget {
   final bool busy;
   final VoidCallback onReview;
   final VoidCallback onDeliver;
+  final VoidCallback onEdit;
+  final VoidCallback onArchive;
 
   @override
   Widget build(BuildContext context) {
@@ -454,11 +531,196 @@ class _SuggestionCard extends StatelessWidget {
                 label: const Text('Examiner'),
               ),
             ],
+            if (isGuardian &&
+                suggestion.status == 'approved' &&
+                !suggestion.isArchived) ...[
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  if (!suggestion.isDelivered)
+                    OutlinedButton.icon(
+                      onPressed: busy ? null : onEdit,
+                      icon: const Icon(Icons.edit_outlined),
+                      label: const Text('Modifier'),
+                    ),
+                  OutlinedButton.icon(
+                    onPressed: busy ? null : onArchive,
+                    icon: const Icon(Icons.archive_outlined),
+                    label: const Text('Archiver'),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
     );
   }
+}
+
+class _RewardEditDialog extends StatefulWidget {
+  const _RewardEditDialog({required this.suggestion});
+
+  final RewardSuggestion suggestion;
+
+  @override
+  State<_RewardEditDialog> createState() => _RewardEditDialogState();
+}
+
+class _RewardEditDialogState extends State<_RewardEditDialog> {
+  late final TextEditingController _title;
+  late final TextEditingController _description;
+  late bool _useQuestGoal;
+  late int _questCount;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _title = TextEditingController(
+      text: widget.suggestion.guardianTitle ?? widget.suggestion.title,
+    );
+    _description = TextEditingController(
+      text: widget.suggestion.guardianDescription ??
+          widget.suggestion.description,
+    );
+    _useQuestGoal = widget.suggestion.guardianQuestCount != null;
+    _questCount = widget.suggestion.guardianQuestCount ??
+        widget.suggestion.completedQuestCount.clamp(1, 100).toInt();
+  }
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _description.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final minimum = widget.suggestion.completedQuestCount.clamp(1, 100).toInt();
+    final canRemoveQuestGoal = widget.suggestion.bossId != null;
+
+    return AlertDialog(
+      title: const Text('Modifier la récompense'),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _title,
+                maxLength: 80,
+                decoration: const InputDecoration(
+                  labelText: 'Nom de la récompense',
+                ),
+              ),
+              TextField(
+                controller: _description,
+                maxLength: 500,
+                minLines: 2,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Description et conditions',
+                ),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _useQuestGoal,
+                onChanged: canRemoveQuestGoal
+                    ? (value) => setState(() => _useQuestGoal = value)
+                    : null,
+                title: const Text('Objectif de quêtes'),
+                subtitle: Text(
+                  canRemoveQuestGoal
+                      ? 'Le boss associé reste inchangé.'
+                      : 'Obligatoire car aucun boss n’est associé.',
+                ),
+              ),
+              if (_useQuestGoal)
+                Row(
+                  children: [
+                    const Expanded(child: Text('Quêtes nécessaires')),
+                    IconButton(
+                      onPressed: _questCount > minimum
+                          ? () => setState(() => _questCount--)
+                          : null,
+                      icon: const Icon(Icons.remove),
+                    ),
+                    Text('$_questCount'),
+                    IconButton(
+                      onPressed: _questCount < 100
+                          ? () => setState(() => _questCount++)
+                          : null,
+                      icon: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
+              if (_error != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Annuler'),
+        ),
+        FilledButton.icon(
+          onPressed: _save,
+          icon: const Icon(Icons.save_outlined),
+          label: const Text('Enregistrer'),
+        ),
+      ],
+    );
+  }
+
+  void _save() {
+    if (_title.text.trim().length < 2) {
+      setState(() => _error = 'Donnez un nom à la récompense.');
+      return;
+    }
+    if (_useQuestGoal && _questCount < widget.suggestion.completedQuestCount) {
+      setState(
+        () => _error = 'Le nouvel objectif ne peut pas être inférieur à la '
+            'progression actuelle.',
+      );
+      return;
+    }
+
+    Navigator.pop(
+      context,
+      _RewardEditDraft(
+        title: _title.text.trim(),
+        description: _description.text.trim(),
+        questCount: _useQuestGoal ? _questCount : null,
+      ),
+    );
+  }
+}
+
+class _RewardEditDraft {
+  const _RewardEditDraft({
+    required this.title,
+    required this.description,
+    required this.questCount,
+  });
+
+  final String title;
+  final String description;
+  final int? questCount;
 }
 
 class _RewardDraftDialog extends StatefulWidget {

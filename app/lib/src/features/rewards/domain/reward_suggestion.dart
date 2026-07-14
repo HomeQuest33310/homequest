@@ -16,6 +16,7 @@ class RewardSuggestion {
     this.completedQuestCount = 0,
     this.fulfilledAt,
     this.deliveredAt,
+    this.archivedAt,
   });
 
   factory RewardSuggestion.fromMap(Map<String, dynamic> map) {
@@ -42,6 +43,9 @@ class RewardSuggestion {
       deliveredAt: map['delivered_at'] == null
           ? null
           : DateTime.parse(map['delivered_at'] as String),
+      archivedAt: map['archived_at'] == null
+          ? null
+          : DateTime.parse(map['archived_at'] as String),
     );
   }
 
@@ -61,12 +65,17 @@ class RewardSuggestion {
   final int completedQuestCount;
   final DateTime? fulfilledAt;
   final DateTime? deliveredAt;
+  final DateTime? archivedAt;
 
-  bool get isCollective => status == 'approved';
+  bool get isCollective => status == 'approved' && !isArchived;
   bool get isFulfilled => fulfilledAt != null;
   bool get isDelivered => deliveredAt != null;
+  bool get isArchived => archivedAt != null;
 
   String get statusLabel {
+    if (isArchived) return 'Archivée';
+    if (isDelivered) return 'Remise';
+    if (isFulfilled) return 'Débloquée';
     switch (status) {
       case 'approved':
         return 'Acceptée';
