@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../family/providers/family_provider.dart';
@@ -14,6 +15,33 @@ final currentFamilyBossesProvider = FutureProvider<List<Boss>>((ref) async {
   final family = await ref.watch(currentFamilyProvider.future);
   if (family == null) return const [];
   return ref.watch(bossRepositoryProvider).listBosses(family.id);
+});
+
+final familyBossesRealtimeProvider = Provider.autoDispose<void>((ref) {
+  final family = ref.watch(currentFamilyProvider).valueOrNull;
+  if (family == null) return;
+
+  final client = ref.watch(supabaseProvider);
+  final channel = client
+      .channel('family-bosses:${family.id}')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'bosses',
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'family_id',
+          value: family.id,
+        ),
+        callback: (_) {
+          ref.invalidate(currentFamilyBossesProvider);
+        },
+      )
+      .subscribe();
+
+  ref.onDispose(() {
+    client.removeChannel(channel);
+  });
 });
 
 final bossControllerProvider =

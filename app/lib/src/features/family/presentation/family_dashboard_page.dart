@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../chronicles/domain/chronicle.dart';
 import '../../chronicles/providers/chronicles_provider.dart';
+import '../../boss/domain/boss.dart';
 import '../../boss/providers/boss_provider.dart';
 import '../../domains/domain/domain.dart';
 import '../../domains/providers/domains_provider.dart';
@@ -11,6 +12,8 @@ import '../../quests/domain/quest.dart';
 import '../../notifications/providers/notifications_provider.dart';
 import '../../quests/presentation/dialogs/quest_form_dialog.dart';
 import '../../quests/providers/quests_provider.dart';
+import '../../rewards/domain/reward_suggestion.dart';
+import '../../rewards/providers/reward_suggestions_provider.dart';
 import '../domain/family.dart' as domain;
 import '../providers/family_members_provider.dart';
 import '../providers/family_provider.dart';
@@ -25,11 +28,16 @@ class FamilyDashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(rewardSuggestionsRealtimeProvider);
+    ref.watch(familyBossesRealtimeProvider);
+
     final familyAsync = ref.watch(currentFamilyProvider);
     final domainsAsync = ref.watch(currentFamilyDomainsProvider);
     final chroniclesAsync = ref.watch(recentChroniclesProvider);
     final statsAsync = ref.watch(currentFamilyStatsProvider);
     final questsAsync = ref.watch(currentFamilyQuestsProvider);
+    final wishesAsync = ref.watch(currentRewardSuggestionsProvider);
+    final bossesAsync = ref.watch(currentFamilyBossesProvider);
     final currentMember = ref.watch(currentFamilyMemberProvider).asData?.value;
     final canManageQuests = currentMember?.role == 'guardian';
     final unreadNotifications = ref.watch(unreadGuardianNotificationsProvider);
@@ -41,6 +49,7 @@ class FamilyDashboardPage extends ConsumerWidget {
       ref.invalidate(currentFamilyStatsProvider);
       ref.invalidate(currentFamilyQuestsProvider);
       ref.invalidate(currentFamilyBossesProvider);
+      ref.invalidate(currentRewardSuggestionsProvider);
       ref.invalidate(guardianNotificationsProvider);
     }
 
@@ -132,6 +141,13 @@ class FamilyDashboardPage extends ConsumerWidget {
                   data: (stats) => _StatsRow(stats: stats),
                 ),
                 const SizedBox(height: 16),
+                _KingdomChallenges(
+                  wishesAsync: wishesAsync,
+                  bossesAsync: bossesAsync,
+                  onOpenWishes: () => context.go('/reward-suggestions'),
+                  onOpenBosses: () => context.go('/bosses'),
+                ),
+                const SizedBox(height: 16),
                 _SectionCard(
                   title: '📜 Registre des Quêtes',
                   subtitle:
@@ -191,6 +207,285 @@ class FamilyDashboardPage extends ConsumerWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _KingdomChallenges extends StatelessWidget {
+  const _KingdomChallenges({
+    required this.wishesAsync,
+    required this.bossesAsync,
+    required this.onOpenWishes,
+    required this.onOpenBosses,
+  });
+
+  final AsyncValue<List<RewardSuggestion>> wishesAsync;
+  final AsyncValue<List<Boss>> bossesAsync;
+  final VoidCallback onOpenWishes;
+  final VoidCallback onOpenBosses;
+
+  @override
+  Widget build(BuildContext context) {
+    final wishes = _SectionCard(
+      title: '🎁 Souhaits du Royaume',
+      subtitle: 'Les récompenses collectives approuvées par les Gardiens.',
+      action: TextButton.icon(
+        onPressed: onOpenWishes,
+        icon: const Icon(Icons.open_in_new),
+        label: const Text('Voir les souhaits'),
+      ),
+      child: wishesAsync.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (error, _) => _InlineError(error: error),
+        data: (suggestions) => _CollectiveWishesPanel(
+          suggestions: suggestions,
+        ),
+      ),
+    );
+
+    final boss = _SectionCard(
+      title: '🐉 Affrontement en cours',
+      subtitle: 'Chaque quête accomplie rapproche la guilde de la victoire.',
+      action: TextButton.icon(
+        onPressed: onOpenBosses,
+        icon: const Icon(Icons.local_fire_department_outlined),
+        label: const Text('Ouvrir l’antre'),
+      ),
+      child: bossesAsync.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (error, _) => _InlineError(error: error),
+        data: (bosses) => _ActiveBossPanel(bosses: bosses),
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 900) {
+          return Column(
+            children: [
+              wishes,
+              const SizedBox(height: 16),
+              boss,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: wishes),
+            const SizedBox(width: 16),
+            Expanded(child: boss),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _CollectiveWishesPanel extends StatelessWidget {
+  const _CollectiveWishesPanel({required this.suggestions});
+
+  final List<RewardSuggestion> suggestions;
+
+  @override
+  Widget build(BuildContext context) {
+    final accepted =
+        suggestions.where((suggestion) => suggestion.isCollective).toList()
+          ..sort((left, right) {
+            if (left.isFulfilled == right.isFulfilled) {
+              return right.createdAt.compareTo(left.createdAt);
+            }
+            return left.isFulfilled ? 1 : -1;
+          });
+
+    if (accepted.isEmpty) {
+      return const ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(Icons.auto_awesome_outlined),
+        title: Text('Aucun souhait collectif actif.'),
+        subtitle: Text(
+          'Les souhaits acceptés par un Gardien apparaîtront ici.',
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < accepted.length; index++) ...[
+          _CollectiveWishTile(suggestion: accepted[index]),
+          if (index < accepted.length - 1) const Divider(height: 24),
+        ],
+      ],
+    );
+  }
+}
+
+class _CollectiveWishTile extends StatelessWidget {
+  const _CollectiveWishTile({required this.suggestion});
+
+  final RewardSuggestion suggestion;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final questGoal = suggestion.guardianQuestCount ?? 0;
+    final questProgress = questGoal <= 0
+        ? null
+        : (suggestion.completedQuestCount / questGoal).clamp(0.0, 1.0);
+    final title = suggestion.guardianTitle?.trim().isNotEmpty == true
+        ? suggestion.guardianTitle!
+        : suggestion.title;
+    final description =
+        suggestion.guardianDescription?.trim().isNotEmpty == true
+            ? suggestion.guardianDescription!
+            : suggestion.description;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              suggestion.isFulfilled ? Icons.check_circle : Icons.card_giftcard,
+              color: suggestion.isFulfilled
+                  ? Colors.green
+                  : theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    suggestion.isFulfilled
+                        ? 'Souhait accompli pour tout le Royaume'
+                        : 'Souhait proposé par ${suggestion.proposerName}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (description.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(description),
+        ],
+        if (questProgress != null) ...[
+          const SizedBox(height: 12),
+          LinearProgressIndicator(value: questProgress.toDouble()),
+          const SizedBox(height: 5),
+          Text(
+            '${suggestion.completedQuestCount.clamp(0, questGoal)} / '
+            '$questGoal quêtes accomplies',
+            style: theme.textTheme.labelMedium,
+          ),
+        ],
+        if (suggestion.guardianBossTheme?.trim().isNotEmpty == true) ...[
+          const SizedBox(height: 10),
+          Chip(
+            avatar: const Icon(Icons.local_fire_department, size: 18),
+            label: Text('Boss : ${suggestion.guardianBossTheme}'),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ActiveBossPanel extends StatelessWidget {
+  const _ActiveBossPanel({required this.bosses});
+
+  final List<Boss> bosses;
+
+  @override
+  Widget build(BuildContext context) {
+    Boss? activeBoss;
+    for (final boss in bosses) {
+      if (boss.isActive) {
+        activeBoss = boss;
+        break;
+      }
+    }
+
+    if (activeBoss == null) {
+      return const ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(Icons.shield_outlined),
+        title: Text('Le Royaume est en paix.'),
+        subtitle: Text('Aucun boss n’est invoqué pour le moment.'),
+      );
+    }
+
+    final boss = activeBoss;
+    final theme = Theme.of(context);
+    final health = boss.healthProgress.clamp(0.0, 1.0).toDouble();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(boss.emoji, style: const TextStyle(fontSize: 44)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    boss.name,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text('${boss.element} • ${boss.domainLabel}'),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (boss.description.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(boss.description),
+        ],
+        const SizedBox(height: 14),
+        LinearProgressIndicator(
+          value: health,
+          minHeight: 12,
+          borderRadius: BorderRadius.circular(999),
+          color: health < 0.3 ? Colors.green : theme.colorScheme.error,
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${boss.currentHp} / ${boss.maxHp} PV',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Text('Difficulté ${boss.difficulty}/5'),
+          ],
+        ),
+        if (boss.specialItem.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Chip(
+            avatar: const Icon(Icons.inventory_2_outlined, size: 18),
+            label: Text('Butin : ${boss.specialItem}'),
+          ),
+        ],
+      ],
     );
   }
 }
