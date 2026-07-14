@@ -87,6 +87,11 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
           ''')
           .eq('boss.family_id', familyId)
           .order('awarded_at', ascending: false),
+      _client
+          .from('quest_completions')
+          .select('id')
+          .eq('completed_by', memberId)
+          .eq('status', 'approved'),
     ]);
 
     final progressBySkill = <String, Map<String, dynamic>>{};
@@ -153,6 +158,7 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
               ))
           .toList(),
       bossVictories: bossVictories,
+      approvedQuestCount: (results[4] as List).length,
     );
   }
 

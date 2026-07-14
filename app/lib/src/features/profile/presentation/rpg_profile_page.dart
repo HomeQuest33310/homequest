@@ -69,6 +69,8 @@ class RpgProfilePage extends ConsumerWidget {
               const SizedBox(height: 16),
               _HarmonyCard(profile: value),
               const SizedBox(height: 16),
+              _AchievementsSection(achievements: value.achievements),
+              const SizedBox(height: 16),
               _SkillsSection(skills: value.skills),
               const SizedBox(height: 16),
               _ElementalAspectsSection(aspects: value.elementalAspects),
@@ -386,6 +388,154 @@ class _HarmonyCard extends StatelessWidget {
                     ),
                   ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AchievementsSection extends StatelessWidget {
+  const _AchievementsSection({required this.achievements});
+
+  final List<RpgAchievement> achievements;
+
+  @override
+  Widget build(BuildContext context) {
+    final unlocked = achievements.where((item) => item.isUnlocked).length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Succès et titres',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
+            Chip(
+              avatar: const Icon(Icons.emoji_events, size: 18),
+              label: Text('$unlocked/${achievements.length} débloqués'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Les aventures, les talents et les victoires contre les boss '
+          'débloqueront de nouveaux titres héroïques.',
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = constraints.maxWidth >= 760
+                ? (constraints.maxWidth - 12) / 2
+                : constraints.maxWidth;
+
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final achievement in achievements)
+                  SizedBox(
+                    width: cardWidth,
+                    child: _AchievementCard(achievement: achievement),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _AchievementCard extends StatelessWidget {
+  const _AchievementCard({required this.achievement});
+
+  final RpgAchievement achievement;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final unlocked = achievement.isUnlocked;
+    final current = achievement.current.clamp(0, achievement.target);
+
+    return Card(
+      color: unlocked ? scheme.primaryContainer : null,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: unlocked
+                    ? scheme.primary.withValues(alpha: 0.14)
+                    : scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                achievement.emoji,
+                style: TextStyle(
+                  fontSize: 28,
+                  color: unlocked ? null : scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          achievement.title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        unlocked ? Icons.verified : Icons.lock_outline,
+                        color:
+                            unlocked ? scheme.primary : scheme.onSurfaceVariant,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    achievement.description,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 10),
+                  LinearProgressIndicator(
+                    value: achievement.progress,
+                    minHeight: 7,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    unlocked
+                        ? 'Titre débloqué'
+                        : '$current/${achievement.target}',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color:
+                          unlocked ? scheme.primary : scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

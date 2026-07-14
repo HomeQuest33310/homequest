@@ -12,6 +12,7 @@ class RpgProfile {
     required this.skills,
     required this.recentAdventures,
     required this.bossVictories,
+    required this.approvedQuestCount,
     this.avatarKey,
   });
 
@@ -28,6 +29,7 @@ class RpgProfile {
   final List<RpgSkill> skills;
   final List<RpgAdventure> recentAdventures;
   final List<RpgBossVictory> bossVictories;
+  final int approvedQuestCount;
 
   List<ElementalAspect> get elementalAspects {
     final totals = <String, int>{};
@@ -68,6 +70,73 @@ class RpgProfile {
   int get developedSkills => skills.where((skill) => skill.xp > 0).length;
   HarmonyRank get harmonyRank => HarmonyRank.fromSkillCount(developedSkills);
 
+  List<RpgAchievement> get achievements => [
+        RpgAchievement(
+          id: 'first_quest',
+          emoji: '🌟',
+          title: 'Premier pas héroïque',
+          description: 'Accomplir une première quête.',
+          current: approvedQuestCount,
+          target: 1,
+        ),
+        RpgAchievement(
+          id: 'quest_10',
+          emoji: '📜',
+          title: 'Aventurier confirmé',
+          description: 'Accomplir 10 quêtes.',
+          current: approvedQuestCount,
+          target: 10,
+        ),
+        RpgAchievement(
+          id: 'quest_25',
+          emoji: '🏅',
+          title: 'Héros infatigable',
+          description: 'Accomplir 25 quêtes.',
+          current: approvedQuestCount,
+          target: 25,
+        ),
+        RpgAchievement(
+          id: 'first_boss',
+          emoji: '⚔️',
+          title: 'Pourfendeur de monstres',
+          description: 'Participer à la défaite d’un boss.',
+          current: bossVictories.length,
+          target: 1,
+        ),
+        RpgAchievement(
+          id: 'boss_3',
+          emoji: '🐉',
+          title: 'Fléau des Titans',
+          description: 'Participer à la défaite de 3 boss.',
+          current: bossVictories.length,
+          target: 3,
+        ),
+        RpgAchievement(
+          id: 'versatile_4',
+          emoji: '🌈',
+          title: 'Héros aux mille talents',
+          description: 'Développer 4 compétences différentes.',
+          current: developedSkills,
+          target: 4,
+        ),
+        RpgAchievement(
+          id: 'harmony_gold',
+          emoji: '✨',
+          title: 'Maître de l’Harmonie',
+          description: 'Développer 6 compétences différentes.',
+          current: developedSkills,
+          target: 6,
+        ),
+        RpgAchievement(
+          id: 'trophy_3',
+          emoji: '🎒',
+          title: 'Gardien des reliques',
+          description: 'Remporter 3 objets de boss.',
+          current: bossTrophies.length,
+          target: 3,
+        ),
+      ];
+
   String get roleLabel {
     switch (role) {
       case 'guardian':
@@ -80,6 +149,11 @@ class RpgProfile {
   }
 
   String get rpgTitle {
+    if (bossVictories.length >= 3) return 'Fléau des Titans';
+    if (developedSkills >= 6) return 'Maître de l’Harmonie';
+    if (approvedQuestCount >= 25) return 'Héros infatigable';
+    if (bossVictories.isNotEmpty) return 'Pourfendeur de monstres';
+    if (approvedQuestCount >= 10) return 'Aventurier confirmé';
     final activeSkills = skills.where((skill) => skill.xp > 0).toList()
       ..sort((left, right) => right.xp.compareTo(left.xp));
     if (activeSkills.isNotEmpty) {
@@ -87,6 +161,27 @@ class RpgProfile {
     }
     return '$roleLabel du Royaume';
   }
+}
+
+class RpgAchievement {
+  const RpgAchievement({
+    required this.id,
+    required this.emoji,
+    required this.title,
+    required this.description,
+    required this.current,
+    required this.target,
+  });
+
+  final String id;
+  final String emoji;
+  final String title;
+  final String description;
+  final int current;
+  final int target;
+
+  bool get isUnlocked => current >= target;
+  double get progress => target <= 0 ? 0 : (current / target).clamp(0, 1);
 }
 
 class RpgSkill {
