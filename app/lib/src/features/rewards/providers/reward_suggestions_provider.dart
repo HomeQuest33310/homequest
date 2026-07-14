@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../boss/providers/boss_provider.dart';
@@ -7,6 +8,19 @@ import '../../profile/providers/rpg_profile_provider.dart';
 import '../data/reward_suggestions_repository.dart';
 import '../data/reward_suggestions_repository_impl.dart';
 import '../domain/reward_suggestion.dart';
+
+class RewardDecisionNotice {
+  const RewardDecisionNotice({
+    required this.title,
+    required this.status,
+  });
+
+  final String title;
+  final String status;
+}
+
+final rewardDecisionNoticeProvider =
+    StateProvider<RewardDecisionNotice?>((ref) => null);
 
 final rewardSuggestionsRepositoryProvider =
     Provider<RewardSuggestionsRepository>((ref) {
@@ -20,6 +34,59 @@ final currentRewardSuggestionsProvider =
   return ref.watch(rewardSuggestionsRepositoryProvider).listSuggestions(
         family.id,
       );
+});
+
+final rewardSuggestionsRealtimeProvider = Provider.autoDispose<void>((ref) {
+  final family = ref.watch(currentFamilyProvider).valueOrNull;
+  if (family == null) return;
+
+  final client = ref.watch(supabaseProvider);
+  final channel = client
+      .channel('reward-suggestions:${family.id}')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'reward_suggestions',
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'family_id',
+          value: family.id,
+        ),
+        callback: (payload) {
+          ref.invalidate(currentRewardSuggestionsProvider);
+
+          if (payload.eventType != PostgresChangeEvent.update) return;
+
+          final newStatus = payload.newRecord['status'] as String?;
+          final oldStatus = payload.oldRecord['status'] as String?;
+          if (newStatus == oldStatus ||
+              (newStatus != 'approved' && newStatus != 'rejected')) {
+            return;
+          }
+
+          final profile = ref.read(currentRpgProfileProvider).valueOrNull;
+          final proposerId = payload.newRecord['proposed_by'] as String?;
+          if (profile == null || profile.memberId != proposerId) return;
+
+          final title =
+              (payload.newRecord['guardian_title'] as String?)?.trim();
+          final originalTitle = (payload.newRecord['title'] as String?)?.trim();
+          ref.read(rewardDecisionNoticeProvider.notifier).state =
+              RewardDecisionNotice(
+            title: title?.isNotEmpty == true
+                ? title!
+                : (originalTitle?.isNotEmpty == true
+                    ? originalTitle!
+                    : 'Votre souhait'),
+            status: newStatus!,
+          );
+        },
+      )
+      .subscribe();
+
+  ref.onDispose(() {
+    client.removeChannel(channel);
+  });
 });
 
 final rewardSuggestionsControllerProvider =

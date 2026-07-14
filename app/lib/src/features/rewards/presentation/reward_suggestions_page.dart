@@ -15,6 +15,29 @@ class RewardSuggestionsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(rewardSuggestionsRealtimeProvider);
+    ref.listen<RewardDecisionNotice?>(
+      rewardDecisionNoticeProvider,
+      (previous, notice) {
+        if (notice == null) return;
+
+        final accepted = notice.status == 'approved';
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                accepted
+                    ? '✨ Votre souhait « ${notice.title} » a été accepté par les Gardiens.'
+                    : 'Le Conseil a refusé votre souhait « ${notice.title} ».',
+              ),
+              backgroundColor: accepted ? Colors.green.shade700 : null,
+            ),
+          );
+        ref.read(rewardDecisionNoticeProvider.notifier).state = null;
+      },
+    );
+
     final profileAsync = ref.watch(currentRpgProfileProvider);
     final suggestionsAsync = ref.watch(currentRewardSuggestionsProvider);
     final bossesAsync = ref.watch(currentFamilyBossesProvider);
