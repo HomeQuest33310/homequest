@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../family/providers/family_provider.dart';
+import '../../kingdom/providers/kingdom_provider.dart';
+import '../../opening/domain/opening_experience.dart';
+import '../../opening/presentation/show_opening_replay.dart';
 import '../domain/kingdom_legend_entry.dart';
 import '../providers/chronicles_provider.dart';
 
@@ -19,6 +23,8 @@ class _KingdomLegendPageState extends ConsumerState<KingdomLegendPage> {
   @override
   Widget build(BuildContext context) {
     final legendAsync = ref.watch(kingdomLegendProvider);
+    final family = ref.watch(currentFamilyProvider).valueOrNull;
+    final kingdom = ref.watch(currentKingdomProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -65,6 +71,17 @@ class _KingdomLegendPageState extends ConsumerState<KingdomLegendPage> {
                     },
                   ),
                 ),
+                SliverToBoxAdapter(
+                  child: _ProloguesSection(
+                    awakeningDate: family?.createdAt,
+                    kingdomArrivalDate: kingdom?.createdAt,
+                    kingdomName: kingdom?.name,
+                    onReplay: (experience) => showOpeningReplay(
+                      context: context,
+                      experience: experience,
+                    ),
+                  ),
+                ),
                 if (filtered.isEmpty)
                   const SliverFillRemaining(
                     hasScrollBody: false,
@@ -86,6 +103,160 @@ class _KingdomLegendPageState extends ConsumerState<KingdomLegendPage> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ProloguesSection extends StatelessWidget {
+  const _ProloguesSection({
+    required this.awakeningDate,
+    required this.kingdomArrivalDate,
+    required this.kingdomName,
+    required this.onReplay,
+  });
+
+  final DateTime? awakeningDate;
+  final DateTime? kingdomArrivalDate;
+  final String? kingdomName;
+  final ValueChanged<OpeningExperience> onReplay;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Les prologues',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Rouvre les premières pages de ta légende, avec leur musique.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cards = [
+                _PrologueCard(
+                  experience: OpeningExperience.firstAwakening,
+                  createdAt: awakeningDate,
+                  contextLabel: 'Éveil de la guilde',
+                  onReplay: () => onReplay(OpeningExperience.firstAwakening),
+                ),
+                _PrologueCard(
+                  experience: OpeningExperience.kingdomArrival,
+                  createdAt: kingdomArrivalDate,
+                  contextLabel: kingdomName == null
+                      ? 'Entrée dans le Royaume'
+                      : 'Entrée dans $kingdomName',
+                  onReplay: () => onReplay(OpeningExperience.kingdomArrival),
+                ),
+              ];
+
+              if (constraints.maxWidth < 760) {
+                return Column(
+                  children: [
+                    cards.first,
+                    const SizedBox(height: 12),
+                    cards.last,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: cards.first),
+                  const SizedBox(width: 12),
+                  Expanded(child: cards.last),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrologueCard extends StatelessWidget {
+  const _PrologueCard({
+    required this.experience,
+    required this.createdAt,
+    required this.contextLabel,
+    required this.onReplay,
+  });
+
+  final OpeningExperience experience;
+  final DateTime? createdAt;
+  final String contextLabel;
+  final VoidCallback onReplay;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onReplay,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const CircleAvatar(
+                    backgroundColor: Color(0xFFE9DDAF),
+                    child: Icon(Icons.auto_awesome, color: Color(0xFF4B3B82)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      experience.eyebrow,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: const Color(0xFF4B3B82),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                experience.title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(contextLabel),
+              if (createdAt != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Inscrit le ${DateFormat('dd/MM/yyyy à HH:mm').format(createdAt!.toLocal())}',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.tonalIcon(
+                  onPressed: onReplay,
+                  icon: const Icon(Icons.replay_rounded),
+                  label: const Text('Rejouer le prologue'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -24,6 +24,7 @@ final availableKingdomsProvider = FutureProvider<List<Kingdom>>((ref) async {
       icon,
       description,
       is_primary,
+      created_at,
       archived_at
     )
   ''').eq('member.user_id', user.id).eq('is_active', true);

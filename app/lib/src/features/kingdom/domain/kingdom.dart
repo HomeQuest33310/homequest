@@ -6,6 +6,7 @@ class Kingdom {
     required this.kind,
     required this.icon,
     required this.isPrimary,
+    required this.createdAt,
     this.membershipRole = 'adventurer',
     this.membershipScope = 'kingdom',
     this.membershipDomainId,
@@ -22,6 +23,7 @@ class Kingdom {
       icon: map['icon'] as String? ?? '🏠',
       description: map['description'] as String?,
       isPrimary: map['is_primary'] as bool? ?? false,
+      createdAt: DateTime.parse(map['created_at'] as String),
       membershipRole: map['membership_role'] as String? ?? 'adventurer',
       membershipScope: map['membership_scope'] as String? ?? 'kingdom',
       membershipDomainId: map['membership_domain_id'] as String?,
@@ -38,6 +40,7 @@ class Kingdom {
   final String icon;
   final String? description;
   final bool isPrimary;
+  final DateTime createdAt;
   final String membershipRole;
   final String membershipScope;
   final String? membershipDomainId;
