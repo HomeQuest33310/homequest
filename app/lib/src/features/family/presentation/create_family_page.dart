@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../kingdom/providers/kingdom_provider.dart';
+import '../../opening/presentation/show_kingdom_arrival.dart';
 import '../providers/family_provider.dart';
 
 class CreateFamilyPage extends ConsumerStatefulWidget {
@@ -52,7 +54,17 @@ class _CreateFamilyPageState extends ConsumerState<CreateFamilyPage> {
       return;
     }
 
-    context.go('/');
+    final kingdom = await ref.read(currentKingdomProvider.future);
+    if (!mounted) return;
+
+    if (kingdom != null) {
+      await showKingdomArrivalIfNeeded(
+        context: context,
+        kingdomId: kingdom.id,
+      );
+    }
+
+    if (mounted) context.go('/');
   }
 
   @override
@@ -76,7 +88,8 @@ class _CreateFamilyPageState extends ConsumerState<CreateFamilyPage> {
                     const Text(
                       '🏰 Bienvenue dans HomeQuest',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     const Text(

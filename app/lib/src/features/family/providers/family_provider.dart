@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../chronicles/providers/chronicles_provider.dart';
 import '../../domains/providers/domains_provider.dart';
+import '../../kingdom/providers/kingdom_provider.dart';
 import '../data/family_repository.dart';
 import '../data/family_repository_impl.dart';
 import '../domain/family.dart' as domain;
@@ -49,6 +50,8 @@ class CreateFamilyController extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(currentFamilyProvider);
       _ref.invalidate(currentFamilyDomainsProvider);
       _ref.invalidate(recentChroniclesProvider);
+      _ref.invalidate(availableKingdomsProvider);
+      _ref.invalidate(currentKingdomProvider);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);

@@ -16,14 +16,14 @@ class OpeningPreferences {
     await preferences.setBool(_firstAwakeningKey, true);
   }
 
-  static Future<bool> shouldShowKingdomArrival(String invitationToken) async {
+  static Future<bool> shouldShowKingdomArrival(String kingdomId) async {
     final preferences = await SharedPreferences.getInstance();
-    return !(preferences.getBool(_kingdomKey(invitationToken)) ?? false);
+    return !(preferences.getBool(_kingdomKey(kingdomId)) ?? false);
   }
 
-  static Future<void> markKingdomArrivalSeen(String invitationToken) async {
+  static Future<void> markKingdomArrivalSeen(String kingdomId) async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setBool(_kingdomKey(invitationToken), true);
+    await preferences.setBool(_kingdomKey(kingdomId), true);
   }
 
   static Future<bool> isSoundEnabled() async {
@@ -36,6 +36,6 @@ class OpeningPreferences {
     await preferences.setBool(_soundEnabledKey, enabled);
   }
 
-  static String _kingdomKey(String invitationToken) =>
-      'opening.kingdom_arrival.$invitationToken.v1';
+  static String _kingdomKey(String kingdomId) =>
+      'opening.kingdom_arrival.$kingdomId.v1';
 }

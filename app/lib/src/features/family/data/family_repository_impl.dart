@@ -181,6 +181,18 @@ class SupabaseFamilyRepository implements FamilyRepository {
   }
 
   @override
+  Future<FamilyInvitation?> getInvitationByToken(String token) async {
+    final data = await _client
+        .from('family_invitations')
+        .select()
+        .eq('token', token)
+        .maybeSingle();
+
+    if (data == null) return null;
+    return FamilyInvitation.fromMap(Map<String, dynamic>.from(data));
+  }
+
+  @override
   Future<FamilyInvitation> inviteMember({
     required String familyId,
     required String kingdomId,

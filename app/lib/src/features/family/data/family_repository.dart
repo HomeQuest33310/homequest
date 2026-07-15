@@ -23,6 +23,8 @@ abstract class FamilyRepository {
 
   Future<List<FamilyInvitation>> getInvitations(String kingdomId);
 
+  Future<FamilyInvitation?> getInvitationByToken(String token);
+
   Future<FamilyInvitation> inviteMember({
     required String familyId,
     required String kingdomId,

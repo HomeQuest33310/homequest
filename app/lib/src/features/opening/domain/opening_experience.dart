@@ -37,16 +37,16 @@ class OpeningExperience {
 
   static const kingdomArrival = OpeningExperience(
     kind: OpeningKind.kingdomArrival,
-    eyebrow: 'UN NOUVEAU SEUIL',
-    title: 'Le Royaume retient son souffle',
+    eyebrow: 'PROLOGUE II · LE PREMIER ROYAUME',
+    title: 'Le Royaume reconnaît ton nom',
     phrases: [
-      'Une porte que nul ne voyait vient de s’éveiller.',
-      'Derrière elle, un Royaume attend ses prochains héros.',
-      'Des quêtes sans nom frémissent encore dans la brume.',
-      'Un feu ancien reconnaît la marque de ton passage…',
-      'Avance. Désormais, cette histoire connaît ton nom.',
+      'Une porte que nul ne voyait vient de reconnaître ton pas.',
+      'Au-delà des brumes, un foyer allume ses premières lanternes.',
+      'Des voix anciennes murmurent déjà les quêtes à venir.',
+      'Qu’importe qui en posa la première pierre…',
+      'Désormais, ce Royaume compte sur ta lumière.',
     ],
-    startLabel: 'Écouter l’appel du Royaume',
-    finishLabel: 'Franchir le seuil',
+    startLabel: 'Écouter le Royaume s’éveiller',
+    finishLabel: 'Entrer dans mon Royaume',
   );
 }

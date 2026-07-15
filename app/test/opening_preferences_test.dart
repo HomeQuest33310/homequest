@@ -19,22 +19,22 @@ void main() {
 
   test('kingdom arrivals are remembered independently', () async {
     expect(
-      await OpeningPreferences.shouldShowKingdomArrival('invitation-a'),
+      await OpeningPreferences.shouldShowKingdomArrival('kingdom-a'),
       isTrue,
     );
     expect(
-      await OpeningPreferences.shouldShowKingdomArrival('invitation-b'),
+      await OpeningPreferences.shouldShowKingdomArrival('kingdom-b'),
       isTrue,
     );
 
-    await OpeningPreferences.markKingdomArrivalSeen('invitation-a');
+    await OpeningPreferences.markKingdomArrivalSeen('kingdom-a');
 
     expect(
-      await OpeningPreferences.shouldShowKingdomArrival('invitation-a'),
+      await OpeningPreferences.shouldShowKingdomArrival('kingdom-a'),
       isFalse,
     );
     expect(
-      await OpeningPreferences.shouldShowKingdomArrival('invitation-b'),
+      await OpeningPreferences.shouldShowKingdomArrival('kingdom-b'),
       isTrue,
     );
   });
