@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../links/pending_invitation_store.dart';
 import '../../features/auth/presentation/auth_page.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/family/presentation/accept_invitation_page.dart';
 import '../../features/family/presentation/create_family_page.dart';
 import '../../features/family/presentation/family_dashboard_page.dart';
 import '../../features/family/providers/family_provider.dart';
@@ -15,9 +17,22 @@ class HomeGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(authStateProvider);
     final user = ref.watch(currentUserProvider);
+    final pendingInvitation = ref.watch(pendingInvitationTokenProvider);
+
+    if (pendingInvitation.isLoading) {
+      return const _LoadingPage(message: 'Recherche de votre invitation...');
+    }
+
+    final invitationToken = pendingInvitation.asData?.value;
 
     if (user == null) {
-      return const FirstLaunchGate(child: AuthPage());
+      return FirstLaunchGate(
+        child: AuthPage(invitationToken: invitationToken),
+      );
+    }
+
+    if (invitationToken != null && invitationToken.isNotEmpty) {
+      return AcceptInvitationPage(token: invitationToken);
     }
 
     final familyAsync = ref.watch(currentFamilyProvider);

@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/links/invitation_link.dart';
+import '../../../core/links/pending_invitation_store.dart';
 import '../../family/providers/family_provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -32,6 +35,15 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     // already created or confirmed. Start on sign-in while keeping sign-up
     // available for genuinely new adventurers.
     _isSignUp = widget.invitationToken == null;
+    final invitationToken = widget.invitationToken;
+    if (invitationToken != null && invitationToken.isNotEmpty) {
+      unawaited(_rememberInvitation(invitationToken));
+    }
+  }
+
+  Future<void> _rememberInvitation(String token) async {
+    await PendingInvitationStore.save(token);
+    if (mounted) ref.invalidate(pendingInvitationTokenProvider);
   }
 
   @override

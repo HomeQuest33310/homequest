@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/links/invitation_link.dart';
+import '../../../core/links/pending_invitation_store.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../opening/presentation/show_kingdom_arrival.dart';
 import '../providers/family_invitations_provider.dart';
@@ -23,6 +24,17 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
   final _displayNameController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _localError;
+
+  @override
+  void initState() {
+    super.initState();
+    _rememberInvitation();
+  }
+
+  Future<void> _rememberInvitation() async {
+    await PendingInvitationStore.save(widget.token);
+    if (mounted) ref.invalidate(pendingInvitationTokenProvider);
+  }
 
   @override
   void dispose() {
@@ -72,6 +84,11 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
                         ),
                         child: const Text('Continuer'),
                       ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _ignoreInvitation,
+                        child: const Text('Ignorer cette invitation'),
+                      ),
                     ] else ...[
                       Text(
                         'Connecté avec ${user.email ?? 'votre compte'}',
@@ -109,6 +126,11 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
                               )
                             : const Icon(Icons.login),
                         label: const Text('Finaliser et rejoindre'),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: state.isLoading ? null : _ignoreInvitation,
+                        child: const Text('Ignorer cette invitation'),
                       ),
                       if (_localError != null || state.hasError) ...[
                         const SizedBox(height: 12),
@@ -165,6 +187,9 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
           .accept(widget.token);
       if (!mounted) return;
       if (success) {
+        await PendingInvitationStore.clear();
+        if (!mounted) return;
+        ref.invalidate(pendingInvitationTokenProvider);
         if (invitation != null) {
           await showKingdomArrivalIfNeeded(
             context: context,
@@ -178,5 +203,11 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
     } catch (error) {
       if (mounted) setState(() => _localError = 'Erreur : $error');
     }
+  }
+
+  Future<void> _ignoreInvitation() async {
+    await PendingInvitationStore.clear();
+    ref.invalidate(pendingInvitationTokenProvider);
+    if (mounted) context.go('/');
   }
 }
