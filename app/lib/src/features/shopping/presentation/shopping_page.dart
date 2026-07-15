@@ -48,6 +48,7 @@ class ShoppingPage extends ConsumerWidget {
               kingdoms: kingdoms.valueOrNull ?? const [],
               currentKingdom: currentKingdom,
               onChanged: (kingdomId) async {
+                if (kingdomId == null) return;
                 await ref
                     .read(selectedKingdomIdProvider.notifier)
                     .select(kingdomId);
