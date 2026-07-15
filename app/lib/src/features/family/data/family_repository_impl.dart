@@ -65,27 +65,56 @@ class SupabaseFamilyRepository implements FamilyRepository {
   }
 
   @override
-  Future<List<FamilyMember>> getMembers(String familyId) async {
-    final data = await _client.from('family_members').select('''
-          id,
-          user_id,
+  Future<Family?> getFamilyById(String familyId) async {
+    final data = await _client
+        .from('families')
+        .select()
+        .eq('id', familyId)
+        .maybeSingle();
+
+    if (data == null) return null;
+    return Family.fromMap(Map<String, dynamic>.from(data));
+  }
+
+  @override
+  Future<List<FamilyMember>> getMembers(String kingdomId) async {
+    final data = await _client.from('kingdom_members').select('''
           role,
-          level,
-          xp,
-          gold,
-          membership_scope,
-          domain_id,
           expires_at,
           is_active,
-          profile:profiles!family_members_user_id_fkey(
+          member:family_members!kingdom_members_member_id_fkey!inner(
             id,
-            display_name,
-            avatar_key
+            user_id,
+            level,
+            xp,
+            gold,
+            is_active,
+            profile:profiles!family_members_user_id_fkey(
+              id,
+              display_name,
+              avatar_key
+            )
           )
-        ''').eq('family_id', familyId).eq('is_active', true).order('joined_at');
+        ''')
+        .eq('kingdom_id', kingdomId)
+        .eq('is_active', true)
+        .order('joined_at');
 
-    return (data as List).map((item) {
-      final memberData = Map<String, dynamic>.from(item as Map);
+    return (data as List).where((item) {
+      final membership = Map<String, dynamic>.from(item as Map);
+      final expiresAt = membership['expires_at'] as String?;
+      if (expiresAt != null &&
+          !DateTime.parse(expiresAt).isAfter(DateTime.now())) {
+        return false;
+      }
+      final member = Map<String, dynamic>.from(membership['member'] as Map);
+      return member['is_active'] == true;
+    }).map((item) {
+      final membershipData = Map<String, dynamic>.from(item as Map);
+      final memberData = Map<String, dynamic>.from(
+        membershipData['member'] as Map,
+      );
+      memberData['role'] = membershipData['role'];
       final profileData = Map<String, dynamic>.from(
         memberData['profile'] as Map,
       );

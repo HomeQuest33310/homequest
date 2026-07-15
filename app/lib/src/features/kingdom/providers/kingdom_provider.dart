@@ -1,9 +1,41 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../domain/kingdom.dart';
 
-final selectedKingdomIdProvider = StateProvider<String?>((ref) => null);
+final selectedKingdomIdProvider =
+    StateNotifierProvider<SelectedKingdomController, String?>((ref) {
+  final controller = SelectedKingdomController();
+  unawaited(controller.restore());
+  return controller;
+});
+
+class SelectedKingdomController extends StateNotifier<String?> {
+  SelectedKingdomController() : super(null);
+
+  static const _preferenceKey = 'homequest.selected_kingdom_id';
+
+  Future<void> restore() async {
+    final preferences = await SharedPreferences.getInstance();
+    state = preferences.getString(_preferenceKey);
+  }
+
+  Future<void> select(String kingdomId) async {
+    if (state == kingdomId) return;
+    state = kingdomId;
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_preferenceKey, kingdomId);
+  }
+
+  Future<void> clear() async {
+    state = null;
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_preferenceKey);
+  }
+}
 
 final availableKingdomsProvider = FutureProvider<List<Kingdom>>((ref) async {
   final user = ref.watch(currentUserProvider);
@@ -33,16 +65,23 @@ final availableKingdomsProvider = FutureProvider<List<Kingdom>>((ref) async {
       .map((row) => Map<String, dynamic>.from(row as Map))
       .where((row) => row['kingdom'] != null)
       .where((row) {
-    final kingdom = Map<String, dynamic>.from(row['kingdom'] as Map);
-    return kingdom['archived_at'] == null;
-  }).map((row) {
-    final kingdom = Map<String, dynamic>.from(row['kingdom'] as Map);
-    kingdom['membership_role'] = row['role'];
-    kingdom['membership_scope'] = row['membership_scope'];
-    kingdom['membership_domain_id'] = row['domain_id'];
-    kingdom['membership_expires_at'] = row['expires_at'];
-    return Kingdom.fromMap(kingdom);
-  }).toList()
+        final expiresAt = row['expires_at'] as String?;
+        return expiresAt == null ||
+            DateTime.parse(expiresAt).isAfter(DateTime.now());
+      })
+      .where((row) {
+        final kingdom = Map<String, dynamic>.from(row['kingdom'] as Map);
+        return kingdom['archived_at'] == null;
+      })
+      .map((row) {
+        final kingdom = Map<String, dynamic>.from(row['kingdom'] as Map);
+        kingdom['membership_role'] = row['role'];
+        kingdom['membership_scope'] = row['membership_scope'];
+        kingdom['membership_domain_id'] = row['domain_id'];
+        kingdom['membership_expires_at'] = row['expires_at'];
+        return Kingdom.fromMap(kingdom);
+      })
+      .toList()
     ..sort((left, right) {
       if (left.isPrimary != right.isPrimary) return left.isPrimary ? -1 : 1;
       return left.name.compareTo(right.name);

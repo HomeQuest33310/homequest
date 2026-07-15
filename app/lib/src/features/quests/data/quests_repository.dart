@@ -1,7 +1,7 @@
 import '../domain/quest.dart';
 
 abstract class QuestsRepository {
-  Future<List<Quest>> listQuests(String familyId);
+  Future<List<Quest>> listQuests(String kingdomId);
 
   Future<Quest> createQuest({
     required String familyId,

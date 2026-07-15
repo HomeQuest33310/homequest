@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../family/providers/family_provider.dart';
+import '../../kingdom/providers/kingdom_provider.dart';
 import '../data/boss_repository.dart';
 import '../data/boss_repository_impl.dart';
 import '../domain/boss.dart';
@@ -12,26 +13,26 @@ final bossRepositoryProvider = Provider<BossRepository>((ref) {
 });
 
 final currentFamilyBossesProvider = FutureProvider<List<Boss>>((ref) async {
-  final family = await ref.watch(currentFamilyProvider.future);
-  if (family == null) return const [];
-  return ref.watch(bossRepositoryProvider).listBosses(family.id);
+  final kingdom = await ref.watch(currentKingdomProvider.future);
+  if (kingdom == null) return const [];
+  return ref.watch(bossRepositoryProvider).listBosses(kingdom.id);
 });
 
 final familyBossesRealtimeProvider = Provider.autoDispose<void>((ref) {
-  final family = ref.watch(currentFamilyProvider).valueOrNull;
-  if (family == null) return;
+  final kingdom = ref.watch(currentKingdomProvider).valueOrNull;
+  if (kingdom == null) return;
 
   final client = ref.watch(supabaseProvider);
   final channel = client
-      .channel('family-bosses:${family.id}')
+      .channel('kingdom-bosses:${kingdom.id}')
       .onPostgresChanges(
         event: PostgresChangeEvent.all,
         schema: 'public',
         table: 'bosses',
         filter: PostgresChangeFilter(
           type: PostgresChangeFilterType.eq,
-          column: 'family_id',
-          value: family.id,
+          column: 'kingdom_id',
+          value: kingdom.id,
         ),
         callback: (_) {
           ref.invalidate(currentFamilyBossesProvider);
@@ -69,11 +70,13 @@ class BossController extends StateNotifier<AsyncValue<void>> {
     required bool replaceActive,
   }) async {
     final family = await _ref.read(currentFamilyProvider.future);
-    if (family == null) return false;
+    final kingdom = await _ref.read(currentKingdomProvider.future);
+    if (family == null || kingdom == null) return false;
     state = const AsyncLoading();
     try {
       await _ref.read(bossRepositoryProvider).createBoss(
             familyId: family.id,
+            kingdomId: kingdom.id,
             name: name,
             emoji: emoji,
             element: element,

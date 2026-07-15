@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../chronicles/providers/chronicles_provider.dart';
 import '../../family/providers/family_provider.dart';
+import '../../kingdom/providers/kingdom_provider.dart';
 import '../data/quests_repository.dart';
 import '../data/quests_repository_impl.dart';
 import '../domain/quest.dart';
@@ -12,10 +13,10 @@ final questsRepositoryProvider = Provider<QuestsRepository>((ref) {
 });
 
 final currentFamilyQuestsProvider = FutureProvider<List<Quest>>((ref) async {
-  final family = await ref.watch(currentFamilyProvider.future);
-  if (family == null) return const [];
+  final kingdom = await ref.watch(currentKingdomProvider.future);
+  if (kingdom == null) return const [];
 
-  return ref.watch(questsRepositoryProvider).listQuests(family.id);
+  return ref.watch(questsRepositoryProvider).listQuests(kingdom.id);
 });
 
 final createQuestControllerProvider =

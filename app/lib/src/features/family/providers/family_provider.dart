@@ -15,7 +15,9 @@ final familyRepositoryProvider = Provider<FamilyRepository>((ref) {
 final currentFamilyProvider = FutureProvider<domain.Family?>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
-  return ref.watch(familyRepositoryProvider).getCurrentUserFamily(user.id);
+  final kingdom = await ref.watch(currentKingdomProvider.future);
+  if (kingdom == null) return null;
+  return ref.watch(familyRepositoryProvider).getFamilyById(kingdom.familyId);
 });
 
 final createFamilyControllerProvider =

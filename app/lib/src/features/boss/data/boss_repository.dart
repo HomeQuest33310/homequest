@@ -1,10 +1,11 @@
 import '../domain/boss.dart';
 
 abstract class BossRepository {
-  Future<List<Boss>> listBosses(String familyId);
+  Future<List<Boss>> listBosses(String kingdomId);
 
   Future<Boss> createBoss({
     required String familyId,
+    required String kingdomId,
     required String name,
     required String emoji,
     required String element,

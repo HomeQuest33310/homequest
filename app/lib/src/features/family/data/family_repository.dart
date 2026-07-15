@@ -12,7 +12,9 @@ abstract class FamilyRepository {
 
   Future<Family?> getCurrentUserFamily(String userId);
 
-  Future<List<FamilyMember>> getMembers(String familyId);
+  Future<Family?> getFamilyById(String familyId);
+
+  Future<List<FamilyMember>> getMembers(String kingdomId);
 
   Future<FamilyMember> changeMemberRole({
     required String memberId,

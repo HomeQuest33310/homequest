@@ -9,10 +9,10 @@ class SupabaseQuestsRepository implements QuestsRepository {
   final SupabaseClient _client;
 
   @override
-  Future<List<Quest>> listQuests(String familyId) async {
+  Future<List<Quest>> listQuests(String kingdomId) async {
     final data = await _client.rpc(
-      'list_available_quests',
-      params: {'p_family_id': familyId},
+      'list_available_kingdom_quests',
+      params: {'p_kingdom_id': kingdomId},
     );
 
     return (data as List)

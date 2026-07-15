@@ -9,10 +9,10 @@ class SupabaseBossRepository implements BossRepository {
   final SupabaseClient _client;
 
   @override
-  Future<List<Boss>> listBosses(String familyId) async {
+  Future<List<Boss>> listBosses(String kingdomId) async {
     final data = await _client.rpc(
-      'list_family_bosses',
-      params: {'p_family_id': familyId},
+      'list_kingdom_bosses',
+      params: {'p_kingdom_id': kingdomId},
     );
     return (data as List)
         .map((item) => Boss.fromMap(Map<String, dynamic>.from(item as Map)))
@@ -22,6 +22,7 @@ class SupabaseBossRepository implements BossRepository {
   @override
   Future<Boss> createBoss({
     required String familyId,
+    required String kingdomId,
     required String name,
     required String emoji,
     required String element,
@@ -36,9 +37,10 @@ class SupabaseBossRepository implements BossRepository {
     required bool replaceActive,
   }) async {
     final data = await _client.rpc(
-      'create_family_boss',
+      'create_kingdom_boss',
       params: {
         'p_family_id': familyId,
+        'p_kingdom_id': kingdomId,
         'p_name': name,
         'p_emoji': emoji,
         'p_element': element,

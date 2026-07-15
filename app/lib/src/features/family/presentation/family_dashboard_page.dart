@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../celebrations/presentation/kingdom_celebration_listener.dart';
 import '../../boss/domain/boss.dart';
 import '../../boss/providers/boss_provider.dart';
+import '../../kingdom/domain/kingdom.dart';
+import '../../kingdom/providers/kingdom_provider.dart';
 import '../../quests/domain/quest.dart';
 import '../../notifications/providers/notifications_provider.dart';
 import '../../quests/presentation/dialogs/quest_form_dialog.dart';
@@ -32,11 +34,16 @@ class FamilyDashboardPage extends ConsumerWidget {
     final wishesAsync = ref.watch(currentRewardSuggestionsProvider);
     final bossesAsync = ref.watch(currentFamilyBossesProvider);
     final currentMember = ref.watch(currentFamilyMemberProvider).asData?.value;
-    final canManageQuests = currentMember?.role == 'guardian';
+    final kingdoms = ref.watch(availableKingdomsProvider).valueOrNull ??
+        const <Kingdom>[];
+    final currentKingdom = ref.watch(currentKingdomProvider).valueOrNull;
+    final canManageQuests = currentKingdom?.membershipRole == 'guardian' &&
+        currentMember?.isActive == true;
     final unreadNotifications = ref.watch(unreadGuardianNotificationsProvider);
 
     Future<void> refreshAll() async {
       ref.invalidate(currentFamilyProvider);
+      ref.invalidate(availableKingdomsProvider);
       ref.invalidate(currentFamilyQuestsProvider);
       ref.invalidate(currentFamilyBossesProvider);
       ref.invalidate(currentRewardSuggestionsProvider);
@@ -147,6 +154,13 @@ class FamilyDashboardPage extends ConsumerWidget {
               children: [
                 _HeroHeader(
                   family: family,
+                  kingdom: currentKingdom,
+                  availableKingdoms: kingdoms,
+                  onSelectKingdom: (kingdomId) async {
+                    await ref
+                        .read(selectedKingdomIdProvider.notifier)
+                        .select(kingdomId);
+                  },
                   onOpenKingdom: () => context.go('/kingdom-progress'),
                   onOpenLegend: () => context.go('/kingdom-legend'),
                 ),
@@ -467,11 +481,17 @@ class _ActiveBossPanel extends StatelessWidget {
 class _HeroHeader extends StatelessWidget {
   const _HeroHeader({
     required this.family,
+    required this.kingdom,
+    required this.availableKingdoms,
+    required this.onSelectKingdom,
     required this.onOpenKingdom,
     required this.onOpenLegend,
   });
 
   final domain.Family family;
+  final Kingdom? kingdom;
+  final List<Kingdom> availableKingdoms;
+  final ValueChanged<String> onSelectKingdom;
   final VoidCallback onOpenKingdom;
   final VoidCallback onOpenLegend;
 
@@ -505,7 +525,7 @@ class _HeroHeader extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        family.kingdomName,
+                        kingdom?.name ?? family.kingdomName,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: theme.colorScheme.onPrimaryContainer,
@@ -521,6 +541,34 @@ class _HeroHeader extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (availableKingdoms.length > 1)
+                  PopupMenuButton<String>(
+                    tooltip: 'Changer de Royaume',
+                    initialValue: kingdom?.id,
+                    onSelected: onSelectKingdom,
+                    icon: Icon(
+                      Icons.swap_horiz,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                    itemBuilder: (context) => [
+                      for (final option in availableKingdoms)
+                        PopupMenuItem<String>(
+                          value: option.id,
+                          child: Row(
+                            children: [
+                              Text(
+                                option.icon,
+                                style: const TextStyle(fontSize: 22),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(child: Text(option.name)),
+                              if (option.id == kingdom?.id)
+                                const Icon(Icons.check, size: 18),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                 IconButton.filledTonal(
                   tooltip: 'Ouvrir le Carnet des légendes',
                   onPressed: onOpenLegend,

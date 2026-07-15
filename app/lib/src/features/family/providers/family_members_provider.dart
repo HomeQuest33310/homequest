@@ -1,18 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../kingdom/providers/kingdom_provider.dart';
 import '../domain/family_member.dart';
 import 'family_provider.dart';
 
 final currentFamilyMembersProvider =
     FutureProvider<List<FamilyMember>>((ref) async {
-  final family = await ref.watch(currentFamilyProvider.future);
+  final kingdom = await ref.watch(currentKingdomProvider.future);
 
-  if (family == null) {
+  if (kingdom == null) {
     return const [];
   }
 
-  return ref.watch(familyRepositoryProvider).getMembers(family.id);
+  return ref.watch(familyRepositoryProvider).getMembers(kingdom.id);
 });
 
 final currentFamilyMemberProvider = FutureProvider<FamilyMember?>((ref) async {
