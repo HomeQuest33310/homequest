@@ -111,8 +111,26 @@
     (() => {
       const query = window.location.search;
       const hash = window.location.hash;
-      const hasInvitation = new URLSearchParams(query).has('invite');
+      const queryParameters = new URLSearchParams(query);
+      const invitationToken = queryParameters.get('invite');
+      const hasInvitation = invitationToken !== null && invitationToken.length > 0;
       const hasRouteHash = hash.length > 1;
+
+      // Supabase invitation emails return with the authenticated session in
+      // the URL fragment. Flutter's hash router cannot read the query string
+      // in that situation, so persist the HomeQuest token before Flutter and
+      // Supabase consume the URL. shared_preferences_web stores JSON values
+      // with the `flutter.` prefix.
+      if (hasInvitation) {
+        try {
+          window.localStorage.setItem(
+            'flutter.homequest_pending_invitation_token_v1',
+            JSON.stringify(invitationToken),
+          );
+        } catch (_) {
+          // Flutter can still use the query parameter when storage is blocked.
+        }
+      }
 
       if (hasInvitation && !hasRouteHash) {
         window.history.replaceState(

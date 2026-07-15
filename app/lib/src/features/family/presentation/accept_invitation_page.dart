@@ -47,6 +47,7 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final state = ref.watch(familyInvitationsControllerProvider);
+    final requiresInitialPassword = _requiresInitialPassword(user);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Rejoindre le Royaume')),
@@ -106,12 +107,14 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
                       TextField(
                         controller: _passwordController,
                         obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText:
-                              'Nouveau mot de passe (première invitation)',
-                          helperText:
-                              'Laissez vide si votre compte a déjà un mot de passe.',
-                          prefixIcon: Icon(Icons.lock_outline),
+                        decoration: InputDecoration(
+                          labelText: requiresInitialPassword
+                              ? 'Créez votre mot de passe'
+                              : 'Nouveau mot de passe (facultatif)',
+                          helperText: requiresInitialPassword
+                              ? 'Au moins 8 caractères pour protéger votre aventurier.'
+                              : 'Laissez vide pour conserver votre mot de passe actuel.',
+                          prefixIcon: const Icon(Icons.lock_outline),
                         ),
                       ),
                       const SizedBox(height: 18),
@@ -157,6 +160,14 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
   Future<void> _accept() async {
     setState(() => _localError = null);
     final password = _passwordController.text;
+    final user = ref.read(currentUserProvider);
+    if (_requiresInitialPassword(user) && password.isEmpty) {
+      setState(() {
+        _localError =
+            'Créez un mot de passe avant de rejoindre le Royaume.';
+      });
+      return;
+    }
     if (password.isNotEmpty && password.length < 8) {
       setState(() {
         _localError = 'Le mot de passe doit contenir au moins 8 caractères.';
@@ -209,5 +220,10 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
     await PendingInvitationStore.clear();
     ref.invalidate(pendingInvitationTokenProvider);
     if (mounted) context.go('/');
+  }
+
+  bool _requiresInitialPassword(User? user) {
+    final invitationToken = user?.userMetadata?['invitation_token']?.toString();
+    return invitationToken != null && invitationToken == widget.token;
   }
 }
