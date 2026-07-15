@@ -5,6 +5,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/links/invitation_link.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../opening/data/opening_preferences.dart';
+import '../../opening/domain/opening_experience.dart';
+import '../../opening/presentation/opening_page.dart';
 import '../providers/family_invitations_provider.dart';
 
 class AcceptInvitationPage extends ConsumerStatefulWidget {
@@ -159,11 +162,39 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
           .read(familyInvitationsControllerProvider.notifier)
           .accept(widget.token);
       if (!mounted) return;
-      if (success) context.go('/');
+      if (success) {
+        await _showKingdomArrivalIfNeeded();
+        if (mounted) context.go('/');
+      }
     } on AuthException catch (error) {
       if (mounted) setState(() => _localError = error.message);
     } catch (error) {
       if (mounted) setState(() => _localError = 'Erreur : $error');
+    }
+  }
+
+  Future<void> _showKingdomArrivalIfNeeded() async {
+    final shouldShow =
+        await OpeningPreferences.shouldShowKingdomArrival(widget.token);
+    if (!mounted || !shouldShow) return;
+
+    final completed = await Navigator.of(context).push<bool>(
+      PageRouteBuilder<bool>(
+        opaque: true,
+        transitionDuration: const Duration(milliseconds: 900),
+        reverseTransitionDuration: const Duration(milliseconds: 500),
+        pageBuilder: (routeContext, animation, secondaryAnimation) =>
+            OpeningPage(
+          experience: OpeningExperience.kingdomArrival,
+          onFinished: () => Navigator.of(routeContext).pop(true),
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+
+    if (completed == true) {
+      await OpeningPreferences.markKingdomArrivalSeen(widget.token);
     }
   }
 }

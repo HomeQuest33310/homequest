@@ -6,6 +6,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/family/presentation/create_family_page.dart';
 import '../../features/family/presentation/family_dashboard_page.dart';
 import '../../features/family/providers/family_provider.dart';
+import '../../features/opening/presentation/first_launch_gate.dart';
 
 class HomeGate extends ConsumerWidget {
   const HomeGate({super.key});
@@ -16,7 +17,7 @@ class HomeGate extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
 
     if (user == null) {
-      return const AuthPage();
+      return const FirstLaunchGate(child: AuthPage());
     }
 
     final familyAsync = ref.watch(currentFamilyProvider);

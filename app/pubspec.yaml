@@ -54,6 +54,7 @@ dependencies:
   # UI/UX
   google_fonts: ^6.1.0
   lottie: ^2.7.0
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +79,8 @@ flutter:
   assets:
     - .env
     - assets/content/quest_suggestions.md
+    - assets/images/opening_gateway.png
+    - assets/audio/opening_theme.wav
 
   # TODO: Add assets later when directories exist
   # assets:
