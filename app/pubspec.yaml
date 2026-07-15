@@ -81,6 +81,7 @@ flutter:
     - assets/content/quest_suggestions.md
     - assets/images/opening_gateway.png
     - assets/audio/opening_theme.wav
+    - assets/audio/celebration_fanfare.wav
 
   # TODO: Add assets later when directories exist
   # assets:

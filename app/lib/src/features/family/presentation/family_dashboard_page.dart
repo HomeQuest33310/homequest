@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../chronicles/domain/chronicle.dart';
 import '../../chronicles/providers/chronicles_provider.dart';
+import '../../celebrations/presentation/kingdom_celebration_listener.dart';
 import '../../boss/domain/boss.dart';
 import '../../boss/providers/boss_provider.dart';
 import '../../domains/domain/domain.dart';
@@ -55,7 +56,12 @@ class FamilyDashboardPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('HomeQuest'),
+        title: const Stack(
+          children: [
+            Text('HomeQuest'),
+            KingdomCelebrationListener(),
+          ],
+        ),
         actions: [
           IconButton(
             tooltip: 'Rafraîchir',
