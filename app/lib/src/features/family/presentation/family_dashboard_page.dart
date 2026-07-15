@@ -10,7 +10,9 @@ import '../../kingdom/providers/kingdom_provider.dart';
 import '../../quests/domain/quest.dart';
 import '../../notifications/providers/notifications_provider.dart';
 import '../../quests/presentation/dialogs/quest_form_dialog.dart';
+import '../../quests/presentation/dialogs/voluntary_quest_request_dialog.dart';
 import '../../quests/providers/quests_provider.dart';
+import '../../quests/providers/voluntary_quest_requests_provider.dart';
 import '../../rewards/domain/reward_suggestion.dart';
 import '../../rewards/providers/reward_suggestions_provider.dart';
 import '../domain/family.dart' as domain;
@@ -34,12 +36,18 @@ class FamilyDashboardPage extends ConsumerWidget {
     final wishesAsync = ref.watch(currentRewardSuggestionsProvider);
     final bossesAsync = ref.watch(currentFamilyBossesProvider);
     final currentMember = ref.watch(currentFamilyMemberProvider).asData?.value;
-    final kingdoms = ref.watch(availableKingdomsProvider).valueOrNull ??
-        const <Kingdom>[];
+    final kingdoms =
+        ref.watch(availableKingdomsProvider).valueOrNull ?? const <Kingdom>[];
     final currentKingdom = ref.watch(currentKingdomProvider).valueOrNull;
     final canManageQuests = currentKingdom?.membershipRole == 'guardian' &&
         currentMember?.isActive == true;
+    final canProposeVoluntaryQuest =
+        (currentKingdom?.membershipRole == 'adventurer' ||
+                currentKingdom?.membershipRole == 'mercenary') &&
+            currentMember?.isActive == true;
     final unreadNotifications = ref.watch(unreadGuardianNotificationsProvider);
+    final pendingInitiatives =
+        ref.watch(pendingVoluntaryQuestRequestCountProvider);
 
     Future<void> refreshAll() async {
       ref.invalidate(currentFamilyProvider);
@@ -88,6 +96,17 @@ class FamilyDashboardPage extends ConsumerWidget {
             tooltip: 'Mes missions',
             onPressed: () => context.go('/missions'),
             icon: const Icon(Icons.assignment_turned_in_outlined),
+          ),
+          IconButton(
+            tooltip: canManageQuests
+                ? 'Initiatives à examiner'
+                : 'Mes initiatives héroïques',
+            onPressed: () => context.go('/quest-requests'),
+            icon: Badge(
+              isLabelVisible: pendingInitiatives > 0,
+              label: Text('$pendingInitiatives'),
+              child: const Icon(Icons.volunteer_activism_outlined),
+            ),
           ),
           IconButton(
             tooltip: 'Mon profil d’aventurier',
@@ -179,7 +198,19 @@ class FamilyDashboardPage extends ConsumerWidget {
                           icon: const Icon(Icons.add),
                           label: const Text('Créer une quête'),
                         )
-                      : null,
+                      : canProposeVoluntaryQuest
+                          ? FilledButton.tonalIcon(
+                              onPressed: () => showDialog<void>(
+                                context: context,
+                                builder: (_) =>
+                                    const VoluntaryQuestRequestDialog(),
+                              ),
+                              icon: const Icon(Icons.volunteer_activism),
+                              label: const Text(
+                                'Je voudrais accomplir une quête',
+                              ),
+                            )
+                          : null,
                   child: questsAsync.when(
                     loading: () => const LinearProgressIndicator(),
                     error: (error, stackTrace) => _InlineError(error: error),

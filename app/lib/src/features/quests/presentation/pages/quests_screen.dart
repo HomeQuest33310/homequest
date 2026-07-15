@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../family/providers/family_members_provider.dart';
+import '../../../kingdom/providers/kingdom_provider.dart';
 import '../../providers/quests_provider.dart';
 import '../dialogs/assign_quest_dialog.dart';
 import '../dialogs/quest_form_dialog.dart';
+import '../dialogs/voluntary_quest_request_dialog.dart';
 import '../widgets/quest_card.dart';
 
 class QuestsScreen extends ConsumerWidget {
@@ -14,11 +17,22 @@ class QuestsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final questsAsync = ref.watch(currentFamilyQuestsProvider);
     final currentMember = ref.watch(currentFamilyMemberProvider).asData?.value;
-    final canManage = currentMember?.role == 'guardian';
+    final kingdom = ref.watch(currentKingdomProvider).valueOrNull;
+    final role = kingdom?.membershipRole ?? currentMember?.role;
+    final canManage = role == 'guardian' && currentMember?.isActive == true;
+    final canPropose = (role == 'adventurer' || role == 'mercenary') &&
+        currentMember?.isActive == true;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Grand Registre des Missions'),
+        actions: [
+          IconButton(
+            tooltip: canManage ? 'Initiatives à examiner' : 'Mes initiatives',
+            onPressed: () => context.go('/quest-requests'),
+            icon: const Icon(Icons.volunteer_activism_outlined),
+          ),
+        ],
       ),
       body: questsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -96,7 +110,16 @@ class QuestsScreen extends ConsumerWidget {
               icon: const Icon(Icons.add),
               label: const Text('Nouvelle mission'),
             )
-          : null,
+          : canPropose
+              ? FloatingActionButton.extended(
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => const VoluntaryQuestRequestDialog(),
+                  ),
+                  icon: const Icon(Icons.volunteer_activism),
+                  label: const Text('Je voudrais accomplir une quête'),
+                )
+              : null,
     );
   }
 }

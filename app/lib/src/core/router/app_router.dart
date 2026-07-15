@@ -17,6 +17,7 @@ import '../../features/chronicles/presentation/kingdom_legend_page.dart';
 import '../../features/kingdom/presentation/kingdom_progress_page.dart';
 import '../../features/shopping/presentation/shopping_page.dart';
 import '../../features/settings/presentation/appearance_settings_page.dart';
+import '../../features/quests/presentation/pages/voluntary_quest_requests_page.dart';
 import '../../features/opening/presentation/first_launch_gate.dart';
 import 'home_gate.dart';
 
@@ -57,6 +58,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/missions',
         builder: (context, state) => const MyMissionsPage(),
+      ),
+      GoRoute(
+        path: '/quest-requests',
+        builder: (context, state) => const VoluntaryQuestRequestsPage(),
       ),
       GoRoute(
         path: '/validations',
