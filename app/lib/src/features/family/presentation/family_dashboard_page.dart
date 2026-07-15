@@ -2,13 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../chronicles/domain/chronicle.dart';
-import '../../chronicles/providers/chronicles_provider.dart';
 import '../../celebrations/presentation/kingdom_celebration_listener.dart';
 import '../../boss/domain/boss.dart';
 import '../../boss/providers/boss_provider.dart';
-import '../../domains/domain/domain.dart';
-import '../../domains/providers/domains_provider.dart';
 import '../../quests/domain/quest.dart';
 import '../../notifications/providers/notifications_provider.dart';
 import '../../quests/presentation/dialogs/quest_form_dialog.dart';
@@ -18,7 +14,6 @@ import '../../rewards/providers/reward_suggestions_provider.dart';
 import '../domain/family.dart' as domain;
 import '../providers/family_members_provider.dart';
 import '../providers/family_provider.dart';
-import '../providers/family_stats_provider.dart';
 import '../../quests/presentation/widgets/quest_card.dart';
 import '../../quests/presentation/dialogs/assign_quest_dialog.dart';
 import 'package:flutter/foundation.dart';
@@ -33,9 +28,6 @@ class FamilyDashboardPage extends ConsumerWidget {
     ref.watch(familyBossesRealtimeProvider);
 
     final familyAsync = ref.watch(currentFamilyProvider);
-    final domainsAsync = ref.watch(currentFamilyDomainsProvider);
-    final chroniclesAsync = ref.watch(recentChroniclesProvider);
-    final statsAsync = ref.watch(currentFamilyStatsProvider);
     final questsAsync = ref.watch(currentFamilyQuestsProvider);
     final wishesAsync = ref.watch(currentRewardSuggestionsProvider);
     final bossesAsync = ref.watch(currentFamilyBossesProvider);
@@ -45,9 +37,6 @@ class FamilyDashboardPage extends ConsumerWidget {
 
     Future<void> refreshAll() async {
       ref.invalidate(currentFamilyProvider);
-      ref.invalidate(currentFamilyDomainsProvider);
-      ref.invalidate(recentChroniclesProvider);
-      ref.invalidate(currentFamilyStatsProvider);
       ref.invalidate(currentFamilyQuestsProvider);
       ref.invalidate(currentFamilyBossesProvider);
       ref.invalidate(currentRewardSuggestionsProvider);
@@ -156,31 +145,9 @@ class FamilyDashboardPage extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                _HeroHeader(
-                  family: family,
-                  onTap: () => context.go('/kingdom-legend'),
-                ),
-                const SizedBox(height: 16),
-                statsAsync.when(
-                  loading: () => const _StatsSkeleton(),
-                  error: (error, stackTrace) => _SoftErrorCard(
-                    title: 'Statistiques indisponibles',
-                    error: error,
-                  ),
-                  data: (stats) => _StatsRow(stats: stats),
-                ),
-                const SizedBox(height: 16),
-                _KingdomChallenges(
-                  wishesAsync: wishesAsync,
-                  bossesAsync: bossesAsync,
-                  onOpenWishes: () => context.go('/reward-suggestions'),
-                  onOpenBosses: () => context.go('/bosses'),
-                ),
-                const SizedBox(height: 16),
                 _SectionCard(
-                  title: '📜 Registre des Quêtes',
-                  subtitle:
-                      'Transformez les tâches du quotidien en missions héroïques.',
+                  title: '📜 Quêtes en cours',
+                  subtitle: 'Les missions prioritaires de votre guilde.',
                   action: canManageQuests
                       ? FilledButton.icon(
                           onPressed: () async {
@@ -204,37 +171,17 @@ class FamilyDashboardPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _SectionCard(
-                  title: '📖 Chronique du Royaume',
-                  subtitle:
-                      'Les premiers souvenirs de votre aventure familiale.',
-                  action: TextButton.icon(
-                    onPressed: () => context.go('/kingdom-legend'),
-                    icon: const Icon(Icons.auto_stories),
-                    label: const Text('Ouvrir le carnet'),
-                  ),
-                  child: chroniclesAsync.when(
-                    loading: () => const LinearProgressIndicator(),
-                    error: (error, stackTrace) => _InlineError(error: error),
-                    data: (chronicles) =>
-                        _ChroniclesList(chronicles: chronicles),
-                  ),
+                _KingdomChallenges(
+                  wishesAsync: wishesAsync,
+                  bossesAsync: bossesAsync,
+                  onOpenWishes: () => context.go('/reward-suggestions'),
+                  onOpenBosses: () => context.go('/bosses'),
                 ),
                 const SizedBox(height: 16),
-                _SectionCard(
-                  title: '🌍 Domaines',
-                  subtitle: 'Les lieux où votre guilde vit ses aventures.',
-                  child: domainsAsync.when(
-                    loading: () => const LinearProgressIndicator(),
-                    error: (error, stackTrace) => _InlineError(error: error),
-                    data: (domains) => _DomainsList(domains: domains),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const _SectionCard(
-                  title: '⚔️ Prochaine étape',
-                  subtitle: 'Sprint 2.3',
-                  child: _NextStepPanel(),
+                _HeroHeader(
+                  family: family,
+                  onOpenKingdom: () => context.go('/kingdom-progress'),
+                  onOpenLegend: () => context.go('/kingdom-legend'),
                 ),
               ],
             ),
@@ -260,9 +207,9 @@ class _KingdomChallenges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wishes = _SectionCard(
-      title: '🎁 Souhaits du Royaume',
-      subtitle: 'Les récompenses collectives approuvées par les Gardiens.',
+    final rewards = _SectionCard(
+      title: '🎁 Récompenses du Royaume',
+      subtitle: 'Les objectifs collectifs approuvés par les Gardiens.',
       action: TextButton.icon(
         onPressed: onOpenWishes,
         icon: const Icon(Icons.open_in_new),
@@ -277,8 +224,8 @@ class _KingdomChallenges extends StatelessWidget {
       ),
     );
 
-    final boss = _SectionCard(
-      title: '🐉 Affrontement en cours',
+    final fights = _SectionCard(
+      title: '🐉 Affrontements en cours',
       subtitle: 'Chaque quête accomplie rapproche la guilde de la victoire.',
       action: TextButton.icon(
         onPressed: onOpenBosses,
@@ -292,27 +239,12 @@ class _KingdomChallenges extends StatelessWidget {
       ),
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 900) {
-          return Column(
-            children: [
-              wishes,
-              const SizedBox(height: 16),
-              boss,
-            ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: wishes),
-            const SizedBox(width: 16),
-            Expanded(child: boss),
-          ],
-        );
-      },
+    return Column(
+      children: [
+        fights,
+        const SizedBox(height: 16),
+        rewards,
+      ],
     );
   }
 }
@@ -533,10 +465,15 @@ class _ActiveBossPanel extends StatelessWidget {
 }
 
 class _HeroHeader extends StatelessWidget {
-  const _HeroHeader({required this.family, required this.onTap});
+  const _HeroHeader({
+    required this.family,
+    required this.onOpenKingdom,
+    required this.onOpenLegend,
+  });
 
   final domain.Family family;
-  final VoidCallback onTap;
+  final VoidCallback onOpenKingdom;
+  final VoidCallback onOpenLegend;
 
   @override
   Widget build(BuildContext context) {
@@ -557,160 +494,44 @@ class _HeroHeader extends StatelessWidget {
           ),
         ),
         child: InkWell(
-          onTap: onTap,
+          onTap: onOpenKingdom,
           borderRadius: BorderRadius.circular(28),
           child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '🏰 ${family.kingdomName}',
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        family.kingdomName,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: theme.colorScheme.onPrimaryContainer,
                         ),
                       ),
-                    ),
-                    Icon(
-                      Icons.menu_book_outlined,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Guilde familiale : ${family.name}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
+                      const SizedBox(height: 4),
+                      Text(
+                        'Guilde familiale : ${family.name}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Touchez le Royaume pour ouvrir son Carnet des légendes.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                IconButton.filledTonal(
+                  tooltip: 'Ouvrir le Carnet des légendes',
+                  onPressed: onOpenLegend,
+                  icon: Icon(
+                    Icons.menu_book_outlined,
                     color: theme.colorScheme.onPrimaryContainer,
                   ),
-                ),
-                const SizedBox(height: 20),
-                const Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _Badge(label: 'Livre des Chroniques ouvert'),
-                    _Badge(label: 'Premier Domaine fondé'),
-                    _Badge(label: 'Registre des Quêtes actif'),
-                  ],
                 ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Text(label, style: theme.textTheme.labelMedium),
-      ),
-    );
-  }
-}
-
-class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.stats});
-
-  final FamilyStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    final compact = MediaQuery.sizeOf(context).width < 720;
-    final cards = [
-      _StatCard(icon: '🧙', value: '${stats.memberCount}', label: 'Aventurier'),
-      _StatCard(icon: '🌍', value: '${stats.domainCount}', label: 'Domaine'),
-      _StatCard(
-          icon: '📜', value: '${stats.chronicleCount}', label: 'Chronique'),
-    ];
-
-    if (compact) {
-      return Column(
-        children: cards
-            .map((card) => Padding(
-                padding: const EdgeInsets.only(bottom: 10), child: card))
-            .toList(),
-      );
-    }
-
-    return Row(
-      children: cards
-          .map((card) => Expanded(
-              child: Padding(
-                  padding: const EdgeInsets.only(right: 10), child: card)))
-          .toList(),
-    );
-  }
-}
-
-class _StatsSkeleton extends StatelessWidget {
-  const _StatsSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Card(
-      child: Padding(
-        padding: EdgeInsets.all(20),
-        child: LinearProgressIndicator(),
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard(
-      {required this.icon, required this.value, required this.label});
-
-  final String icon;
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 28)),
-            const SizedBox(width: 14),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(value,
-                    style: theme.textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold)),
-                Text(label),
-              ],
-            ),
-          ],
         ),
       ),
     );
@@ -878,184 +699,6 @@ class _QuestsList extends ConsumerWidget {
   }
 }
 
-class _ChroniclesList extends StatelessWidget {
-  const _ChroniclesList({required this.chronicles});
-
-  final List<Chronicle> chronicles;
-
-  @override
-  Widget build(BuildContext context) {
-    if (chronicles.isEmpty) {
-      return const Column(
-        children: [
-          _ChronicleItem(
-              emoji: '✨',
-              title: 'Les Chroniques commencent',
-              body: 'Les premiers événements apparaîtront ici.'),
-          _ChronicleItem(
-              emoji: '⚔️',
-              title: 'Les premières quêtes arrivent bientôt',
-              body: 'Le registre des missions est maintenant ouvert.'),
-        ],
-      );
-    }
-
-    return Column(
-      children: chronicles
-          .map((chronicle) => _ChronicleItem(
-                emoji: _emojiForChronicleType(chronicle.type),
-                title: chronicle.title,
-                body: chronicle.body,
-              ))
-          .toList(),
-    );
-  }
-
-  String _emojiForChronicleType(String type) {
-    switch (type) {
-      case 'kingdom_created':
-        return '🏰';
-      case 'domain_created':
-        return '🏠';
-      case 'quest_created':
-        return '📜';
-      case 'quest_completed':
-        return '⚔️';
-      case 'boss_defeated':
-        return '🐉';
-      case 'level_up':
-        return '⭐';
-      case 'reward_claimed':
-        return '🎁';
-      case 'mercenary_joined':
-        return '🛡️';
-      default:
-        return '📜';
-    }
-  }
-}
-
-class _ChronicleItem extends StatelessWidget {
-  const _ChronicleItem({required this.emoji, required this.title, this.body});
-
-  final String emoji;
-  final String title;
-  final String? body;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 24)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-                if (body != null && body!.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(body!),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DomainsList extends StatelessWidget {
-  const _DomainsList({required this.domains});
-
-  final List<Domain> domains;
-
-  @override
-  Widget build(BuildContext context) {
-    if (domains.isEmpty) return const Text('Aucun domaine pour le moment.');
-    return Column(
-        children:
-            domains.map((domain) => _DomainTile(domain: domain)).toList());
-  }
-}
-
-class _DomainTile extends StatelessWidget {
-  const _DomainTile({required this.domain});
-
-  final Domain domain;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(child: Text(_emojiForDomain(domain.domainKind))),
-      title: Text(domain.name),
-      subtitle: Text(domain.isPrimary
-          ? 'Domaine principal'
-          : _labelForDomain(domain.domainKind)),
-      trailing: domain.isPrimary
-          ? const Icon(Icons.workspace_premium_outlined)
-          : const Icon(Icons.chevron_right),
-    );
-  }
-
-  String _emojiForDomain(String kind) {
-    switch (kind) {
-      case 'vacation':
-        return '🏖';
-      case 'grandparent':
-        return '👵';
-      case 'camp':
-        return '🏕';
-      case 'custom':
-        return '✨';
-      case 'home':
-      default:
-        return '🏠';
-    }
-  }
-
-  String _labelForDomain(String kind) {
-    switch (kind) {
-      case 'vacation':
-        return 'Maison de vacances';
-      case 'grandparent':
-        return 'Maison de grand-parent';
-      case 'camp':
-        return 'Camp ou lieu temporaire';
-      case 'custom':
-        return 'Domaine personnalisé';
-      case 'home':
-      default:
-        return 'Maison';
-    }
-  }
-}
-
-class _NextStepPanel extends StatelessWidget {
-  const _NextStepPanel();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Le registre des quêtes est ouvert.'),
-        SizedBox(height: 8),
-        Text(
-            'Prochain objectif : terminer une quête, gagner XP/or, puis alimenter les compétences.'),
-      ],
-    );
-  }
-}
-
 class _LoadingDashboard extends StatelessWidget {
   const _LoadingDashboard();
 
@@ -1117,22 +760,5 @@ class _InlineError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text('Erreur : $error');
-  }
-}
-
-class _SoftErrorCard extends StatelessWidget {
-  const _SoftErrorCard({required this.title, required this.error});
-
-  final String title;
-  final Object error;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text('$title : $error'),
-      ),
-    );
   }
 }

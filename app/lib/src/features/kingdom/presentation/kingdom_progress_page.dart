@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../domains/domain/domain.dart';
+import '../../domains/providers/domains_provider.dart';
 import '../../family/providers/family_provider.dart';
 import '../../family/providers/family_stats_provider.dart';
 import '../domain/kingdom_progress.dart';
@@ -17,6 +19,7 @@ class KingdomProgressPage extends ConsumerWidget {
     final family = ref.watch(currentFamilyProvider).asData?.value;
     final stats = ref.watch(currentFamilyStatsProvider);
     final resources = ref.watch(currentKingdomResourcesProvider);
+    final domains = ref.watch(currentFamilyDomainsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -25,7 +28,7 @@ class KingdomProgressPage extends ConsumerWidget {
           onPressed: () => context.go('/dashboard'),
           icon: const Icon(Icons.arrow_back),
         ),
-        title: const Text('Évolution du Royaume'),
+        title: const Text('Royaume'),
         actions: [
           IconButton(
             tooltip: 'Carnet des légendes',
@@ -46,9 +49,11 @@ class KingdomProgressPage extends ConsumerWidget {
             onRefresh: () async {
               ref.invalidate(currentFamilyStatsProvider);
               ref.invalidate(currentKingdomResourcesProvider);
+              ref.invalidate(currentFamilyDomainsProvider);
               await Future.wait([
                 ref.read(currentFamilyStatsProvider.future),
                 ref.read(currentKingdomResourcesProvider.future),
+                ref.read(currentFamilyDomainsProvider.future),
               ]);
             },
             child: ListView(
@@ -58,6 +63,18 @@ class KingdomProgressPage extends ConsumerWidget {
                   kingdomName: family?.kingdomName ?? 'Votre Royaume',
                   stats: value,
                   progress: progress,
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  child: ListTile(
+                    onTap: () => context.go('/kingdom-legend'),
+                    leading: const Icon(Icons.auto_stories, size: 30),
+                    title: const Text('Carnet des légendes'),
+                    subtitle: const Text(
+                      'Retrouvez toute l’histoire et les exploits du Royaume.',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 resources.when(
@@ -101,6 +118,8 @@ class KingdomProgressPage extends ConsumerWidget {
                     );
                   },
                 ),
+                const SizedBox(height: 28),
+                _DomainsSection(domains: domains),
                 const SizedBox(height: 24),
               ],
             ),
@@ -388,6 +407,123 @@ class _BuildingCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _DomainsSection extends StatelessWidget {
+  const _DomainsSection({required this.domains});
+
+  final AsyncValue<List<Domain>> domains;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.domain_outlined, size: 30),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Domaines du Royaume',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      const Text(
+                        'Les pièces, zones et grandes activités de votre foyer.',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            domains.when(
+              loading: () => const LinearProgressIndicator(),
+              error: (error, _) => Text(
+                'Impossible de charger les Domaines : $error',
+              ),
+              data: (items) {
+                if (items.isEmpty) {
+                  return const Text('Aucun Domaine pour le moment.');
+                }
+                return Column(
+                  children: [
+                    for (var index = 0; index < items.length; index++) ...[
+                      _DomainTile(domain: items[index]),
+                      if (index < items.length - 1) const Divider(height: 1),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DomainTile extends StatelessWidget {
+  const _DomainTile({required this.domain});
+
+  final Domain domain;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(child: Text(_emojiForDomain(domain.domainKind))),
+      title: Text(domain.name),
+      subtitle: Text(
+        domain.isPrimary
+            ? 'Domaine principal'
+            : _labelForDomain(domain.domainKind),
+      ),
+      trailing: domain.isPrimary
+          ? const Icon(Icons.workspace_premium_outlined)
+          : const Icon(Icons.chevron_right),
+    );
+  }
+
+  String _emojiForDomain(String kind) {
+    switch (kind) {
+      case 'vacation':
+        return '🏖️';
+      case 'grandparent':
+        return '👵';
+      case 'camp':
+        return '🏕️';
+      case 'custom':
+        return '✨';
+      case 'home':
+      default:
+        return '🏠';
+    }
+  }
+
+  String _labelForDomain(String kind) {
+    switch (kind) {
+      case 'vacation':
+        return 'Maison de vacances';
+      case 'grandparent':
+        return 'Maison de grand-parent';
+      case 'camp':
+        return 'Camp ou lieu temporaire';
+      case 'custom':
+        return 'Domaine personnalisé';
+      case 'home':
+      default:
+        return 'Maison';
+    }
   }
 }
 
