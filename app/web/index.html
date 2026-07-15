@@ -1,44 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
-
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="HomeQuest transforme les tâches du foyer en aventures coopératives.">
   <meta name="theme-color" content="#6B4EFF">
-
-  <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="HomeQuest">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>HomeQuest</title>
+  <link rel="icon" type="image/png" href="favicon.png">
   <link rel="manifest" href="manifest.json">
+  <title>HomeQuest</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: #171426;
+      color: #fff8ee;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #homequest-bootstrap {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      background:
+        radial-gradient(circle at 50% 35%, rgba(107, 78, 255, 0.32), transparent 34%),
+        linear-gradient(160deg, #211b38, #11101d 72%);
+      transition: opacity 240ms ease;
+    }
+    #homequest-bootstrap.is-hidden {
+      pointer-events: none;
+      opacity: 0;
+    }
+    .homequest-loader__crest {
+      font-size: 52px;
+      filter: drop-shadow(0 0 18px rgba(255, 215, 122, 0.45));
+    }
+    .homequest-loader__title {
+      margin: 14px 0 6px;
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .homequest-loader__message {
+      max-width: 340px;
+      margin: 0 auto;
+      color: #d9d3e8;
+      line-height: 1.5;
+    }
+    .homequest-loader__spinner {
+      width: 34px;
+      height: 34px;
+      margin: 22px auto 0;
+      border: 3px solid rgba(255, 255, 255, 0.18);
+      border-top-color: #ffd77a;
+      border-radius: 50%;
+      animation: homequest-spin 900ms linear infinite;
+    }
+    .homequest-loader__retry {
+      display: none;
+      margin: 20px auto 0;
+      padding: 11px 18px;
+      border: 0;
+      border-radius: 999px;
+      color: #171426;
+      background: #ffd77a;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    #homequest-bootstrap.has-error .homequest-loader__spinner {
+      display: none;
+    }
+    #homequest-bootstrap.has-error .homequest-loader__retry {
+      display: block;
+    }
+    @keyframes homequest-spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
+  <div id="homequest-bootstrap" role="status" aria-live="polite">
+    <div>
+      <div class="homequest-loader__crest" aria-hidden="true">&#x1F3F0;</div>
+      <h1 class="homequest-loader__title">HomeQuest</h1>
+      <p id="homequest-bootstrap-message" class="homequest-loader__message">
+        Les portes du Royaume s&rsquo;ouvrent&hellip;
+      </p>
+      <div class="homequest-loader__spinner" aria-hidden="true"></div>
+      <button
+        class="homequest-loader__retry"
+        type="button"
+        onclick="window.location.reload()"
+      >
+        R&eacute;essayer
+      </button>
+    </div>
+  </div>
   <script>
-    // Flutter Web uses hash-based routes in this project. Invitation links
-    // deliberately keep the token in the regular query string so the same
-    // HTTPS link can later be reused by Android App Links and iOS Universal
-    // Links. Before Flutter starts, move that query into the web route.
+    // Preserve invitation tokens while using hash-based Flutter routes.
     (() => {
       const query = window.location.search;
       const hash = window.location.hash;
@@ -54,14 +123,6 @@
       }
     })();
   </script>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
