@@ -21,9 +21,18 @@ class _AuthPageState extends ConsumerState<AuthPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _isSignUp = true;
+  late bool _isSignUp;
   bool _isLoading = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // An invitation is most often opened by an account that Supabase has
+    // already created or confirmed. Start on sign-in while keeping sign-up
+    // available for genuinely new adventurers.
+    _isSignUp = widget.invitationToken == null;
+  }
 
   @override
   void dispose() {
