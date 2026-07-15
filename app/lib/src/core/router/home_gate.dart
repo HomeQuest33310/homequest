@@ -7,7 +7,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/family/presentation/accept_invitation_page.dart';
 import '../../features/family/presentation/create_family_page.dart';
 import '../../features/family/presentation/family_dashboard_page.dart';
-import '../../features/family/providers/family_provider.dart';
+import '../../features/kingdom/providers/kingdom_provider.dart';
 import '../../features/opening/presentation/first_launch_gate.dart';
 
 class HomeGate extends ConsumerWidget {
@@ -35,17 +35,21 @@ class HomeGate extends ConsumerWidget {
       return AcceptInvitationPage(token: invitationToken);
     }
 
-    final familyAsync = ref.watch(currentFamilyProvider);
+    // The gate only decides whether the user owns at least one kingdom.
+    // It must not depend on the currently selected kingdom: changing kingdoms
+    // would otherwise alternate between this gate and the dashboard while the
+    // selected family's data is reloading.
+    final kingdomsAsync = ref.watch(availableKingdomsProvider);
 
-    return familyAsync.when(
+    return kingdomsAsync.when(
       loading: () => const _LoadingPage(message: 'Ouverture des Chroniques...'),
       error: (error, stackTrace) => _ErrorPage(
         message: 'Impossible de charger le royaume.',
         details: error.toString(),
-        onRetry: () => ref.invalidate(currentFamilyProvider),
+        onRetry: () => ref.invalidate(availableKingdomsProvider),
       ),
-      data: (family) {
-        if (family == null) {
+      data: (kingdoms) {
+        if (kingdoms.isEmpty) {
           return const CreateFamilyPage();
         }
         return const FamilyDashboardPage();
