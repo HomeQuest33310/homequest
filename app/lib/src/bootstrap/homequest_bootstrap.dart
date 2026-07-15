@@ -70,7 +70,9 @@ class _HomeQuestBootstrapState extends State<HomeQuestBootstrap> {
   }
 
   Future<void> _initializeServices() async {
-    await dotenv.load(fileName: '.env');
+    // Local development reads app/.env. Production builds receive the same
+    // public values through --dart-define, so the asset is optional at runtime.
+    await dotenv.load(fileName: '.env', isOptional: true);
 
     if (!Env.hasSupabaseConfig) {
       throw StateError(
