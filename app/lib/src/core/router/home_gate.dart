@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../links/pending_invitation_store.dart';
 import '../../features/auth/presentation/auth_page.dart';
+import '../../features/auth/presentation/reset_password_page.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/family/presentation/accept_invitation_page.dart';
 import '../../features/family/presentation/create_family_page.dart';
@@ -15,7 +17,13 @@ class HomeGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<AsyncValue<AuthState>>(authStateProvider, (previous, next) {
+      if (next.asData?.value.event == AuthChangeEvent.passwordRecovery) {
+        ref.read(passwordRecoveryProvider.notifier).state = true;
+      }
+    });
     ref.watch(authStateProvider);
+    final isPasswordRecovery = ref.watch(passwordRecoveryProvider);
     final user = ref.watch(currentUserProvider);
     final pendingInvitation = ref.watch(pendingInvitationTokenProvider);
 
@@ -24,6 +32,10 @@ class HomeGate extends ConsumerWidget {
     }
 
     final invitationToken = pendingInvitation.asData?.value;
+
+    if (isPasswordRecovery) {
+      return const ResetPasswordPage();
+    }
 
     if (user == null) {
       return FirstLaunchGate(

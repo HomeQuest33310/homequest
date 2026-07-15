@@ -123,6 +123,37 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     }
   }
 
+  Future<void> _requestPasswordReset() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      _setError('Indiquez votre adresse e-mail, puis réessayez.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      await ref.read(passwordResetServiceProvider).requestForEmail(email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Si ce compte existe, un lien de réinitialisation vient d’être envoyé.',
+          ),
+        ),
+      );
+    } on AuthException catch (error) {
+      _setError(error.message);
+    } catch (error) {
+      _setError('Impossible d’envoyer le lien : $error');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -210,6 +241,12 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                             : 'Créer un nouvel aventurier',
                       ),
                     ),
+                    if (!_isSignUp)
+                      TextButton.icon(
+                        onPressed: _isLoading ? null : _requestPasswordReset,
+                        icon: const Icon(Icons.key_outlined),
+                        label: const Text('Mot de passe oublié ?'),
+                      ),
                   ],
                 ),
               ),

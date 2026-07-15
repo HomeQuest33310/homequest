@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../auth/providers/auth_provider.dart';
 import '../data/rpg_profile_repository_impl.dart';
 import '../domain/rpg_profile.dart';
 import '../providers/rpg_profile_provider.dart';
@@ -65,6 +66,18 @@ class RpgProfilePage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              Card(
+                child: ListTile(
+                  leading: const CircleAvatar(child: Icon(Icons.key_outlined)),
+                  title: const Text('Sécurité du compte'),
+                  subtitle: const Text(
+                    'Recevoir un lien pour choisir un nouveau mot de passe.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _requestOwnPasswordReset(context, ref),
+                ),
+              ),
+              const SizedBox(height: 16),
               _ProgressCard(profile: value),
               const SizedBox(height: 16),
               _HarmonyCard(profile: value),
@@ -118,6 +131,34 @@ class RpgProfilePage extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Impossible de modifier le profil : $error')),
     );
+  }
+
+  Future<void> _requestOwnPasswordReset(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final email = ref.read(currentUserProvider)?.email;
+    if (email == null || email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucune adresse e-mail n’est associée à ce compte.')),
+      );
+      return;
+    }
+
+    try {
+      await ref.read(passwordResetServiceProvider).requestForEmail(email);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Le lien de réinitialisation a été envoyé par e-mail.'),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Envoi impossible : $error')),
+      );
+    }
   }
 }
 

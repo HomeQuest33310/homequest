@@ -93,6 +93,14 @@ class MembersManagementPage extends ConsumerWidget {
                     onRoleChanged: (role) =>
                         _changeRole(context, ref, member, role),
                     onDeactivate: () => _deactivate(context, ref, member),
+                    onRequestPasswordReset: kingdom == null
+                        ? null
+                        : () => _requestPasswordReset(
+                              context,
+                              ref,
+                              member,
+                              kingdom.id,
+                            ),
                   ),
                 ),
               if (canManage) ...[
@@ -208,6 +216,56 @@ class MembersManagementPage extends ConsumerWidget {
     if (context.mounted) _showControllerResult(context, ref);
   }
 
+  Future<void> _requestPasswordReset(
+    BuildContext context,
+    WidgetRef ref,
+    FamilyMember member,
+    String kingdomId,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Demander une réinitialisation ?'),
+        content: Text(
+          '${member.displayName} recevra un e-mail sécurisé pour choisir '
+          'son nouveau mot de passe. Vous ne verrez jamais ce mot de passe.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            icon: const Icon(Icons.outgoing_mail),
+            label: const Text('Envoyer le lien'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref.read(passwordResetServiceProvider).requestForMember(
+            memberId: member.id,
+            kingdomId: kingdomId,
+          );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Un lien de réinitialisation a été envoyé à ${member.displayName}.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Envoi impossible : $error')),
+      );
+    }
+  }
+
   void _showControllerResult(BuildContext context, WidgetRef ref) {
     final state = ref.read(familyMembersControllerProvider);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -253,6 +311,7 @@ class _MemberCard extends StatelessWidget {
     required this.canManage,
     required this.onRoleChanged,
     required this.onDeactivate,
+    required this.onRequestPasswordReset,
   });
 
   final FamilyMember member;
@@ -260,6 +319,7 @@ class _MemberCard extends StatelessWidget {
   final bool canManage;
   final ValueChanged<String> onRoleChanged;
   final VoidCallback onDeactivate;
+  final VoidCallback? onRequestPasswordReset;
 
   @override
   Widget build(BuildContext context) {
@@ -317,6 +377,11 @@ class _MemberCard extends StatelessWidget {
                       icon: const Icon(Icons.explore),
                       label: const Text('Passer Aventurier'),
                     ),
+                  OutlinedButton.icon(
+                    onPressed: onRequestPasswordReset,
+                    icon: const Icon(Icons.key_outlined),
+                    label: const Text('Réinitialiser le mot de passe'),
+                  ),
                   OutlinedButton.icon(
                     onPressed: onDeactivate,
                     icon: const Icon(Icons.person_off),
