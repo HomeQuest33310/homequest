@@ -11,6 +11,20 @@ import '../domain/quest_suggestion.dart';
 import '../domain/voluntary_quest_request.dart';
 import 'quests_provider.dart';
 
+const voluntaryQuestMinimumLevel = 10;
+
+bool meetsVoluntaryQuestLevel(int level) => level >= voluntaryQuestMinimumLevel;
+
+final canSubmitVoluntaryQuestProvider = Provider<bool>((ref) {
+  final kingdom = ref.watch(currentKingdomProvider).valueOrNull;
+  final member = ref.watch(currentFamilyMemberProvider).valueOrNull;
+  final role = kingdom?.membershipRole ?? member?.role;
+
+  return (role == 'adventurer' || role == 'mercenary') &&
+      member?.isActive == true &&
+      meetsVoluntaryQuestLevel(member?.level ?? 0);
+});
+
 final voluntaryQuestRequestsRepositoryProvider =
     Provider<VoluntaryQuestRequestsRepository>((ref) {
   return SupabaseVoluntaryQuestRequestsRepository(ref.watch(supabaseProvider));
@@ -56,7 +70,16 @@ class VoluntaryQuestRequestsController extends StateNotifier<AsyncValue<void>> {
     String? note,
   }) async {
     final kingdom = await _ref.read(currentKingdomProvider.future);
-    if (kingdom == null) return false;
+    final member = await _ref.read(currentFamilyMemberProvider.future);
+    if (kingdom == null ||
+        member == null ||
+        !meetsVoluntaryQuestLevel(member.level)) {
+      state = AsyncError(
+        StateError('Aventurier niveau 10 requis.'),
+        StackTrace.current,
+      );
+      return false;
+    }
 
     state = const AsyncLoading();
     try {

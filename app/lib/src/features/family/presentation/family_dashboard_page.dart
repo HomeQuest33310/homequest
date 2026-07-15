@@ -45,6 +45,7 @@ class FamilyDashboardPage extends ConsumerWidget {
         (currentKingdom?.membershipRole == 'adventurer' ||
                 currentKingdom?.membershipRole == 'mercenary') &&
             currentMember?.isActive == true;
+    final canSubmitVoluntaryQuest = ref.watch(canSubmitVoluntaryQuestProvider);
     final unreadNotifications = ref.watch(unreadGuardianNotificationsProvider);
     final pendingInitiatives =
         ref.watch(pendingVoluntaryQuestRequestCountProvider);
@@ -100,8 +101,12 @@ class FamilyDashboardPage extends ConsumerWidget {
           IconButton(
             tooltip: canManageQuests
                 ? 'Initiatives à examiner'
-                : 'Mes initiatives héroïques',
-            onPressed: () => context.go('/quest-requests'),
+                : canSubmitVoluntaryQuest
+                    ? 'Mes initiatives héroïques'
+                    : 'Aventurier niveau 10 requis',
+            onPressed: canManageQuests || canSubmitVoluntaryQuest
+                ? () => context.go('/quest-requests')
+                : null,
             icon: Badge(
               isLabelVisible: pendingInitiatives > 0,
               label: Text('$pendingInitiatives'),
@@ -200,14 +205,22 @@ class FamilyDashboardPage extends ConsumerWidget {
                         )
                       : canProposeVoluntaryQuest
                           ? FilledButton.tonalIcon(
-                              onPressed: () => showDialog<void>(
-                                context: context,
-                                builder: (_) =>
-                                    const VoluntaryQuestRequestDialog(),
+                              onPressed: canSubmitVoluntaryQuest
+                                  ? () => showDialog<void>(
+                                        context: context,
+                                        builder: (_) =>
+                                            const VoluntaryQuestRequestDialog(),
+                                      )
+                                  : null,
+                              icon: Icon(
+                                canSubmitVoluntaryQuest
+                                    ? Icons.volunteer_activism
+                                    : Icons.lock_outline,
                               ),
-                              icon: const Icon(Icons.volunteer_activism),
-                              label: const Text(
-                                'Je voudrais accomplir une quête',
+                              label: Text(
+                                canSubmitVoluntaryQuest
+                                    ? 'Je voudrais accomplir une quête'
+                                    : 'Aventurier niveau 10 requis',
                               ),
                             )
                           : null,
