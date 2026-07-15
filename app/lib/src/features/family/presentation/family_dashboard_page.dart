@@ -156,10 +156,9 @@ class FamilyDashboardPage extends ConsumerWidget {
                   family: family,
                   kingdom: currentKingdom,
                   availableKingdoms: kingdoms,
-                  onSelectKingdom: (kingdomId) async {
-                    await ref
-                        .read(selectedKingdomIdProvider.notifier)
-                        .select(kingdomId);
+                  onSelectKingdom: (kingdomId) {
+                    ref.read(selectedKingdomIdProvider.notifier).state =
+                        kingdomId;
                   },
                   onOpenKingdom: () => context.go('/kingdom-progress'),
                   onOpenLegend: () => context.go('/kingdom-legend'),

@@ -47,11 +47,9 @@ class ShoppingPage extends ConsumerWidget {
             _SupplyHeader(
               kingdoms: kingdoms.valueOrNull ?? const [],
               currentKingdom: currentKingdom,
-              onChanged: (kingdomId) async {
+              onChanged: (kingdomId) {
                 if (kingdomId == null) return;
-                await ref
-                    .read(selectedKingdomIdProvider.notifier)
-                    .select(kingdomId);
+                ref.read(selectedKingdomIdProvider.notifier).state = kingdomId;
               },
             ),
             const SizedBox(height: 16),
