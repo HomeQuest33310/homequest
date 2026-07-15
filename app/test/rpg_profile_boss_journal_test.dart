@@ -15,6 +15,7 @@ void main() {
       isOwner: false,
       skills: const [],
       recentAdventures: const [],
+      approvedQuestCount: 0,
       bossVictories: [
         _victory(id: 'boss-1', element: 'Feu', item: 'Écaille ardente'),
         _victory(id: 'boss-2', element: 'Feu', item: 'Cœur de braise'),
