@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/dashboard_home_button.dart';
 import '../../../family/providers/family_members_provider.dart';
 import '../../../kingdom/providers/kingdom_provider.dart';
 import '../../providers/quests_provider.dart';
@@ -25,6 +26,7 @@ class QuestsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const DashboardHomeButton(),
         title: const Text('Grand Registre des Missions'),
         actions: [
           IconButton(

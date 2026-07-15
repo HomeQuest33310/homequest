@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/dashboard_home_button.dart';
 import '../../../kingdom/providers/kingdom_provider.dart';
 import '../../domain/voluntary_quest_request.dart';
 import '../../providers/voluntary_quest_requests_provider.dart';
@@ -17,6 +18,7 @@ class VoluntaryQuestRequestsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const DashboardHomeButton(),
         title: Text(isGuardian ? 'Initiatives à examiner' : 'Mes initiatives'),
       ),
       body: requests.when(

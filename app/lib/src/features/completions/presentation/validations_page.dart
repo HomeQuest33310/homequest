@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/dashboard_home_button.dart';
+
 import '../domain/pending_completion.dart';
 import '../providers/completions_provider.dart';
 
@@ -13,7 +15,10 @@ class ValidationsPage extends ConsumerWidget {
     final action = ref.watch(completionControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Conseil des validations')),
+      appBar: AppBar(
+        leading: const DashboardHomeButton(),
+        title: const Text('Conseil des validations'),
+      ),
       body: pending.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('Erreur : $error')),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/dashboard_home_button.dart';
+
 import '../../auth/providers/auth_provider.dart';
 import '../../domains/domain/domain.dart';
 import '../../domains/providers/domains_provider.dart';
@@ -38,6 +40,7 @@ class MembersManagementPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const DashboardHomeButton(),
         title: const Text('Membres du royaume'),
         actions: [
           if (canManage)

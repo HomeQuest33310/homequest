@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/dashboard_home_button.dart';
 import '../../../core/theme/app_appearance.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/appearance_provider.dart';
@@ -16,11 +16,7 @@ class AppearanceSettingsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Retour au Royaume',
-          onPressed: () => context.go('/dashboard'),
-          icon: const Icon(Icons.arrow_back),
-        ),
+        leading: const DashboardHomeButton(),
         title: const Text('Apparence du Royaume'),
       ),
       body: ListView(

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/dashboard_home_button.dart';
+
 class FamilyScreen extends StatelessWidget {
   const FamilyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Le Royaume')),
+      appBar: AppBar(
+        leading: const DashboardHomeButton(),
+        title: const Text('Le Royaume'),
+      ),
       body: ListView(
         children: const [
           _KingdomCard(),
@@ -30,7 +35,8 @@ class _KingdomCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('🏰 Royaume de la Maison', style: Theme.of(context).textTheme.titleLarge),
+            Text('🏰 Royaume de la Maison',
+                style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             const Text('Niveau 1 · Le campement commence à prendre vie.'),
           ],
@@ -41,7 +47,8 @@ class _KingdomCard extends StatelessWidget {
 }
 
 class _MemberCard extends StatelessWidget {
-  const _MemberCard({required this.name, required this.role, required this.level});
+  const _MemberCard(
+      {required this.name, required this.role, required this.level});
 
   final String name;
   final String role;

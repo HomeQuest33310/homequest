@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/widgets/dashboard_home_button.dart';
 import '../../boss/domain/boss.dart';
 import '../../boss/domain/boss_suggestion.dart';
 import '../../boss/presentation/boss_suggestions_dialog.dart';
@@ -53,11 +53,7 @@ class RewardSuggestionsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Retour au profil',
-          onPressed: () => context.go('/profile'),
-          icon: const Icon(Icons.arrow_back),
-        ),
+        leading: const DashboardHomeButton(),
         title: const Text('Souhaits de récompenses'),
       ),
       floatingActionButton: profileAsync.maybeWhen(

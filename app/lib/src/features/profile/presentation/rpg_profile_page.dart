@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/widgets/dashboard_home_button.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/rpg_profile_repository_impl.dart';
 import '../domain/rpg_profile.dart';
@@ -17,11 +18,7 @@ class RpgProfilePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Retour au royaume',
-          onPressed: () => context.go('/dashboard'),
-          icon: const Icon(Icons.arrow_back),
-        ),
+        leading: const DashboardHomeButton(),
         title: const Text('Profil d’aventurier'),
         actions: [
           IconButton(
@@ -140,7 +137,8 @@ class RpgProfilePage extends ConsumerWidget {
     final email = ref.read(currentUserProvider)?.email;
     if (email == null || email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Aucune adresse e-mail n’est associée à ce compte.')),
+        const SnackBar(
+            content: Text('Aucune adresse e-mail n’est associée à ce compte.')),
       );
       return;
     }

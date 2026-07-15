@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/dashboard_home_button.dart';
 import '../data/rpg_profile_repository_impl.dart';
 import '../domain/rpg_profile.dart';
 import '../providers/rpg_profile_provider.dart';
@@ -15,11 +15,7 @@ class HeroesHallPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Retour au Royaume',
-          onPressed: () => context.go('/dashboard'),
-          icon: const Icon(Icons.arrow_back),
-        ),
+        leading: const DashboardHomeButton(),
         title: const Text('Hall des Héros'),
         actions: [
           IconButton(

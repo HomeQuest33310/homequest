@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+
+import '../../../core/widgets/dashboard_home_button.dart';
 import 'package:intl/intl.dart';
 
 import '../../family/providers/family_provider.dart';
@@ -28,11 +29,7 @@ class _KingdomLegendPageState extends ConsumerState<KingdomLegendPage> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Retour au Royaume',
-          onPressed: () => context.go('/dashboard'),
-          icon: const Icon(Icons.arrow_back),
-        ),
+        leading: const DashboardHomeButton(),
         title: const Text('Carnet des légendes'),
         actions: [
           IconButton(

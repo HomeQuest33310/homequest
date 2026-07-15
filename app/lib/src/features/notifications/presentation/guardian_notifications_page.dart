@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/dashboard_home_button.dart';
 import '../domain/guardian_notification.dart';
 import '../providers/notifications_provider.dart';
 
@@ -12,7 +13,10 @@ class GuardianNotificationsPage extends ConsumerWidget {
     final notifications = ref.watch(guardianNotificationsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications du royaume')),
+      appBar: AppBar(
+        leading: const DashboardHomeButton(),
+        title: const Text('Notifications du royaume'),
+      ),
       body: notifications.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(

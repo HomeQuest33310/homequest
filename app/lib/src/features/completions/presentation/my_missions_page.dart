@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/dashboard_home_button.dart';
+
 import '../domain/mission_assignment.dart';
 import '../providers/completions_provider.dart';
 
@@ -13,7 +15,10 @@ class MyMissionsPage extends ConsumerWidget {
     final action = ref.watch(completionControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mes missions')),
+      appBar: AppBar(
+        leading: const DashboardHomeButton(),
+        title: const Text('Mes missions'),
+      ),
       body: missions.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _MissionError(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/dashboard_home_button.dart';
+
 import '../../auth/providers/auth_provider.dart';
 import '../../family/providers/family_members_provider.dart';
 import '../../family/providers/family_provider.dart';
@@ -18,13 +20,18 @@ class DevToolsPage extends ConsumerWidget {
     final questsAsync = ref.watch(currentFamilyQuestsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Developer Tools')),
+      appBar: AppBar(
+        leading: const DashboardHomeButton(),
+        title: const Text('Developer Tools'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           _Section(
             title: 'Session',
-            child: Text(user == null ? 'Aucun utilisateur connecté' : 'User ID: ${user.id}'),
+            child: Text(user == null
+                ? 'Aucun utilisateur connecté'
+                : 'User ID: ${user.id}'),
           ),
           const SizedBox(height: 12),
           _Section(
@@ -70,14 +77,14 @@ class DevToolsPage extends ConsumerWidget {
             icon: const Icon(Icons.refresh),
             label: const Text('Rafraîchir les providers'),
           ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
             onPressed: () => context.go('/'),
             icon: const Icon(Icons.arrow_back),
             label: const Text('Retour au dashboard'),
           ),
         ],
-              ),
+      ),
     );
   }
 }
