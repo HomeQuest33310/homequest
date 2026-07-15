@@ -145,6 +145,12 @@ class FamilyDashboardPage extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
+                _HeroHeader(
+                  family: family,
+                  onOpenKingdom: () => context.go('/kingdom-progress'),
+                  onOpenLegend: () => context.go('/kingdom-legend'),
+                ),
+                const SizedBox(height: 16),
                 _SectionCard(
                   title: '📜 Quêtes en cours',
                   subtitle: 'Les missions prioritaires de votre guilde.',
@@ -176,12 +182,6 @@ class FamilyDashboardPage extends ConsumerWidget {
                   bossesAsync: bossesAsync,
                   onOpenWishes: () => context.go('/reward-suggestions'),
                   onOpenBosses: () => context.go('/bosses'),
-                ),
-                const SizedBox(height: 16),
-                _HeroHeader(
-                  family: family,
-                  onOpenKingdom: () => context.go('/kingdom-progress'),
-                  onOpenLegend: () => context.go('/kingdom-legend'),
                 ),
               ],
             ),
