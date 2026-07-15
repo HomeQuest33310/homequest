@@ -30,6 +30,7 @@ abstract class QuestsRepository {
     required int goldReward,
     required int bossDamage,
     required String frequency,
+    required bool requiresApproval,
     required String emoji,
     required String element,
     required int difficulty,

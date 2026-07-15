@@ -34,6 +34,7 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
   String _regionKey = 'custom';
   String? _domainId;
   int _difficulty = 1;
+  bool _requiresApproval = true;
   late final List<String> _selectedSkillIds;
 
   @override
@@ -55,6 +56,7 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
     _regionKey = quest?.regionKey ?? 'custom';
     _domainId = quest?.domainId;
     _difficulty = quest?.difficulty ?? 1;
+    _requiresApproval = quest?.requiresApproval ?? true;
     _selectedSkillIds = quest?.skillRewards
             .map((reward) => reward.skillId)
             .where((id) => heroicSkills.any((skill) => skill.id == id))
@@ -247,6 +249,20 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
                         if (value != null) setState(() => _frequency = value);
                       },
                     ),
+                    const SizedBox(height: 12),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      value: _requiresApproval,
+                      title: const Text('Validation par un Gardien'),
+                      subtitle: Text(
+                        _requiresApproval
+                            ? 'Les récompenses sont accordées après validation.'
+                            : 'Les récompenses sont accordées automatiquement.',
+                      ),
+                      onChanged: (value) {
+                        setState(() => _requiresApproval = value);
+                      },
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Compétences héroïques · choisissez-en 2',
@@ -416,6 +432,7 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
             goldReward: int.parse(_goldController.text),
             bossDamage: int.parse(_bossDamageController.text),
             frequency: _frequency,
+            requiresApproval: _requiresApproval,
             emoji: _emojiController.text.trim(),
             element: _elementController.text.trim(),
             difficulty: _difficulty,
