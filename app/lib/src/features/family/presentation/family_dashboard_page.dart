@@ -99,6 +99,11 @@ class FamilyDashboardPage extends ConsumerWidget {
             icon: const Icon(Icons.account_circle_outlined),
           ),
           IconButton(
+            tooltip: 'Apparence du Royaume',
+            onPressed: () => context.go('/appearance'),
+            icon: const Icon(Icons.palette_outlined),
+          ),
+          IconButton(
             tooltip: 'Antre des Boss',
             onPressed: () => context.go('/bosses'),
             icon: const Icon(Icons.local_fire_department_outlined),

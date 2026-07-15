@@ -16,6 +16,7 @@ import '../../features/rewards/presentation/reward_suggestions_page.dart';
 import '../../features/chronicles/presentation/kingdom_legend_page.dart';
 import '../../features/kingdom/presentation/kingdom_progress_page.dart';
 import '../../features/shopping/presentation/shopping_page.dart';
+import '../../features/settings/presentation/appearance_settings_page.dart';
 import '../../features/opening/presentation/first_launch_gate.dart';
 import 'home_gate.dart';
 
@@ -92,6 +93,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/shopping',
         builder: (context, state) => const ShoppingPage(),
+      ),
+      GoRoute(
+        path: '/appearance',
+        builder: (context, state) => const AppearanceSettingsPage(),
       ),
       GoRoute(
         path: '/invite/:token',

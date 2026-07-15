@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
 import 'core/realtime/gameplay_realtime_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/appearance_provider.dart';
 
 class HomeQuestApp extends ConsumerWidget {
   const HomeQuestApp({super.key});
@@ -11,13 +12,13 @@ class HomeQuestApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final appearance = ref.watch(appearanceProvider);
     ref.watch(gameplayRealtimeProvider);
 
     return MaterialApp.router(
       title: 'HomeQuest',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.build(appearance),
       themeMode: ThemeMode.light,
       routerConfig: router,
     );
