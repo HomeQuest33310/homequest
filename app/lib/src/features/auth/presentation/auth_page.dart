@@ -43,7 +43,6 @@ class _AuthPageState extends ConsumerState<AuthPage> {
 
   Future<void> _rememberInvitation(String token) async {
     await PendingInvitationStore.save(token);
-    if (mounted) ref.invalidate(pendingInvitationTokenProvider);
   }
 
   @override

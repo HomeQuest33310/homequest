@@ -33,7 +33,6 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
 
   Future<void> _rememberInvitation() async {
     await PendingInvitationStore.save(widget.token);
-    if (mounted) ref.invalidate(pendingInvitationTokenProvider);
   }
 
   @override
