@@ -1,16 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domains/providers/domains_provider.dart';
+import '../../kingdom/providers/kingdom_provider.dart';
 import '../domain/family_invitation.dart';
 import 'family_members_provider.dart';
 import 'family_provider.dart';
 
 final currentFamilyInvitationsProvider =
     FutureProvider<List<FamilyInvitation>>((ref) async {
-  final family = await ref.watch(currentFamilyProvider.future);
-  if (family == null) return const [];
+  final kingdom = await ref.watch(currentKingdomProvider.future);
+  if (kingdom == null) return const [];
 
-  return ref.watch(familyRepositoryProvider).getInvitations(family.id);
+  return ref.watch(familyRepositoryProvider).getInvitations(kingdom.id);
 });
 
 final familyInvitationsControllerProvider =
@@ -31,7 +32,8 @@ class FamilyInvitationsController extends StateNotifier<AsyncValue<void>> {
     int expiresInDays = 7,
   }) async {
     final family = await _ref.read(currentFamilyProvider.future);
-    if (family == null) {
+    final kingdom = await _ref.read(currentKingdomProvider.future);
+    if (family == null || kingdom == null) {
       state = AsyncError('Aucun royaume actif', StackTrace.current);
       return null;
     }
@@ -40,6 +42,7 @@ class FamilyInvitationsController extends StateNotifier<AsyncValue<void>> {
     try {
       final invitation = await _ref.read(familyRepositoryProvider).inviteMember(
             familyId: family.id,
+            kingdomId: kingdom.id,
             email: email,
             role: role,
             membershipScope: membershipScope,
@@ -75,6 +78,8 @@ class FamilyInvitationsController extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(currentFamilyProvider);
       _ref.invalidate(currentFamilyMembersProvider);
       _ref.invalidate(currentFamilyDomainsProvider);
+      _ref.invalidate(availableKingdomsProvider);
+      _ref.invalidate(currentKingdomProvider);
       state = const AsyncData(null);
       return true;
     } catch (error, stackTrace) {

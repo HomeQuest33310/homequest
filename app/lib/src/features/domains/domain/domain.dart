@@ -1,6 +1,7 @@
 class Domain {
   final String id;
   final String familyId;
+  final String kingdomId;
   final String name;
   final String domainKind;
   final String icon;
@@ -11,6 +12,7 @@ class Domain {
   const Domain({
     required this.id,
     required this.familyId,
+    required this.kingdomId,
     required this.name,
     required this.domainKind,
     required this.icon,
@@ -23,6 +25,7 @@ class Domain {
     return Domain(
       id: map['id'] as String,
       familyId: map['family_id'] as String,
+      kingdomId: map['kingdom_id'] as String,
       name: map['name'] as String,
       domainKind: map['domain_kind'] as String,
       icon: map['icon'] as String,

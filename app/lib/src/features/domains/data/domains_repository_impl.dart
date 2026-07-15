@@ -9,11 +9,11 @@ class SupabaseDomainsRepository implements DomainsRepository {
   final SupabaseClient _client;
 
   @override
-  Future<List<Domain>> getDomains(String familyId) async {
+  Future<List<Domain>> getDomains(String kingdomId) async {
     final data = await _client
         .from('domains')
         .select()
-        .eq('family_id', familyId)
+        .eq('kingdom_id', kingdomId)
         .order('is_primary', ascending: false)
         .order('created_at');
 

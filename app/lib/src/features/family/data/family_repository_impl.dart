@@ -163,11 +163,11 @@ class SupabaseFamilyRepository implements FamilyRepository {
   }
 
   @override
-  Future<List<FamilyInvitation>> getInvitations(String familyId) async {
+  Future<List<FamilyInvitation>> getInvitations(String kingdomId) async {
     final data = await _client
         .from('family_invitations')
         .select()
-        .eq('family_id', familyId)
+        .eq('kingdom_id', kingdomId)
         .eq('status', 'pending')
         .order('created_at', ascending: false);
 
@@ -183,26 +183,35 @@ class SupabaseFamilyRepository implements FamilyRepository {
   @override
   Future<FamilyInvitation> inviteMember({
     required String familyId,
+    required String kingdomId,
     required String email,
     required String role,
     required String membershipScope,
     String? domainId,
     int expiresInDays = 7,
   }) async {
-    final data = await _client.rpc(
-      'invite_family_member',
-      params: {
-        'p_family_id': familyId,
-        'p_email': email,
-        'p_role': role,
-        'p_membership_scope': membershipScope,
-        'p_domain_id': domainId,
-        'p_expires_in_days': expiresInDays,
+    final response = await _client.functions.invoke(
+      'send-family-invitation',
+      body: {
+        'family_id': familyId,
+        'kingdom_id': kingdomId,
+        'email': email,
+        'role': role,
+        'membership_scope': membershipScope,
+        'domain_id': domainId,
+        'expires_in_days': expiresInDays,
       },
     );
 
+    final payload = Map<String, dynamic>.from(response.data as Map);
+    if (payload['error'] != null) {
+      throw AuthException(payload['error'] as String);
+    }
+    final invitation = Map<String, dynamic>.from(payload['invitation'] as Map);
+    invitation['email_sent'] = payload['email_sent'];
+    invitation['email_error'] = payload['email_error'];
     return FamilyInvitation.fromMap(
-      Map<String, dynamic>.from(data as Map),
+      invitation,
     );
   }
 

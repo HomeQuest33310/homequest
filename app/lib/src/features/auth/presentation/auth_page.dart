@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/links/invitation_link.dart';
 import '../../family/providers/family_provider.dart';
 import '../providers/auth_provider.dart';
 
 class AuthPage extends ConsumerStatefulWidget {
-  const AuthPage({super.key});
+  const AuthPage({this.invitationToken, super.key});
+
+  final String? invitationToken;
 
   @override
   ConsumerState<AuthPage> createState() => _AuthPageState();
@@ -39,7 +43,9 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     final password = _passwordController.text.trim();
     final displayName = _displayNameController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || (_isSignUp && displayName.isEmpty)) {
+    if (email.isEmpty ||
+        password.isEmpty ||
+        (_isSignUp && displayName.isEmpty)) {
       _setError('Tous les champs visibles sont nécessaires.');
       return;
     }
@@ -82,6 +88,10 @@ class _AuthPageState extends ConsumerState<AuthPage> {
       if (!mounted) return;
       ref.invalidate(currentFamilyProvider);
       ref.invalidate(authStateProvider);
+      final invitationToken = widget.invitationToken;
+      if (invitationToken != null && invitationToken.isNotEmpty && mounted) {
+        context.go(InvitationLink.appLocation(invitationToken));
+      }
     } on AuthException catch (e) {
       _setError(e.message);
     } catch (e) {
@@ -111,7 +121,8 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                     const Text(
                       '📖 Les Chroniques de HomeQuest',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -152,7 +163,8 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       const SizedBox(height: 12),
                       Text(
                         _error!,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error),
                       ),
                     ],
                     const SizedBox(height: 20),
@@ -161,7 +173,9 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       icon: Icon(_isSignUp ? Icons.auto_awesome : Icons.login),
                       label: _isLoading
                           ? const Text('Ouverture des Chroniques...')
-                          : Text(_isSignUp ? 'Créer mon aventurier' : 'Se connecter'),
+                          : Text(_isSignUp
+                              ? 'Créer mon aventurier'
+                              : 'Se connecter'),
                     ),
                     TextButton(
                       onPressed: _isLoading

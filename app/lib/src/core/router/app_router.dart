@@ -24,11 +24,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, state) => const HomeGate(),
+        builder: (context, state) {
+          final invitationToken = state.uri.queryParameters['invite'];
+          if (invitationToken != null && invitationToken.isNotEmpty) {
+            return AcceptInvitationPage(token: invitationToken);
+          }
+          return const HomeGate();
+        },
       ),
       GoRoute(
         path: '/auth',
-        builder: (context, state) => const AuthPage(),
+        builder: (context, state) => AuthPage(
+          invitationToken: state.uri.queryParameters['invite'],
+        ),
       ),
       GoRoute(
         path: '/create-family',

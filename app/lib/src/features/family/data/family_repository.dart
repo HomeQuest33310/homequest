@@ -21,10 +21,11 @@ abstract class FamilyRepository {
 
   Future<FamilyMember> deactivateMember(String memberId);
 
-  Future<List<FamilyInvitation>> getInvitations(String familyId);
+  Future<List<FamilyInvitation>> getInvitations(String kingdomId);
 
   Future<FamilyInvitation> inviteMember({
     required String familyId,
+    required String kingdomId,
     required String email,
     required String role,
     required String membershipScope,

@@ -8,10 +8,12 @@ import '../providers/family_invitations_provider.dart';
 class InviteMemberDialog extends ConsumerStatefulWidget {
   const InviteMemberDialog({
     required this.domains,
+    required this.canInviteGuardian,
     super.key,
   });
 
   final List<Domain> domains;
+  final bool canInviteGuardian;
 
   @override
   ConsumerState<InviteMemberDialog> createState() => _InviteMemberDialogState();
@@ -65,21 +67,26 @@ class _InviteMemberDialogState extends ConsumerState<InviteMemberDialog> {
                 DropdownButtonFormField<String>(
                   initialValue: _role,
                   decoration: const InputDecoration(labelText: 'Rôle'),
-                  items: const [
-                    DropdownMenuItem(
+                  items: [
+                    const DropdownMenuItem(
                       value: 'adventurer',
                       child: Text('Aventurier permanent'),
                     ),
-                    DropdownMenuItem(
+                    const DropdownMenuItem(
                       value: 'mercenary',
                       child: Text('Mercenaire temporaire'),
                     ),
+                    if (widget.canInviteGuardian)
+                      const DropdownMenuItem(
+                        value: 'guardian',
+                        child: Text('Gardien du Royaume'),
+                      ),
                   ],
                   onChanged: state.isLoading
                       ? null
                       : (value) => setState(() {
                             _role = value ?? 'adventurer';
-                            if (_role == 'adventurer') {
+                            if (_role != 'mercenary') {
                               _scope = 'kingdom';
                               _domainId = null;
                             }
@@ -179,7 +186,7 @@ class _InviteMemberDialogState extends ConsumerState<InviteMemberDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.send),
-          label: const Text('Créer l’invitation'),
+          label: const Text('Envoyer l’invitation'),
         ),
       ],
     );

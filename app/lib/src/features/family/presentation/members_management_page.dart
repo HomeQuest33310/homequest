@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../domains/domain/domain.dart';
 import '../../domains/providers/domains_provider.dart';
+import '../../kingdom/providers/kingdom_provider.dart';
+import '../../../core/links/invitation_link.dart';
 import '../domain/family_invitation.dart';
 import '../domain/family_member.dart';
 import '../providers/family_invitations_provider.dart';
@@ -18,6 +20,7 @@ class MembersManagementPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final family = ref.watch(currentFamilyProvider).asData?.value;
+    final kingdom = ref.watch(currentKingdomProvider).asData?.value;
     final members = ref.watch(currentFamilyMembersProvider);
     final invitations = ref.watch(currentFamilyInvitationsProvider);
     final domains = ref.watch(currentFamilyDomainsProvider).asData?.value ??
@@ -30,8 +33,8 @@ class MembersManagementPage extends ConsumerWidget {
         break;
       }
     }
-    final canManage =
-        currentMember?.role == 'guardian' && currentMember?.isActive == true;
+    final canManage = kingdom?.membershipRole == 'guardian' &&
+        currentMember?.isActive == true;
 
     return Scaffold(
       appBar: AppBar(
@@ -40,14 +43,24 @@ class MembersManagementPage extends ConsumerWidget {
           if (canManage)
             IconButton(
               tooltip: 'Inviter',
-              onPressed: () => _showInviteDialog(context, ref, domains),
+              onPressed: () => _showInviteDialog(
+                context,
+                ref,
+                domains,
+                canInviteGuardian: family?.ownerId == userId,
+              ),
               icon: const Icon(Icons.person_add),
             ),
         ],
       ),
       floatingActionButton: canManage
           ? FloatingActionButton.extended(
-              onPressed: () => _showInviteDialog(context, ref, domains),
+              onPressed: () => _showInviteDialog(
+                context,
+                ref,
+                domains,
+                canInviteGuardian: family?.ownerId == userId,
+              ),
               icon: const Icon(Icons.person_add),
               label: const Text('Inviter'),
             )
@@ -127,18 +140,26 @@ class MembersManagementPage extends ConsumerWidget {
   Future<void> _showInviteDialog(
     BuildContext context,
     WidgetRef ref,
-    List<Domain> domains,
-  ) async {
+    List<Domain> domains, {
+    required bool canInviteGuardian,
+  }) async {
     final invitation = await showDialog<FamilyInvitation>(
       context: context,
-      builder: (_) => InviteMemberDialog(domains: domains),
+      builder: (_) => InviteMemberDialog(
+        domains: domains,
+        canInviteGuardian: canInviteGuardian,
+      ),
     );
     if (invitation != null && context.mounted) {
       await _copyInviteLink(context, invitation);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invitation créée et lien copié.'),
+          SnackBar(
+            content: Text(
+              invitation.emailSent
+                  ? 'Invitation envoyée par e-mail et lien copié.'
+                  : 'Invitation créée. Le lien a été copié pour un partage manuel.',
+            ),
           ),
         );
       }
@@ -220,7 +241,7 @@ class MembersManagementPage extends ConsumerWidget {
     BuildContext context,
     FamilyInvitation invitation,
   ) async {
-    final link = '${Uri.base.origin}/#/invite/${invitation.token}';
+    final link = InvitationLink.build(invitation.token).toString();
     await Clipboard.setData(ClipboardData(text: link));
   }
 }
