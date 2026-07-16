@@ -13,6 +13,7 @@ class Quest {
     required this.status,
     required this.createdAt,
     this.description,
+    this.availableFrom,
     this.regionKey,
     this.domainId,
     this.emoji = '📜',
@@ -28,6 +29,7 @@ class Quest {
   final String title;
   final String realTask;
   final String? description;
+  final DateTime? availableFrom;
   final String? regionKey;
   final String? domainId;
   final String emoji;
@@ -44,6 +46,12 @@ class Quest {
         'weekly' => 'Hebdomadaire',
         _ => frequency,
       };
+
+  bool isAvailableAt(DateTime moment) =>
+      availableFrom == null || !moment.isBefore(availableFrom!);
+
+  bool get isAvailableNow => isAvailableAt(DateTime.now());
+
   final bool requiresApproval;
   final String status;
   final DateTime createdAt;
@@ -58,6 +66,9 @@ class Quest {
       title: map['title'] as String,
       realTask: map['real_task'] as String,
       description: map['description'] as String?,
+      availableFrom: map['available_from'] == null
+          ? null
+          : DateTime.parse(map['available_from'] as String),
       regionKey: map['region_key'] as String?,
       domainId: map['domain_id'] as String?,
       emoji: map['emoji'] as String? ?? '📜',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../domains/providers/domains_provider.dart';
 import '../../domain/quest.dart';
@@ -35,6 +36,7 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
   String? _domainId;
   int _difficulty = 1;
   bool _requiresApproval = true;
+  DateTime? _availableFrom;
   late final List<String> _selectedSkillIds;
 
   @override
@@ -57,6 +59,7 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
     _domainId = quest?.domainId;
     _difficulty = quest?.difficulty ?? 1;
     _requiresApproval = quest?.requiresApproval ?? true;
+    _availableFrom = quest?.availableFrom?.toLocal();
     _selectedSkillIds = quest?.skillRewards
             .map((reward) => reward.skillId)
             .where((id) => heroicSkills.any((skill) => skill.id == id))
@@ -250,6 +253,72 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
                       },
                     ),
                     const SizedBox(height: 12),
+                    Card(
+                      margin: EdgeInsets.zero,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          children: [
+                            SwitchListTile.adaptive(
+                              contentPadding: EdgeInsets.zero,
+                              value: _availableFrom != null,
+                              title: const Text('Programmer la disponibilité'),
+                              subtitle: const Text(
+                                'La quête restera visible, mais personne ne '
+                                'pourra la prendre avant cette date.',
+                              ),
+                              onChanged: (scheduled) {
+                                setState(() {
+                                  _availableFrom = scheduled
+                                      ? DateTime.now()
+                                          .add(const Duration(hours: 1))
+                                          .copyWith(second: 0, millisecond: 0)
+                                      : null;
+                                });
+                              },
+                            ),
+                            if (_availableFrom != null) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: _chooseAvailableDate,
+                                      icon: const Icon(Icons.calendar_today),
+                                      label: Text(
+                                        DateFormat('dd/MM/yyyy')
+                                            .format(_availableFrom!),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: _chooseAvailableTime,
+                                      icon: const Icon(Icons.schedule),
+                                      label: Text(
+                                        DateFormat('HH:mm')
+                                            .format(_availableFrom!),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  'Disponible le '
+                                  '${DateFormat('dd/MM/yyyy à HH:mm').format(_availableFrom!)}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
                       value: _requiresApproval,
@@ -382,6 +451,46 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
     });
   }
 
+  Future<void> _chooseAvailableDate() async {
+    final current = _availableFrom;
+    if (current == null) return;
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: DateTime(DateTime.now().year - 1),
+      lastDate: DateTime(DateTime.now().year + 10),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _availableFrom = DateTime(
+        selected.year,
+        selected.month,
+        selected.day,
+        current.hour,
+        current.minute,
+      );
+    });
+  }
+
+  Future<void> _chooseAvailableTime() async {
+    final current = _availableFrom;
+    if (current == null) return;
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(current),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _availableFrom = DateTime(
+        current.year,
+        current.month,
+        current.day,
+        selected.hour,
+        selected.minute,
+      );
+    });
+  }
+
   List<QuestSkillReward> _skillRewards() {
     final points = skillPointsForDifficulty(_difficulty);
     return [
@@ -432,6 +541,7 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
             goldReward: int.parse(_goldController.text),
             bossDamage: int.parse(_bossDamageController.text),
             frequency: _frequency,
+            availableFrom: _availableFrom,
             requiresApproval: _requiresApproval,
             emoji: _emojiController.text.trim(),
             element: _elementController.text.trim(),
@@ -451,6 +561,7 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
             goldReward: int.parse(_goldController.text),
             bossDamage: int.parse(_bossDamageController.text),
             frequency: _frequency,
+            availableFrom: _availableFrom,
             emoji: _emojiController.text.trim(),
             element: _elementController.text.trim(),
             difficulty: _difficulty,

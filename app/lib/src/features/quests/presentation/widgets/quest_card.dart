@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../domain/quest.dart';
 import '../../domain/quest_suggestion.dart';
@@ -95,6 +98,14 @@ class QuestCard extends StatelessWidget {
                 _StatBadge(
                     icon: Icons.gps_fixed, label: '${quest.bossDamage} dégâts'),
                 _StatBadge(icon: Icons.repeat, label: quest.frequencyLabel),
+                if (quest.availableFrom != null)
+                  _StatBadge(
+                    icon: Icons.schedule,
+                    label: quest.isAvailableNow
+                        ? 'Disponible maintenant'
+                        : 'Disponible le '
+                            '${DateFormat('dd/MM/yyyy à HH:mm').format(quest.availableFrom!.toLocal())}',
+                  ),
                 _StatBadge(
                   icon: quest.requiresApproval
                       ? Icons.fact_check_outlined
@@ -111,10 +122,9 @@ class QuestCard extends StatelessWidget {
               runSpacing: 12,
               children: [
                 if (onSelfAssign != null)
-                  FilledButton.icon(
-                    onPressed: onSelfAssign,
-                    icon: const Icon(Icons.back_hand_outlined),
-                    label: const Text('Prendre cette mission'),
+                  _QuestSelfAssignButton(
+                    availableFrom: quest.availableFrom,
+                    onPressed: onSelfAssign!,
                   ),
                 if (onEdit != null)
                   FilledButton.tonalIcon(
@@ -138,6 +148,77 @@ class QuestCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _QuestSelfAssignButton extends StatefulWidget {
+  const _QuestSelfAssignButton({
+    required this.availableFrom,
+    required this.onPressed,
+  });
+
+  final DateTime? availableFrom;
+  final VoidCallback onPressed;
+
+  @override
+  State<_QuestSelfAssignButton> createState() => _QuestSelfAssignButtonState();
+}
+
+class _QuestSelfAssignButtonState extends State<_QuestSelfAssignButton> {
+  Timer? _availabilityTimer;
+
+  bool get _isAvailable {
+    final availableFrom = widget.availableFrom;
+    return availableFrom == null || !DateTime.now().isBefore(availableFrom);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleAvailabilityRefresh();
+  }
+
+  @override
+  void didUpdateWidget(covariant _QuestSelfAssignButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.availableFrom != widget.availableFrom) {
+      _scheduleAvailabilityRefresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    _availabilityTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleAvailabilityRefresh() {
+    _availabilityTimer?.cancel();
+    final availableFrom = widget.availableFrom;
+    if (availableFrom == null) return;
+    final delay = availableFrom.difference(DateTime.now());
+    if (delay <= Duration.zero) return;
+    _availabilityTimer = Timer(delay, () {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final available = _isAvailable;
+    final availableFrom = widget.availableFrom?.toLocal();
+    return FilledButton.icon(
+      onPressed: available ? widget.onPressed : null,
+      icon: Icon(
+        available ? Icons.back_hand_outlined : Icons.schedule,
+      ),
+      label: Text(
+        available
+            ? 'Prendre cette mission'
+            : 'Disponible à partir du '
+                '${DateFormat('dd/MM/yyyy à HH:mm').format(availableFrom!)}',
       ),
     );
   }
