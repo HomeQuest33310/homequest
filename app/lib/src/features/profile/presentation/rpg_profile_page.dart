@@ -5,9 +5,10 @@ import 'package:intl/intl.dart';
 
 import '../../../core/widgets/dashboard_home_button.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../data/rpg_profile_repository_impl.dart';
+import '../domain/profile_avatar.dart';
 import '../domain/rpg_profile.dart';
 import '../providers/rpg_profile_provider.dart';
+import 'widgets/profile_avatar_view.dart';
 
 class RpgProfilePage extends ConsumerWidget {
   const RpgProfilePage({super.key});
@@ -106,7 +107,12 @@ class RpgProfilePage extends ConsumerWidget {
   ) async {
     final result = await showDialog<_ProfileEdition>(
       context: context,
-      builder: (_) => _EditProfileDialog(profile: profile),
+      builder: (_) => _EditProfileDialog(
+        profile: profile,
+        onPurchase: (avatarKey) => ref
+            .read(rpgProfileControllerProvider.notifier)
+            .purchaseAvatar(avatarKey),
+      ),
     );
     if (result == null || !context.mounted) return;
 
@@ -200,9 +206,10 @@ class _HeroCard extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 4),
               ),
               alignment: Alignment.center,
-              child: Text(
-                avatarEmoji(profile.avatarKey),
-                style: const TextStyle(fontSize: 48),
+              child: ProfileAvatarView(
+                avatarKey: profile.avatarKey,
+                size: 84,
+                semanticLabel: 'Avatar de ${profile.displayName}',
               ),
             ),
             const SizedBox(width: 18),
@@ -877,9 +884,13 @@ class _JournalEntry {
 }
 
 class _EditProfileDialog extends StatefulWidget {
-  const _EditProfileDialog({required this.profile});
+  const _EditProfileDialog({
+    required this.profile,
+    required this.onPurchase,
+  });
 
   final RpgProfile profile;
+  final Future<int> Function(String avatarKey) onPurchase;
 
   @override
   State<_EditProfileDialog> createState() => _EditProfileDialogState();
@@ -888,14 +899,19 @@ class _EditProfileDialog extends StatefulWidget {
 class _EditProfileDialogState extends State<_EditProfileDialog> {
   late final TextEditingController _nameController;
   late String _avatarKey;
+  late Set<String> _unlockedAvatarKeys;
+  late int _gold;
+  String? _purchasingAvatarKey;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.profile.displayName);
-    _avatarKey = rpgAvatarKeys.contains(widget.profile.avatarKey)
+    _avatarKey = profileAvatarKeys.contains(widget.profile.avatarKey)
         ? widget.profile.avatarKey!
         : 'explorer';
+    _unlockedAvatarKeys = {...widget.profile.unlockedAvatarKeys};
+    _gold = widget.profile.gold;
   }
 
   @override
@@ -923,39 +939,59 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                 ),
               ),
               const SizedBox(height: 12),
-              Text('Avatar', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Avatars gratuits',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final entry in rpgAvatars.entries)
-                    InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () => setState(() => _avatarKey = entry.key),
-                      child: Container(
-                        width: 58,
-                        height: 58,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          color: _avatarKey == entry.key
-                              ? Theme.of(context).colorScheme.primaryContainer
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
-                          border: Border.all(
-                            color: _avatarKey == entry.key
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        child: Text(
-                          entry.value,
-                          style: const TextStyle(fontSize: 30),
-                        ),
-                      ),
+                  for (final avatar
+                      in profileAvatarCatalog.where((item) => !item.isPremium))
+                    _AvatarChoice(
+                      avatar: avatar,
+                      isSelected: _avatarKey == avatar.key,
+                      isUnlocked: true,
+                      isPurchasing: false,
+                      onTap: () => setState(() => _avatarKey = avatar.key),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Avatars à débloquer',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  Chip(
+                    avatar: const Icon(Icons.monetization_on, size: 18),
+                    label: Text('$_gold or'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Chaque avatar coûte 100 pièces d’or et reste ensuite débloqué.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final avatar
+                      in profileAvatarCatalog.where((item) => item.isPremium))
+                    _AvatarChoice(
+                      avatar: avatar,
+                      isSelected: _avatarKey == avatar.key,
+                      isUnlocked: _unlockedAvatarKeys.contains(avatar.key),
+                      isPurchasing: _purchasingAvatarKey == avatar.key,
+                      onTap: () => _selectAvatar(avatar),
                     ),
                 ],
               ),
@@ -986,6 +1022,159 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
           child: const Text('Enregistrer'),
         ),
       ],
+    );
+  }
+
+  Future<void> _selectAvatar(ProfileAvatarOption avatar) async {
+    if (!avatar.isPremium || _unlockedAvatarKeys.contains(avatar.key)) {
+      setState(() => _avatarKey = avatar.key);
+      return;
+    }
+    if (_purchasingAvatarKey != null) return;
+
+    if (_gold < avatar.goldPrice) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Il faut ${avatar.goldPrice} pièces d’or pour débloquer '
+            '${avatar.label}.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Débloquer ${avatar.label} ?'),
+        content: Text(
+          '${avatar.goldPrice} pièces d’or seront retirées de votre solde. '
+          'Cet avatar restera disponible définitivement.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            icon: const Icon(Icons.monetization_on),
+            label: Text('Acheter ${avatar.goldPrice} or'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _purchasingAvatarKey = avatar.key);
+    try {
+      final remainingGold = await widget.onPurchase(avatar.key);
+      if (!mounted) return;
+      setState(() {
+        _gold = remainingGold;
+        _unlockedAvatarKeys.add(avatar.key);
+        _avatarKey = avatar.key;
+        _purchasingAvatarKey = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${avatar.label} est maintenant débloqué.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _purchasingAvatarKey = null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Achat impossible : $error')),
+      );
+    }
+  }
+}
+
+class _AvatarChoice extends StatelessWidget {
+  const _AvatarChoice({
+    required this.avatar,
+    required this.isSelected,
+    required this.isUnlocked,
+    required this.isPurchasing,
+    required this.onTap,
+  });
+
+  final ProfileAvatarOption avatar;
+  final bool isSelected;
+  final bool isUnlocked;
+  final bool isPurchasing;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: avatar.label,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          width: avatar.isPremium ? 92 : 62,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: isSelected
+                ? scheme.primaryContainer
+                : scheme.surfaceContainerHighest,
+            border: Border.all(
+              color: isSelected ? scheme.primary : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                children: [
+                  ProfileAvatarView(
+                    avatarKey: avatar.key,
+                    size: avatar.isPremium ? 80 : 50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  if (avatar.isPremium)
+                    Positioned(
+                      right: 3,
+                      top: 3,
+                      child: CircleAvatar(
+                        radius: 11,
+                        backgroundColor: scheme.surface.withValues(alpha: 0.9),
+                        child: isPurchasing
+                            ? const SizedBox.square(
+                                dimension: 13,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Icon(
+                                isUnlocked ? Icons.check : Icons.lock,
+                                size: 14,
+                                color: isUnlocked
+                                    ? scheme.primary
+                                    : scheme.onSurface,
+                              ),
+                      ),
+                    ),
+                ],
+              ),
+              if (avatar.isPremium) ...[
+                const SizedBox(height: 4),
+                Text(
+                  isUnlocked ? 'Débloqué' : '${avatar.goldPrice} or',
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: isUnlocked ? scheme.primary : null,
+                      ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

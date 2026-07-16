@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../domain/profile_avatar.dart';
 import '../domain/rpg_profile.dart';
 import 'rpg_profile_repository.dart';
 
@@ -117,6 +118,7 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
           .select('id')
           .eq('completed_by', memberId)
           .eq('status', 'approved'),
+      _getUnlockedAvatarKeys(memberData['user_id'] as String),
     ]);
 
     final progressBySkill = <String, Map<String, dynamic>>{};
@@ -184,6 +186,7 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
           .toList(),
       bossVictories: bossVictories,
       approvedQuestCount: (results[4] as List).length,
+      unlockedAvatarKeys: results[5] as Set<String>,
     );
   }
 
@@ -257,35 +260,82 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
     if (normalizedName.length < 2 || normalizedName.length > 32) {
       throw ArgumentError('Le nom doit contenir entre 2 et 32 caractères.');
     }
-    if (!rpgAvatarKeys.contains(avatarKey)) {
+    if (!profileAvatarKeys.contains(avatarKey)) {
       throw ArgumentError('Cet avatar n’est pas disponible.');
     }
 
-    await _client.from('profiles').update({
-      'display_name': normalizedName,
-      'avatar_key': avatarKey,
-    }).eq('id', user.id);
+    try {
+      await _client.rpc(
+        'update_my_profile',
+        params: {
+          'p_display_name': normalizedName,
+          'p_avatar_key': avatarKey,
+        },
+      );
+    } on PostgrestException catch (error) {
+      if (!_isMissingAvatarShopObject(error)) rethrow;
+      await _client.from('profiles').update({
+        'display_name': normalizedName,
+        'avatar_key': avatarKey,
+      }).eq('id', user.id);
+    }
+  }
+
+  @override
+  Future<int> purchaseAvatar({
+    required String familyId,
+    required String avatarKey,
+  }) async {
+    final avatar = profileAvatarFor(avatarKey);
+    if (!avatar.isPremium) {
+      throw ArgumentError('Cet avatar est déjà disponible gratuitement.');
+    }
+
+    dynamic data;
+    try {
+      data = await _client.rpc(
+        'purchase_profile_avatar',
+        params: {
+          'p_family_id': familyId,
+          'p_avatar_key': avatarKey,
+        },
+      );
+    } on PostgrestException catch (error) {
+      if (_isMissingAvatarShopObject(error)) {
+        throw StateError(
+          'La boutique d’avatars n’est pas encore activée sur Supabase.',
+        );
+      }
+      rethrow;
+    }
+    final result = Map<String, dynamic>.from(data as Map);
+    return (result['remaining_gold'] as num).toInt();
+  }
+
+  Future<Set<String>> _getUnlockedAvatarKeys(String userId) async {
+    try {
+      final data = await _client
+          .from('profile_avatar_unlocks')
+          .select('avatar_key')
+          .eq('user_id', userId);
+      return (data as List)
+          .map(
+            (item) =>
+                Map<String, dynamic>.from(item as Map)['avatar_key'] as String,
+          )
+          .toSet();
+    } on PostgrestException catch (error) {
+      if (_isMissingAvatarShopObject(error)) return {};
+      rethrow;
+    }
+  }
+
+  bool _isMissingAvatarShopObject(PostgrestException error) {
+    return error.code == 'PGRST202' ||
+        error.code == 'PGRST205' ||
+        error.code == '42P01';
   }
 }
-
-const rpgAvatars = <String, String>{
-  'guardian': '🛡️',
-  'knight': '⚔️',
-  'mage': '🧙',
-  'ranger': '🏹',
-  'healer': '💚',
-  'scholar': '📚',
-  'explorer': '🧭',
-  'druid': '🌿',
-  'cook': '🍳',
-  'builder': '🔨',
-  'star': '⭐',
-  'dragon': '🐉',
-};
-
-Set<String> get rpgAvatarKeys => rpgAvatars.keys.toSet();
-
-String avatarEmoji(String? key) => rpgAvatars[key] ?? '🧭';
 
 String _canonicalSkillId(String id) {
   return id == 'organisation' ? 'organization' : id;

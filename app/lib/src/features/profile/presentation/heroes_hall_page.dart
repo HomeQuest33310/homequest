@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/widgets/dashboard_home_button.dart';
-import '../data/rpg_profile_repository_impl.dart';
+import '../domain/profile_avatar.dart';
 import '../domain/rpg_profile.dart';
 import '../providers/rpg_profile_provider.dart';
+import 'widgets/profile_avatar_view.dart';
 
 class HeroesHallPage extends ConsumerWidget {
   const HeroesHallPage({super.key});
@@ -173,9 +174,9 @@ class _HeroHallCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    child: Text(
-                      avatarEmoji(profile.avatarKey),
-                      style: const TextStyle(fontSize: 30),
+                    child: ProfileAvatarView(
+                      avatarKey: profile.avatarKey,
+                      size: 60,
                     ),
                   ),
                   const SizedBox(width: 14),

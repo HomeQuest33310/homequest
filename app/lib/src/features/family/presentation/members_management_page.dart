@@ -8,6 +8,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../domains/domain/domain.dart';
 import '../../domains/providers/domains_provider.dart';
 import '../../kingdom/providers/kingdom_provider.dart';
+import '../../profile/presentation/widgets/profile_avatar_view.dart';
 import '../../../core/links/invitation_link.dart';
 import '../domain/family_invitation.dart';
 import '../domain/family_member.dart';
@@ -335,10 +336,10 @@ class _MemberCard extends StatelessWidget {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
-                child: Text(
-                  member.displayName.isEmpty
-                      ? '?'
-                      : member.displayName.characters.first.toUpperCase(),
+                child: ProfileAvatarView(
+                  avatarKey: member.avatarKey,
+                  size: 40,
+                  semanticLabel: 'Avatar de ${member.displayName}',
                 ),
               ),
               title: Text(member.displayName),
