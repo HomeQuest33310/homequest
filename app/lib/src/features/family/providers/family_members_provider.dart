@@ -39,6 +39,7 @@ class FamilyMembersController extends StateNotifier<AsyncValue<void>> {
 
   Future<void> changeRole({
     required String memberId,
+    required String kingdomId,
     required String newRole,
   }) async {
     state = const AsyncLoading();
@@ -46,10 +47,13 @@ class FamilyMembersController extends StateNotifier<AsyncValue<void>> {
     try {
       await _ref.read(familyRepositoryProvider).changeMemberRole(
             memberId: memberId,
+            kingdomId: kingdomId,
             newRole: newRole,
           );
 
       _ref.invalidate(currentFamilyMembersProvider);
+      _ref.invalidate(availableKingdomsProvider);
+      _ref.invalidate(currentKingdomProvider);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);

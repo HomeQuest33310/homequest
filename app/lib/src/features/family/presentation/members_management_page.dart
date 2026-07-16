@@ -94,8 +94,16 @@ class MembersManagementPage extends ConsumerWidget {
                     member: member,
                     isOwner: member.userId == family?.ownerId,
                     canManage: canManage && member.userId != userId,
-                    onRoleChanged: (role) =>
-                        _changeRole(context, ref, member, role),
+                    onRoleChanged: (role) {
+                      if (kingdom == null) return;
+                      _changeRole(
+                        context,
+                        ref,
+                        member,
+                        kingdom.id,
+                        role,
+                      );
+                    },
                     onDeactivate: () => _deactivate(context, ref, member),
                     onRequestPasswordReset: kingdom == null
                         ? null
@@ -182,10 +190,12 @@ class MembersManagementPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     FamilyMember member,
+    String kingdomId,
     String role,
   ) async {
     await ref.read(familyMembersControllerProvider.notifier).changeRole(
           memberId: member.id,
+          kingdomId: kingdomId,
           newRole: role,
         );
     if (context.mounted) _showControllerResult(context, ref);
