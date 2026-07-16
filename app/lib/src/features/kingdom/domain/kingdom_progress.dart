@@ -51,19 +51,19 @@ class KingdomProgress {
           required: 50,
           current: stats.approvedQuestCount,
         ),
-        KingdomBuilding.bosses(
+        KingdomBuilding.quests(
           emoji: '🏛️',
           name: 'Hall des Trophées',
           description: 'Les victoires collectives y sont honorées.',
-          required: 3,
-          current: stats.defeatedBossCount,
+          required: 60,
+          current: stats.approvedQuestCount,
         ),
-        KingdomBuilding.rewards(
+        KingdomBuilding.quests(
           emoji: '🌳',
           name: 'Jardin des Souhaits',
           description: 'Les récompenses partagées y font fleurir le Royaume.',
-          required: 3,
-          current: stats.deliveredRewardCount,
+          required: 75,
+          current: stats.approvedQuestCount,
         ),
         KingdomBuilding.quests(
           emoji: '🏰',
