@@ -54,6 +54,11 @@ const questLocationLabels = <String, String>{
   'special_cooking': 'Cuisine spéciale',
   'quick_daily': 'Quotidien rapide',
   'family_group': 'Toute la maison',
+  'animal_care': 'Soin des animaux',
+  'home_routine': 'Maison et routines',
+  'vehicle': 'Véhicules et transport',
+  'wellbeing': 'Santé et bien-être',
+  'community': 'Liens et communauté',
 };
 
 const heroicSkills = <HeroicSkill>[
@@ -186,6 +191,21 @@ class _Location {
 
 _Location? _locationFromHeading(String heading) {
   if (!heading.startsWith('## ')) return null;
+  if (heading.contains('SOIN DES ANIMAUX')) {
+    return const _Location('animal_care', 'Soin des animaux');
+  }
+  if (heading.contains('MAISON ET DES ROUTINES')) {
+    return const _Location('home_routine', 'Maison et routines');
+  }
+  if (heading.contains('VÉHICULES ET DU TRANSPORT')) {
+    return const _Location('vehicle', 'Véhicules et transport');
+  }
+  if (heading.contains('SANTÉ ET DE BIEN-ÊTRE')) {
+    return const _Location('wellbeing', 'Santé et bien-être');
+  }
+  if (heading.contains('LIENS ET DE LA COMMUNAUTÉ')) {
+    return const _Location('community', 'Liens et communauté');
+  }
   if (heading.contains('CULINAIRES SPÉCIALES')) {
     return const _Location('special_cooking', 'Cuisine spéciale');
   }

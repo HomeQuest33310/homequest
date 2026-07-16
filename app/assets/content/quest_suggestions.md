@@ -159,6 +159,63 @@ Chaque quête développe **2 compétences** en plus de gagner de l'XP:
 
 ---
 
+## 🐱 **QUÊTES DE SOIN DES ANIMAUX**
+
+| # | Tâche Réelle | Quête Héroïque | Emoji | Élément | Compétences | XP | Difficulté |
+|---|---|---|---|---|---|---|---|
+| 76 | Nourrir le chat | Alimenter le Félin Majestueux | 🍖 | Terre 🌍 | 📦 Rangement, 👥 Leadership | 50 | ⭐ |
+| 77 | Nettoyer la litière du chat | Purifier le Sanctuaire du Félin | 🧹 | Eau 💧 | 🧹 Nettoyage, ⏳ Endurance | 80 | ⭐⭐ |
+| 78 | Changer la litière du chat | Renouveler le Sanctuaire du Félin | 🪣 | Terre 🌍 | 💪 Force, 📦 Rangement | 120 | ⭐⭐ |
+| 85 | Brosser le chat | Toiletter le Félin Majestueux | 🐱 | Air 💨 | ✋ Dextérité, 👥 Leadership | 75 | ⭐⭐ |
+
+---
+
+## 🏠 **QUÊTES DE LA MAISON ET DES ROUTINES**
+
+| # | Tâche Réelle | Quête Héroïque | Emoji | Élément | Compétences | XP | Difficulté |
+|---|---|---|---|---|---|---|---|
+| 79 | Fermer les volets | Sceller le Château pour la Nuit | 🪟 | Métal ⚙️ | 👥 Leadership, 🧠 Intelligence | 60 | ⭐⭐ |
+| 80 | Ramasser le linge | Collecter les Vêtements Éparpillés | 👕 | Air 💨 | 📦 Rangement, 🏃 Agilité | 70 | ⭐⭐ |
+| 81 | Vider le lave-vaisselle | Rendre les Coupes à la Cuisine | 🍽️ | Eau 💧 | 📦 Rangement, ✋ Dextérité | 85 | ⭐⭐ |
+| 82 | Remplir les bouteilles d'eau | Recharger les Vases de l'Hydratation | 💧 | Eau 💧 | 👥 Leadership, 🧠 Intelligence | 55 | ⭐ |
+
+---
+
+## 🌳 **QUÊTES EXTÉRIEURES ET D'ORGANISATION**
+
+| # | Tâche Réelle | Quête Héroïque | Emoji | Élément | Compétences | XP | Difficulté |
+|---|---|---|---|---|---|---|---|
+| 83 | Vider le compost | Évacuer les Résidus du Compost | 🗑️ | Terre 🌍 | 💪 Force, 🌱 Jardinage | 95 | ⭐⭐ |
+| 84 | Ranger le cabanon | Organiser le Sanctuaire des Outils | 🪜 | Métal ⚙️ | 📦 Rangement, 🧠 Intelligence | 130 | ⭐⭐⭐ |
+
+---
+
+## 🚗 **QUÊTES DES VÉHICULES ET DU TRANSPORT**
+
+| # | Tâche Réelle | Quête Héroïque | Emoji | Élément | Compétences | XP | Difficulté |
+|---|---|---|---|---|---|---|---|
+| 86 | Nettoyer l'intérieur de la voiture | Purifier le Carrosse de la Famille | 🚗 | Eau 💧 | 🧹 Nettoyage, 📦 Rangement | 110 | ⭐⭐ |
+| 87 | Nettoyer l'extérieur de la voiture | Lustrer le Carrosse Brillant | 🚙 | Eau 💧 | 💪 Force, ✋ Dextérité | 135 | ⭐⭐⭐ |
+
+---
+
+## 🏃 **QUÊTES DE SANTÉ ET DE BIEN-ÊTRE**
+
+| # | Tâche Réelle | Quête Héroïque | Emoji | Élément | Compétences | XP | Difficulté |
+|---|---|---|---|---|---|---|---|
+| 88 | Faire du sport pendant plus d'une heure | Accomplir les Exploits Athlétiques du Héros | 🏃 | Air 💨 | ⏳ Endurance, 💪 Force | 200 | ⭐⭐⭐ |
+
+---
+
+## ❤️ **QUÊTES DES LIENS ET DE LA COMMUNAUTÉ**
+
+| # | Tâche Réelle | Quête Héroïque | Emoji | Élément | Compétences | XP | Difficulté |
+|---|---|---|---|---|---|---|---|
+| 89 | Appeler une personne de la famille | Tisser les Liens du Cœur | 📞 | Lumière ✨ | 👥 Leadership, 💪 Force | 85 | ⭐⭐ |
+| 90 | Faire une bonne action à l'extérieur | Accomplir un Acte de Charité Héroïque | 🤝 | Lumière ✨ | 👥 Leadership, 🧠 Intelligence | 150 | ⭐⭐⭐ |
+
+---
+
 ## 📊 **SYSTÈME DE COMPÉTENCES**
 
 ### **Compétences Principales**
