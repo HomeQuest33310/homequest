@@ -18,7 +18,9 @@ import '../../features/kingdom/presentation/kingdom_progress_page.dart';
 import '../../features/shopping/presentation/shopping_page.dart';
 import '../../features/settings/presentation/appearance_settings_page.dart';
 import '../../features/quests/presentation/pages/voluntary_quest_requests_page.dart';
+import '../../features/quests/presentation/pages/quests_screen.dart';
 import '../../features/opening/presentation/first_launch_gate.dart';
+import '../widgets/home_shell.dart';
 import 'home_gate.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -47,71 +49,80 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/create-family',
         builder: (context, state) => const CreateFamilyPage(),
       ),
-      GoRoute(
-        path: '/dashboard',
-        builder: (context, state) => const FamilyDashboardPage(),
-      ),
-      GoRoute(
-        path: '/members',
-        builder: (context, state) => const MembersManagementPage(),
-      ),
-      GoRoute(
-        path: '/missions',
-        builder: (context, state) => const MyMissionsPage(),
-      ),
-      GoRoute(
-        path: '/quest-requests',
-        builder: (context, state) => const VoluntaryQuestRequestsPage(),
-      ),
-      GoRoute(
-        path: '/validations',
-        builder: (context, state) => const ValidationsPage(),
-      ),
-      GoRoute(
-        path: '/notifications',
-        builder: (context, state) => const GuardianNotificationsPage(),
-      ),
-      GoRoute(
-        path: '/profile',
-        builder: (context, state) => const RpgProfilePage(),
-      ),
-      GoRoute(
-        path: '/heroes',
-        builder: (context, state) => const HeroesHallPage(),
-      ),
-      GoRoute(
-        path: '/bosses',
-        builder: (context, state) => const BossScreen(),
-      ),
-      GoRoute(
-        path: '/reward-suggestions',
-        builder: (context, state) => const RewardSuggestionsPage(),
-      ),
-      GoRoute(
-        path: '/kingdom-legend',
-        builder: (context, state) => const KingdomLegendPage(),
-      ),
-      GoRoute(
-        path: '/kingdom-progress',
-        builder: (context, state) => const KingdomProgressPage(),
-      ),
-      GoRoute(
-        path: '/shopping',
-        builder: (context, state) => const ShoppingPage(),
-      ),
-      GoRoute(
-        path: '/appearance',
-        builder: (context, state) => const AppearanceSettingsPage(),
+      ShellRoute(
+        builder: (context, state, child) => HomeShell(child: child),
+        routes: [
+          GoRoute(
+            path: '/dashboard',
+            builder: (context, state) => const FamilyDashboardPage(),
+          ),
+          GoRoute(
+            path: '/quests',
+            builder: (context, state) => const QuestsScreen(),
+          ),
+          GoRoute(
+            path: '/members',
+            builder: (context, state) => const MembersManagementPage(),
+          ),
+          GoRoute(
+            path: '/missions',
+            builder: (context, state) => const MyMissionsPage(),
+          ),
+          GoRoute(
+            path: '/quest-requests',
+            builder: (context, state) => const VoluntaryQuestRequestsPage(),
+          ),
+          GoRoute(
+            path: '/validations',
+            builder: (context, state) => const ValidationsPage(),
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (context, state) => const GuardianNotificationsPage(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const RpgProfilePage(),
+          ),
+          GoRoute(
+            path: '/heroes',
+            builder: (context, state) => const HeroesHallPage(),
+          ),
+          GoRoute(
+            path: '/bosses',
+            builder: (context, state) => const BossScreen(),
+          ),
+          GoRoute(
+            path: '/reward-suggestions',
+            builder: (context, state) => const RewardSuggestionsPage(),
+          ),
+          GoRoute(
+            path: '/kingdom-legend',
+            builder: (context, state) => const KingdomLegendPage(),
+          ),
+          GoRoute(
+            path: '/kingdom-progress',
+            builder: (context, state) => const KingdomProgressPage(),
+          ),
+          GoRoute(
+            path: '/shopping',
+            builder: (context, state) => const ShoppingPage(),
+          ),
+          GoRoute(
+            path: '/appearance',
+            builder: (context, state) => const AppearanceSettingsPage(),
+          ),
+          GoRoute(
+            path: '/devtools',
+            builder: (context, state) => const DevToolsPage(),
+          ),
+        ],
       ),
       GoRoute(
         path: '/invite/:token',
         builder: (context, state) => AcceptInvitationPage(
           token: state.pathParameters['token']!,
         ),
-      ),
-      GoRoute(
-        path: '/devtools',
-        builder: (context, state) => const DevToolsPage(),
       ),
     ],
   );

@@ -6,6 +6,7 @@ import '../../celebrations/presentation/kingdom_celebration_listener.dart';
 import '../../boss/domain/boss.dart';
 import '../../boss/providers/boss_provider.dart';
 import '../../kingdom/domain/kingdom.dart';
+import '../../kingdom/domain/kingdom_progress.dart';
 import '../../kingdom/providers/kingdom_provider.dart';
 import '../../quests/domain/quest.dart';
 import '../../notifications/providers/notifications_provider.dart';
@@ -18,6 +19,7 @@ import '../../rewards/providers/reward_suggestions_provider.dart';
 import '../domain/family.dart' as domain;
 import '../providers/family_members_provider.dart';
 import '../providers/family_provider.dart';
+import '../providers/family_stats_provider.dart';
 import '../../quests/presentation/widgets/quest_card.dart';
 import '../../quests/presentation/dialogs/assign_quest_dialog.dart';
 import 'package:flutter/foundation.dart';
@@ -39,6 +41,10 @@ class FamilyDashboardPage extends ConsumerWidget {
     final kingdoms =
         ref.watch(availableKingdomsProvider).valueOrNull ?? const <Kingdom>[];
     final currentKingdom = ref.watch(currentKingdomProvider).valueOrNull;
+    final familyStats = ref.watch(currentFamilyStatsProvider).valueOrNull;
+    final kingdomStage = familyStats == null
+        ? KingdomStage.values.first
+        : KingdomProgress.fromStats(familyStats).stage;
     final canManageQuests = currentKingdom?.membershipRole == 'guardian' &&
         currentMember?.isActive == true;
     final canProposeVoluntaryQuest =
@@ -59,7 +65,19 @@ class FamilyDashboardPage extends ConsumerWidget {
       ref.invalidate(guardianNotificationsProvider);
     }
 
+    final navigationMenu = _HomeNavigationMenu(
+      canManageQuests: canManageQuests,
+      canOpenInitiatives: canManageQuests || canSubmitVoluntaryQuest,
+      unreadNotifications: unreadNotifications,
+      pendingInitiatives: pendingInitiatives,
+      onSignOut: () async {
+        await Supabase.instance.client.auth.signOut();
+        ref.invalidate(currentFamilyProvider);
+      },
+    );
+
     return Scaffold(
+      drawer: navigationMenu,
       appBar: AppBar(
         title: const Stack(
           children: [
@@ -68,66 +86,6 @@ class FamilyDashboardPage extends ConsumerWidget {
           ],
         ),
         actions: [
-          IconButton(
-            tooltip: 'Rafraîchir',
-            onPressed: refreshAll,
-            icon: const Icon(Icons.refresh),
-          ),
-          IconButton(
-            tooltip: 'Membres du royaume',
-            onPressed: () => context.go('/members'),
-            icon: const Icon(Icons.groups),
-          ),
-          IconButton(
-            tooltip: 'Hall des Héros',
-            onPressed: () => context.go('/heroes'),
-            icon: const Icon(Icons.workspace_premium_outlined),
-          ),
-          IconButton(
-            tooltip: 'Évolution du Royaume',
-            onPressed: () => context.go('/kingdom-progress'),
-            icon: const Icon(Icons.castle_outlined),
-          ),
-          IconButton(
-            tooltip: 'Liste de ravitaillement',
-            onPressed: () => context.go('/shopping'),
-            icon: const Icon(Icons.shopping_basket_outlined),
-          ),
-          IconButton(
-            tooltip: 'Mes missions',
-            onPressed: () => context.go('/missions'),
-            icon: const Icon(Icons.assignment_turned_in_outlined),
-          ),
-          IconButton(
-            tooltip: canManageQuests
-                ? 'Initiatives à examiner'
-                : canSubmitVoluntaryQuest
-                    ? 'Mes initiatives héroïques'
-                    : 'Aventurier niveau 10 requis',
-            onPressed: canManageQuests || canSubmitVoluntaryQuest
-                ? () => context.go('/quest-requests')
-                : null,
-            icon: Badge(
-              isLabelVisible: pendingInitiatives > 0,
-              label: Text('$pendingInitiatives'),
-              child: const Icon(Icons.volunteer_activism_outlined),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Mon profil d’aventurier',
-            onPressed: () => context.go('/profile'),
-            icon: const Icon(Icons.account_circle_outlined),
-          ),
-          IconButton(
-            tooltip: 'Apparence du Royaume',
-            onPressed: () => context.go('/appearance'),
-            icon: const Icon(Icons.palette_outlined),
-          ),
-          IconButton(
-            tooltip: 'Antre des Boss',
-            onPressed: () => context.go('/bosses'),
-            icon: const Icon(Icons.local_fire_department_outlined),
-          ),
           if (canManageQuests)
             IconButton(
               tooltip: 'Notifications du royaume',
@@ -138,25 +96,42 @@ class FamilyDashboardPage extends ConsumerWidget {
                 child: const Icon(Icons.notifications_outlined),
               ),
             ),
-          if (canManageQuests)
-            IconButton(
-              tooltip: 'Validations en attente',
-              onPressed: () => context.go('/validations'),
-              icon: const Icon(Icons.fact_check_outlined),
-            ),
-          if (kDebugMode)
-            IconButton(
-              tooltip: 'Developer Tools',
-              onPressed: () => context.go('/devtools'),
-              icon: const Icon(Icons.bug_report),
-            ),
-          IconButton(
-            tooltip: 'Déconnexion',
-            onPressed: () async {
-              await Supabase.instance.client.auth.signOut();
-              ref.invalidate(currentFamilyProvider);
+          PopupMenuButton<_AccountAction>(
+            tooltip: 'Compte et réglages',
+            icon: const Icon(Icons.account_circle_outlined),
+            onSelected: (action) async {
+              switch (action) {
+                case _AccountAction.profile:
+                  context.go('/profile');
+                case _AccountAction.appearance:
+                  context.go('/appearance');
+                case _AccountAction.devtools:
+                  context.go('/devtools');
+                case _AccountAction.signOut:
+                  await Supabase.instance.client.auth.signOut();
+                  ref.invalidate(currentFamilyProvider);
+              }
             },
-            icon: const Icon(Icons.logout),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: _AccountAction.profile,
+                child: Text('Mon profil'),
+              ),
+              const PopupMenuItem(
+                value: _AccountAction.appearance,
+                child: Text('Apparence'),
+              ),
+              if (kDebugMode)
+                const PopupMenuItem(
+                  value: _AccountAction.devtools,
+                  child: Text('Outils de développement'),
+                ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: _AccountAction.signOut,
+                child: Text('Déconnexion'),
+              ),
+            ],
           ),
         ],
       ),
@@ -179,6 +154,7 @@ class FamilyDashboardPage extends ConsumerWidget {
                 _HeroHeader(
                   family: family,
                   kingdom: currentKingdom,
+                  stage: kingdomStage,
                   availableKingdoms: kingdoms,
                   onSelectKingdom: (kingdomId) {
                     ref.read(selectedKingdomIdProvider.notifier).state =
@@ -247,6 +223,179 @@ class FamilyDashboardPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+enum _AccountAction { profile, appearance, devtools, signOut }
+
+class _HomeNavigationMenu extends StatelessWidget {
+  const _HomeNavigationMenu({
+    required this.canManageQuests,
+    required this.canOpenInitiatives,
+    required this.unreadNotifications,
+    required this.pendingInitiatives,
+    required this.onSignOut,
+  });
+
+  final bool canManageQuests;
+  final bool canOpenInitiatives;
+  final int unreadNotifications;
+  final int pendingInitiatives;
+  final Future<void> Function() onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    void open(String location) => context.go(location);
+
+    return Drawer(
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          children: [
+            const ListTile(
+              leading: CircleAvatar(child: Icon(Icons.castle_outlined)),
+              title: Text('HomeQuest'),
+              subtitle: Text('Navigation du Royaume'),
+            ),
+            const Divider(),
+            const _MenuSectionTitle('Royaume'),
+            _MenuItem(
+              icon: Icons.home_outlined,
+              label: 'Accueil',
+              onTap: () => open('/dashboard'),
+            ),
+            _MenuItem(
+              icon: Icons.castle_outlined,
+              label: 'Évolution du Royaume',
+              onTap: () => open('/kingdom-progress'),
+            ),
+            _MenuItem(
+              icon: Icons.groups_outlined,
+              label: 'Membres du royaume',
+              onTap: () => open('/members'),
+            ),
+            _MenuItem(
+              icon: Icons.workspace_premium_outlined,
+              label: 'Hall des Héros',
+              onTap: () => open('/heroes'),
+            ),
+            _MenuItem(
+              icon: Icons.auto_stories_outlined,
+              label: 'Légende du Royaume',
+              onTap: () => open('/kingdom-legend'),
+            ),
+            const _MenuSectionTitle('Aventure'),
+            _MenuItem(
+              icon: Icons.task_alt_outlined,
+              label: 'Quêtes',
+              onTap: () => open('/quests'),
+            ),
+            _MenuItem(
+              icon: Icons.assignment_turned_in_outlined,
+              label: 'Mes missions',
+              onTap: () => open('/missions'),
+            ),
+            _MenuItem(
+              icon: Icons.local_fire_department_outlined,
+              label: 'Antre des Boss',
+              onTap: () => open('/bosses'),
+            ),
+            if (canOpenInitiatives)
+              _MenuItem(
+                icon: Icons.volunteer_activism_outlined,
+                label: canManageQuests
+                    ? 'Initiatives à examiner'
+                    : 'Mes initiatives',
+                badgeCount: pendingInitiatives,
+                onTap: () => open('/quest-requests'),
+              ),
+            _MenuItem(
+              icon: Icons.card_giftcard_outlined,
+              label: 'Souhaits et récompenses',
+              onTap: () => open('/reward-suggestions'),
+            ),
+            const _MenuSectionTitle('Foyer'),
+            _MenuItem(
+              icon: Icons.shopping_basket_outlined,
+              label: 'Liste de ravitaillement',
+              onTap: () => open('/shopping'),
+            ),
+            if (canManageQuests) ...[
+              const _MenuSectionTitle('Gestion du gardien'),
+              _MenuItem(
+                icon: Icons.fact_check_outlined,
+                label: 'Validations en attente',
+                onTap: () => open('/validations'),
+              ),
+              _MenuItem(
+                icon: Icons.notifications_outlined,
+                label: 'Notifications',
+                badgeCount: unreadNotifications,
+                onTap: () => open('/notifications'),
+              ),
+            ],
+            const Divider(),
+            _MenuItem(
+              icon: Icons.person_outline,
+              label: 'Mon profil',
+              onTap: () => open('/profile'),
+            ),
+            _MenuItem(
+              icon: Icons.palette_outlined,
+              label: 'Apparence',
+              onTap: () => open('/appearance'),
+            ),
+            _MenuItem(
+              icon: Icons.logout,
+              label: 'Déconnexion',
+              onTap: onSignOut,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuSectionTitle extends StatelessWidget {
+  const _MenuSectionTitle(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 18, 16, 6),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+        ),
+      );
+}
+
+class _MenuItem extends StatelessWidget {
+  const _MenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.badgeCount = 0,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final int badgeCount;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+        leading: Badge(
+          isLabelVisible: badgeCount > 0,
+          label: Text('$badgeCount'),
+          child: Icon(icon),
+        ),
+        title: Text(label),
+        onTap: onTap,
+      );
 }
 
 class _KingdomChallenges extends StatelessWidget {
@@ -525,6 +674,7 @@ class _HeroHeader extends StatelessWidget {
   const _HeroHeader({
     required this.family,
     required this.kingdom,
+    required this.stage,
     required this.availableKingdoms,
     required this.onSelectKingdom,
     required this.onOpenKingdom,
@@ -533,6 +683,7 @@ class _HeroHeader extends StatelessWidget {
 
   final domain.Family family;
   final Kingdom? kingdom;
+  final KingdomStage stage;
   final List<Kingdom> availableKingdoms;
   final ValueChanged<String> onSelectKingdom;
   final VoidCallback onOpenKingdom;
@@ -563,6 +714,14 @@ class _HeroHeader extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
             child: Row(
               children: [
+                Semantics(
+                  label: 'Étape actuelle du Royaume : ${stage.name}',
+                  child: Text(
+                    stage.emoji,
+                    style: const TextStyle(fontSize: 48),
+                  ),
+                ),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -571,6 +730,13 @@ class _HeroHeader extends StatelessWidget {
                         kingdom?.name ?? family.kingdomName,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Étape actuelle : ${stage.name}',
+                        style: theme.textTheme.labelLarge?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer,
                         ),
                       ),
