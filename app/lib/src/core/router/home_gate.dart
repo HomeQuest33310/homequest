@@ -11,6 +11,7 @@ import '../../features/family/presentation/create_family_page.dart';
 import '../../features/family/presentation/family_dashboard_page.dart';
 import '../../features/kingdom/providers/kingdom_provider.dart';
 import '../../features/opening/presentation/first_launch_gate.dart';
+import '../widgets/home_shell.dart';
 
 class HomeGate extends ConsumerWidget {
   const HomeGate({super.key});
@@ -64,7 +65,7 @@ class HomeGate extends ConsumerWidget {
         if (kingdoms.isEmpty) {
           return const CreateFamilyPage();
         }
-        return const FamilyDashboardPage();
+        return const HomeShell(child: FamilyDashboardPage());
       },
     );
   }
