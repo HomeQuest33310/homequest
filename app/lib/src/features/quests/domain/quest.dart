@@ -37,6 +37,13 @@ class Quest {
   final int goldReward;
   final int bossDamage;
   final String frequency;
+
+  String get frequencyLabel => switch (frequency) {
+        'once' => 'Une seule fois',
+        'daily' => 'Quotidien',
+        'weekly' => 'Hebdomadaire',
+        _ => frequency,
+      };
   final bool requiresApproval;
   final String status;
   final DateTime createdAt;

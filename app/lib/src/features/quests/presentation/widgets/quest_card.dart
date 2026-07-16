@@ -94,7 +94,7 @@ class QuestCard extends StatelessWidget {
                     label: '${quest.goldReward} Or'),
                 _StatBadge(
                     icon: Icons.gps_fixed, label: '${quest.bossDamage} dégâts'),
-                _StatBadge(icon: Icons.repeat, label: quest.frequency),
+                _StatBadge(icon: Icons.repeat, label: quest.frequencyLabel),
                 _StatBadge(
                   icon: quest.requiresApproval
                       ? Icons.fact_check_outlined
