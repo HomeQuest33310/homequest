@@ -62,4 +62,25 @@ class RpgProfileController extends StateNotifier<AsyncValue<void>> {
       return false;
     }
   }
+
+  Future<int> purchaseAvatar(String avatarKey) async {
+    state = const AsyncLoading();
+    try {
+      final family = await _ref.read(currentFamilyProvider.future);
+      if (family == null) throw StateError('Aucun royaume actif.');
+
+      final remainingGold =
+          await _ref.read(rpgProfileRepositoryProvider).purchaseAvatar(
+                familyId: family.id,
+                avatarKey: avatarKey,
+              );
+      _ref.invalidate(currentRpgProfileProvider);
+      _ref.invalidate(currentFamilyMembersProvider);
+      state = const AsyncData(null);
+      return remainingGold;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      rethrow;
+    }
+  }
 }

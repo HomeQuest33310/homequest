@@ -12,4 +12,9 @@ abstract class RpgProfileRepository {
     required String displayName,
     required String avatarKey,
   });
+
+  Future<int> purchaseAvatar({
+    required String familyId,
+    required String avatarKey,
+  });
 }

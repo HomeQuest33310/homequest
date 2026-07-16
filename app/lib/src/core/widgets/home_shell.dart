@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/family/providers/family_members_provider.dart';
 import '../../features/family/providers/family_stats_provider.dart';
 import '../../features/kingdom/domain/kingdom_progress.dart';
-import '../../features/profile/data/rpg_profile_repository_impl.dart';
+import '../../features/profile/presentation/widgets/profile_avatar_view.dart';
 
 class HomeShell extends ConsumerWidget {
   const HomeShell({required this.child, super.key});
@@ -35,7 +35,6 @@ class HomeShell extends ConsumerWidget {
     final stats = ref.watch(currentFamilyStatsProvider).valueOrNull;
     final kingdomEmoji =
         stats == null ? '⛺' : KingdomProgress.fromStats(stats).stage.emoji;
-    final profileEmoji = avatarEmoji(member?.avatarKey);
 
     return Scaffold(
       body: child,
@@ -73,10 +72,10 @@ class HomeShell extends ConsumerWidget {
             label: 'Missions',
           ),
           NavigationDestination(
-            icon: Text(
-              profileEmoji,
-              style: const TextStyle(fontSize: 23),
-              semanticsLabel: 'Avatar du profil',
+            icon: ProfileAvatarView(
+              avatarKey: member?.avatarKey,
+              size: 26,
+              semanticLabel: 'Avatar du profil',
             ),
             label: 'Profil',
           ),

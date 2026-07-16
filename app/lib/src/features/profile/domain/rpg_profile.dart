@@ -14,12 +14,14 @@ class RpgProfile {
     required this.bossVictories,
     required this.approvedQuestCount,
     this.avatarKey,
+    this.unlockedAvatarKeys = const {},
   });
 
   final String memberId;
   final String userId;
   final String displayName;
   final String? avatarKey;
+  final Set<String> unlockedAvatarKeys;
   final String role;
   final int level;
   final int xp;
