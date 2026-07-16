@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/family/providers/family_members_provider.dart';
 import '../../features/family/providers/family_stats_provider.dart';
 import '../../features/kingdom/domain/kingdom_progress.dart';
+import '../../features/kingdom/providers/kingdom_provider.dart';
 import '../../features/profile/presentation/widgets/profile_avatar_view.dart';
 
 class HomeShell extends ConsumerWidget {
@@ -29,6 +30,7 @@ class HomeShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(kingdomMembershipRealtimeProvider);
     final location = GoRouterState.of(context).uri.toString();
     final selectedIndex = _indexFromLocation(location);
     final member = ref.watch(currentFamilyMemberProvider).valueOrNull;

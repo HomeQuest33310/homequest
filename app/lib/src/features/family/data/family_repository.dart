@@ -18,6 +18,7 @@ abstract class FamilyRepository {
 
   Future<FamilyMember> changeMemberRole({
     required String memberId,
+    required String kingdomId,
     required String newRole,
   });
 

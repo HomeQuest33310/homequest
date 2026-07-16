@@ -78,7 +78,9 @@ class SupabaseFamilyRepository implements FamilyRepository {
 
   @override
   Future<List<FamilyMember>> getMembers(String kingdomId) async {
-    final data = await _client.from('kingdom_members').select('''
+    final data = await _client
+        .from('kingdom_members')
+        .select('''
           role,
           expires_at,
           is_active,
@@ -129,12 +131,14 @@ class SupabaseFamilyRepository implements FamilyRepository {
   @override
   Future<FamilyMember> changeMemberRole({
     required String memberId,
+    required String kingdomId,
     required String newRole,
   }) async {
     final data = await _client.rpc(
-      'change_family_member_role',
+      'change_kingdom_member_role',
       params: {
         'p_member_id': memberId,
+        'p_kingdom_id': kingdomId,
         'p_new_role': newRole,
       },
     );
