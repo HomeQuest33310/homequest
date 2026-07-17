@@ -82,6 +82,12 @@ class RewardSuggestionsPage extends ConsumerWidget {
             final priorityQueue = suggestions
                 .where((suggestion) => suggestion.isInQuestPriorityQueue)
                 .toList();
+            final activeSuggestions = suggestions
+                .where((suggestion) => !suggestion.isArchived)
+                .toList();
+            final archivedSuggestions = suggestions
+                .where((suggestion) => suggestion.isArchived)
+                .toList();
             return RefreshIndicator(
               onRefresh: () async {
                 ref.invalidate(currentRewardSuggestionsProvider);
@@ -107,58 +113,109 @@ class RewardSuggestionsPage extends ConsumerWidget {
                           'Les propositions de récompenses apparaîtront ici.',
                         ),
                       ),
-                    )
-                  else
-                    for (final suggestion in suggestions)
-                      _SuggestionCard(
+                    ),
+                  if (activeSuggestions.isNotEmpty) ...[
+                    const _RewardSectionTitle(
+                      icon: Icons.auto_awesome,
+                      title: 'Récompenses actives et souhaits',
+                    ),
+                    const SizedBox(height: 10),
+                    for (final suggestion in activeSuggestions) ...[
+                      _buildSuggestionCard(
+                        context: context,
+                        ref: ref,
                         suggestion: suggestion,
+                        priorityQueue: priorityQueue,
                         isGuardian: profile.role == 'guardian',
                         busy: busy,
-                        priorityPosition: suggestion.isInQuestPriorityQueue
-                            ? priorityQueue.indexOf(suggestion) + 1
-                            : null,
-                        priorityCount: priorityQueue.length,
-                        onMoveUp: () => _moveReward(
-                          context,
-                          ref,
-                          priorityQueue,
-                          suggestion,
-                          -1,
-                        ),
-                        onMoveDown: () => _moveReward(
-                          context,
-                          ref,
-                          priorityQueue,
-                          suggestion,
-                          1,
-                        ),
-                        onReview: () => _reviewReward(
-                          context,
-                          ref,
-                          suggestion,
-                          activeBoss,
-                        ),
-                        onDeliver: () => _deliverReward(
-                          context,
-                          ref,
-                          suggestion,
-                        ),
-                        onEdit: () => _editReward(
-                          context,
-                          ref,
-                          suggestion,
-                        ),
-                        onArchive: () => _archiveReward(
-                          context,
-                          ref,
-                          suggestion,
-                        ),
+                        activeBoss: activeBoss,
                       ),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
+                  if (archivedSuggestions.isNotEmpty) ...[
+                    if (activeSuggestions.isNotEmpty)
+                      const SizedBox(height: 16),
+                    const _RewardSectionTitle(
+                      icon: Icons.archive_outlined,
+                      title: 'Récompenses archivées',
+                      subtitle:
+                          'Historique des récompenses retirées des objectifs actifs.',
+                    ),
+                    const SizedBox(height: 10),
+                    for (final suggestion in archivedSuggestions) ...[
+                      _buildSuggestionCard(
+                        context: context,
+                        ref: ref,
+                        suggestion: suggestion,
+                        priorityQueue: priorityQueue,
+                        isGuardian: profile.role == 'guardian',
+                        busy: busy,
+                        activeBoss: activeBoss,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
                 ],
               ),
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionCard({
+    required BuildContext context,
+    required WidgetRef ref,
+    required RewardSuggestion suggestion,
+    required List<RewardSuggestion> priorityQueue,
+    required bool isGuardian,
+    required bool busy,
+    required Boss? activeBoss,
+  }) {
+    return _SuggestionCard(
+      suggestion: suggestion,
+      isGuardian: isGuardian,
+      busy: busy,
+      priorityPosition: suggestion.isInQuestPriorityQueue
+          ? priorityQueue.indexOf(suggestion) + 1
+          : null,
+      priorityCount: priorityQueue.length,
+      onMoveUp: () => _moveReward(
+        context,
+        ref,
+        priorityQueue,
+        suggestion,
+        -1,
+      ),
+      onMoveDown: () => _moveReward(
+        context,
+        ref,
+        priorityQueue,
+        suggestion,
+        1,
+      ),
+      onReview: () => _reviewReward(
+        context,
+        ref,
+        suggestion,
+        activeBoss,
+      ),
+      onDeliver: () => _deliverReward(
+        context,
+        ref,
+        suggestion,
+      ),
+      onEdit: () => _editReward(
+        context,
+        ref,
+        suggestion,
+      ),
+      onArchive: () => _archiveReward(
+        context,
+        ref,
+        suggestion,
       ),
     );
   }
@@ -496,6 +553,41 @@ class _PriorityExplanationCard extends StatelessWidget {
                   'basculent automatiquement vers la suivante.',
         ),
       ),
+    );
+  }
+}
+
+class _RewardSectionTitle extends StatelessWidget {
+  const _RewardSectionTitle({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              if (subtitle case final text?) ...[
+                const SizedBox(height: 2),
+                Text(text, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
