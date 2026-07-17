@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../celebrations/presentation/kingdom_celebration_listener.dart';
 import '../../boss/domain/boss.dart';
 import '../../boss/providers/boss_provider.dart';
 import '../../kingdom/domain/kingdom.dart';
@@ -79,12 +78,7 @@ class FamilyDashboardPage extends ConsumerWidget {
     return Scaffold(
       drawer: navigationMenu,
       appBar: AppBar(
-        title: const Stack(
-          children: [
-            Text('HomeQuest'),
-            KingdomCelebrationListener(),
-          ],
-        ),
+        title: const Text('HomeQuest'),
         actions: [
           if (canManageQuests)
             IconButton(

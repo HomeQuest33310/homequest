@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../boss/providers/boss_provider.dart';
 import '../../chronicles/providers/chronicles_provider.dart';
 import '../../family/providers/family_members_provider.dart';
 import '../../family/providers/family_provider.dart';
 import '../../family/providers/family_stats_provider.dart';
 import '../../quests/providers/quests_provider.dart';
+import '../../rewards/providers/reward_suggestions_provider.dart';
 import '../../profile/providers/rpg_profile_provider.dart';
 import '../data/completions_repository.dart';
 import '../data/completions_repository_impl.dart';
@@ -111,7 +113,10 @@ class CompletionController extends StateNotifier<AsyncValue<void>> {
     _ref.invalidate(pendingCompletionsProvider);
     _ref.invalidate(currentFamilyMembersProvider);
     _ref.invalidate(currentFamilyStatsProvider);
+    _ref.invalidate(currentFamilyBossesProvider);
     _ref.invalidate(recentChroniclesProvider);
+    _ref.invalidate(kingdomLegendProvider);
     _ref.invalidate(currentRpgProfileProvider);
+    _ref.invalidate(currentRewardSuggestionsProvider);
   }
 }

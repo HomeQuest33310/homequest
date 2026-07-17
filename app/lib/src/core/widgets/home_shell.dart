@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/celebrations/presentation/kingdom_celebration_listener.dart';
 import '../../features/family/providers/family_members_provider.dart';
 import '../../features/family/providers/family_stats_provider.dart';
 import '../../features/kingdom/domain/kingdom_progress.dart';
@@ -39,7 +40,13 @@ class HomeShell extends ConsumerWidget {
         stats == null ? '⛺' : KingdomProgress.fromStats(stats).stage.emoji;
 
     return Scaffold(
-      body: child,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          child,
+          const KingdomCelebrationListener(),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (index) {

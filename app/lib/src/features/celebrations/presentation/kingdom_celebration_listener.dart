@@ -73,7 +73,7 @@ class _KingdomCelebrationListenerState
             const Duration(days: 30),
           );
       final pending = entries.where((entry) {
-        if (seen.contains(entry.id) ||
+        if (_wasCelebrationSeen(seen, entry) ||
             entry.occurredAt.isBefore(oldestAllowed)) {
           return false;
         }
@@ -86,7 +86,7 @@ class _KingdomCelebrationListenerState
         await CelebrationPreferences.markSeen(
           userId: userId,
           familyId: familyId,
-          eventId: entry.id,
+          eventId: _celebrationIdFor(entry),
         );
       }
 
@@ -95,7 +95,7 @@ class _KingdomCelebrationListenerState
         await CelebrationPreferences.markSeen(
           userId: userId,
           familyId: familyId,
-          eventId: entry.id,
+          eventId: _celebrationIdFor(entry),
         );
         if (!mounted) break;
         await showKingdomCelebration(context: context, entry: entry);
@@ -106,7 +106,22 @@ class _KingdomCelebrationListenerState
   }
 }
 
-enum _CelebrationKind { heroArrival, bossDefeated, rewardApproved }
+enum _CelebrationKind { heroArrival, bossDefeated, rewardUnlocked }
+
+String _celebrationIdFor(KingdomLegendEntry entry) =>
+    '${entry.id}:${entry.eventType}:${entry.status}';
+
+bool _wasCelebrationSeen(
+  Set<String> seen,
+  KingdomLegendEntry entry,
+) {
+  if (seen.contains(_celebrationIdFor(entry))) return true;
+
+  // Before event-specific fingerprints, arrivals and boss victories were
+  // stored with the row id only. Keep those memories without letting a
+  // previously approved reward hide its later unlock celebration.
+  return entry.category != 'reward' && seen.contains(entry.id);
+}
 
 _CelebrationKind? _kindFor(KingdomLegendEntry entry) {
   if (entry.category == 'member' &&
@@ -118,9 +133,9 @@ _CelebrationKind? _kindFor(KingdomLegendEntry entry) {
     return _CelebrationKind.bossDefeated;
   }
   if (entry.category == 'reward' &&
-      entry.eventType == 'reward_approved' &&
-      entry.status == 'approved') {
-    return _CelebrationKind.rewardApproved;
+      entry.eventType == 'reward_unlocked' &&
+      entry.status == 'unlocked') {
+    return _CelebrationKind.rewardUnlocked;
   }
   return null;
 }
@@ -356,20 +371,20 @@ class _CelebrationPresentation {
           ],
           actionLabel: 'Célébrer la victoire',
         );
-      case _CelebrationKind.rewardApproved:
+      case _CelebrationKind.rewardUnlocked:
         return _CelebrationPresentation(
-          eyebrow: 'LE CONSEIL A PARLÉ',
+          eyebrow: 'RÉCOMPENSE DÉBLOQUÉE',
           emoji: '🎁',
           title: entry.title,
           body:
-              'Un Gardien a validé cette récompense. Le Royaume possède désormais un nouvel objectif collectif.',
+              'Le Royaume a rempli cet objectif collectif. Un Gardien peut maintenant remettre la récompense aux héros.',
           details: [
             if (metadata['guardian_quest_count'] != null)
-              '${metadata['guardian_quest_count']} quêtes requises',
+              '${metadata['completed_quest_count'] ?? metadata['guardian_quest_count']}/${metadata['guardian_quest_count']} quêtes accomplies',
             if ((metadata['boss_theme'] as String?)?.isNotEmpty == true)
-              'Boss : ${metadata['boss_theme']}',
+              'Boss vaincu : ${metadata['boss_theme']}',
           ],
-          actionLabel: 'Relever le défi',
+          actionLabel: 'Découvrir la récompense',
         );
     }
   }
