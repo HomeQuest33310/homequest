@@ -1,4 +1,4 @@
-# HomeQuest
+# 🏰 HomeQuest ✨
 
 Transformez les tâches ménagères en aventures coopératives pour toute la famille.
 
