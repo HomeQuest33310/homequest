@@ -1,4 +1,4 @@
-# Vision de HomeQuest
+# 🏰 Vision de HomeQuest ✨
 
 HomeQuest est un jeu de rôle coopératif familial, open source, dans lequel les tâches du quotidien deviennent des quêtes et les efforts de chacun font progresser un Royaume commun.
 
