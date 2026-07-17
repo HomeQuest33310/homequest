@@ -78,57 +78,86 @@ class RewardSuggestionsPage extends ConsumerWidget {
         data: (profile) => suggestionsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => _ErrorView(error: error),
-          data: (suggestions) => RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(currentRewardSuggestionsProvider);
-              await ref.read(currentRewardSuggestionsProvider.future);
-            },
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-              children: [
-                _IntroductionCard(isGuardian: profile.role == 'guardian'),
-                const SizedBox(height: 16),
-                if (suggestions.isEmpty)
-                  const Card(
-                    child: ListTile(
-                      leading: Icon(Icons.card_giftcard),
-                      title: Text('Aucun souhait pour le moment.'),
-                      subtitle: Text(
-                        'Les propositions de récompenses apparaîtront ici.',
-                      ),
-                    ),
-                  )
-                else
-                  for (final suggestion in suggestions)
-                    _SuggestionCard(
-                      suggestion: suggestion,
+          data: (suggestions) {
+            final priorityQueue = suggestions
+                .where((suggestion) => suggestion.isInQuestPriorityQueue)
+                .toList();
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(currentRewardSuggestionsProvider);
+                await ref.read(currentRewardSuggestionsProvider.future);
+              },
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                children: [
+                  _IntroductionCard(isGuardian: profile.role == 'guardian'),
+                  if (priorityQueue.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _PriorityExplanationCard(
                       isGuardian: profile.role == 'guardian',
-                      busy: busy,
-                      onReview: () => _reviewReward(
-                        context,
-                        ref,
-                        suggestion,
-                        activeBoss,
-                      ),
-                      onDeliver: () => _deliverReward(
-                        context,
-                        ref,
-                        suggestion,
-                      ),
-                      onEdit: () => _editReward(
-                        context,
-                        ref,
-                        suggestion,
-                      ),
-                      onArchive: () => _archiveReward(
-                        context,
-                        ref,
-                        suggestion,
-                      ),
                     ),
-              ],
-            ),
-          ),
+                  ],
+                  const SizedBox(height: 16),
+                  if (suggestions.isEmpty)
+                    const Card(
+                      child: ListTile(
+                        leading: Icon(Icons.card_giftcard),
+                        title: Text('Aucun souhait pour le moment.'),
+                        subtitle: Text(
+                          'Les propositions de récompenses apparaîtront ici.',
+                        ),
+                      ),
+                    )
+                  else
+                    for (final suggestion in suggestions)
+                      _SuggestionCard(
+                        suggestion: suggestion,
+                        isGuardian: profile.role == 'guardian',
+                        busy: busy,
+                        priorityPosition: suggestion.isInQuestPriorityQueue
+                            ? priorityQueue.indexOf(suggestion) + 1
+                            : null,
+                        priorityCount: priorityQueue.length,
+                        onMoveUp: () => _moveReward(
+                          context,
+                          ref,
+                          priorityQueue,
+                          suggestion,
+                          -1,
+                        ),
+                        onMoveDown: () => _moveReward(
+                          context,
+                          ref,
+                          priorityQueue,
+                          suggestion,
+                          1,
+                        ),
+                        onReview: () => _reviewReward(
+                          context,
+                          ref,
+                          suggestion,
+                          activeBoss,
+                        ),
+                        onDeliver: () => _deliverReward(
+                          context,
+                          ref,
+                          suggestion,
+                        ),
+                        onEdit: () => _editReward(
+                          context,
+                          ref,
+                          suggestion,
+                        ),
+                        onArchive: () => _archiveReward(
+                          context,
+                          ref,
+                          suggestion,
+                        ),
+                      ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -335,6 +364,37 @@ class RewardSuggestionsPage extends ConsumerWidget {
     );
   }
 
+  Future<void> _moveReward(
+    BuildContext context,
+    WidgetRef ref,
+    List<RewardSuggestion> queue,
+    RewardSuggestion suggestion,
+    int offset,
+  ) async {
+    final currentIndex = queue.indexWhere((item) => item.id == suggestion.id);
+    final targetIndex = currentIndex + offset;
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= queue.length) {
+      return;
+    }
+
+    final reordered = List<RewardSuggestion>.of(queue);
+    final moved = reordered.removeAt(currentIndex);
+    reordered.insert(targetIndex, moved);
+
+    final success = await ref
+        .read(rewardSuggestionsControllerProvider.notifier)
+        .reorderCollectiveRewards(
+          reordered.map((reward) => reward.id).toList(),
+        );
+    if (!context.mounted) return;
+    _showResult(
+      context,
+      ref,
+      success,
+      'Ordre des récompenses mis à jour.',
+    );
+  }
+
   Map<String, dynamic>? _bossPayload(_ReviewDraft result) {
     if (result.existingBoss != null) {
       return {
@@ -400,9 +460,8 @@ class _IntroductionCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     isGuardian
-                        ? 'Validez plusieurs souhaits en parallèle ou créez '
-                            'directement une récompense officielle avec un '
-                            'objectif de quêtes et/ou un boss.'
+                        ? 'Créez plusieurs récompenses, puis choisissez '
+                            'celle qui recevra les prochaines quêtes validées.'
                         : 'Suggérez une récompense et un nombre de quêtes. '
                             'Les Gardiens restent seuls décisionnaires.',
                   ),
@@ -410,6 +469,31 @@ class _IntroductionCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PriorityExplanationCard extends StatelessWidget {
+  const _PriorityExplanationCard({required this.isGuardian});
+
+  final bool isGuardian;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      child: ListTile(
+        leading: const Icon(Icons.low_priority),
+        title: const Text('File des récompenses'),
+        subtitle: Text(
+          isGuardian
+              ? 'La prochaine quête validée progressera sur la priorité 1. '
+                  'Utilisez les flèches pour changer de cible sans perdre '
+                  'la progression déjà acquise.'
+              : 'Les quêtes validées progressent sur la priorité 1, puis '
+                  'basculent automatiquement vers la suivante.',
         ),
       ),
     );
@@ -425,6 +509,10 @@ class _SuggestionCard extends StatelessWidget {
     required this.onDeliver,
     required this.onEdit,
     required this.onArchive,
+    required this.priorityPosition,
+    required this.priorityCount,
+    required this.onMoveUp,
+    required this.onMoveDown,
   });
 
   final RewardSuggestion suggestion;
@@ -434,6 +522,10 @@ class _SuggestionCard extends StatelessWidget {
   final VoidCallback onDeliver;
   final VoidCallback onEdit;
   final VoidCallback onArchive;
+  final int? priorityPosition;
+  final int priorityCount;
+  final VoidCallback onMoveUp;
+  final VoidCallback onMoveDown;
 
   @override
   Widget build(BuildContext context) {
@@ -455,6 +547,39 @@ class _SuggestionCard extends StatelessWidget {
                 Chip(label: Text(suggestion.statusLabel)),
               ],
             ),
+            if (priorityPosition case final position?) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Chip(
+                    avatar: Icon(
+                      position == 1 ? Icons.flag : Icons.format_list_numbered,
+                      size: 18,
+                    ),
+                    label: Text(
+                      position == 1
+                          ? 'Priorité actuelle'
+                          : 'Priorité $position',
+                    ),
+                  ),
+                  if (isGuardian) ...[
+                    IconButton.filledTonal(
+                      tooltip: 'Monter dans les priorités',
+                      onPressed: !busy && position > 1 ? onMoveUp : null,
+                      icon: const Icon(Icons.arrow_upward),
+                    ),
+                    IconButton.filledTonal(
+                      tooltip: 'Descendre dans les priorités',
+                      onPressed:
+                          !busy && position < priorityCount ? onMoveDown : null,
+                      icon: const Icon(Icons.arrow_downward),
+                    ),
+                  ],
+                ],
+              ),
+            ],
             Text(
               '${suggestion.createdByGuardian ? 'Objectif fixé par les Gardiens' : 'Proposé par ${suggestion.proposerName}'} · '
               '${DateFormat('dd/MM/yyyy').format(suggestion.createdAt.toLocal())}',
@@ -881,7 +1006,8 @@ class _ReviewDialogState extends State<_ReviewDialog> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Objectif de quêtes'),
                 subtitle: const Text(
-                  'Toutes les quêtes validées de la guilde font progresser le souhait.',
+                  'La récompense progressera lorsque son tour arrivera dans '
+                  'la file de priorité.',
                 ),
                 value: _useQuestGoal,
                 onChanged: (value) => setState(() => _useQuestGoal = value),
