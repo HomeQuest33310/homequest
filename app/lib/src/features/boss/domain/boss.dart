@@ -16,6 +16,7 @@ class Boss {
     required this.status,
     required this.skillRewards,
     required this.createdAt,
+    this.participantNames = const [],
   });
 
   factory Boss.fromMap(Map<String, dynamic> map) {
@@ -41,6 +42,9 @@ class Boss {
             ),
           )
           .toList(),
+      participantNames: (map['participant_names'] as List? ?? const [])
+          .whereType<String>()
+          .toList(),
       createdAt: DateTime.parse(map['created_at'] as String),
     );
   }
@@ -60,6 +64,7 @@ class Boss {
   final String specialItem;
   final String status;
   final List<BossSkillReward> skillRewards;
+  final List<String> participantNames;
   final DateTime createdAt;
 
   double get healthProgress => maxHp <= 0 ? 0 : currentHp / maxHp;

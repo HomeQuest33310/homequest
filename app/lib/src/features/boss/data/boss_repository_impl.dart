@@ -14,9 +14,38 @@ class SupabaseBossRepository implements BossRepository {
       'list_kingdom_bosses',
       params: {'p_kingdom_id': kingdomId},
     );
-    return (data as List)
-        .map((item) => Boss.fromMap(Map<String, dynamic>.from(item as Map)))
+    final bossRows = (data as List)
+        .map((item) => Map<String, dynamic>.from(item as Map))
         .toList();
+    if (bossRows.isEmpty) return const [];
+
+    final participantRows = await _client.from('boss_reward_events').select('''
+      boss_id,
+      boss:bosses!boss_reward_events_boss_id_fkey!inner(kingdom_id),
+      member:family_members!boss_reward_events_member_id_fkey(
+        profile:profiles!family_members_user_id_fkey(display_name)
+      )
+    ''').eq('boss.kingdom_id', kingdomId);
+
+    final participantsByBoss = <String, Set<String>>{};
+    for (final item in participantRows) {
+      final row = Map<String, dynamic>.from(item);
+      final member = row['member'];
+      if (member is! Map) continue;
+      final profile = member['profile'];
+      if (profile is! Map) continue;
+      final displayName = (profile['display_name'] as String?)?.trim();
+      if (displayName == null || displayName.isEmpty) continue;
+      participantsByBoss
+          .putIfAbsent(row['boss_id'] as String, () => <String>{})
+          .add(displayName);
+    }
+
+    return bossRows.map((row) {
+      final names = participantsByBoss[row['id']]?.toList() ?? <String>[];
+      names.sort();
+      return Boss.fromMap({...row, 'participant_names': names});
+    }).toList();
   }
 
   @override

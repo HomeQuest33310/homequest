@@ -76,9 +76,22 @@ class BossScreen extends ConsumerWidget {
                         style: const TextStyle(fontSize: 28),
                       ),
                       title: Text(boss.name),
-                      subtitle: Text(
-                        boss.status == 'defeated' ? 'Vaincu' : 'Retiré',
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            boss.status == 'defeated' ? 'Vaincu' : 'Retiré',
+                          ),
+                          if (boss.participantNames.isNotEmpty)
+                            Text(
+                              'Héros participants : '
+                              '${boss.participantNames.join(', ')}',
+                            )
+                          else if (boss.status == 'defeated')
+                            const Text('Aucun participant enregistré'),
+                        ],
                       ),
+                      isThreeLine: boss.participantNames.isNotEmpty,
                       trailing: Text('${boss.currentHp}/${boss.maxHp} PV'),
                     ),
                   ),
