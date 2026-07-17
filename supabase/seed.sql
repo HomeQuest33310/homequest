@@ -1,0 +1,4 @@
+-- Intentionally empty.
+--
+-- The local database must be reproducible from migrations alone. Add only
+-- anonymous development fixtures here; never copy production family data.

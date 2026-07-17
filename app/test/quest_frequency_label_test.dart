@@ -55,4 +55,45 @@ void main() {
       isTrue,
     );
   });
+
+  test('quest mapping preserves availability, skills and assignees', () {
+    final quest = Quest.fromMap({
+      'id': 'quest-id',
+      'family_id': 'family-id',
+      'created_by': 'guardian-id',
+      'title': 'Préparer le repas',
+      'real_task': 'Cuisiner',
+      'available_from': '2026-07-17T18:30:00Z',
+      'xp_reward': 20,
+      'gold_reward': 10,
+      'boss_damage': 3,
+      'frequency': 'weekly',
+      'requires_approval': true,
+      'status': 'active',
+      'created_at': '2026-07-17T12:00:00Z',
+      'skill_rewards': [
+        {
+          'skill_id': 'cuisine',
+          'name': 'Cuisine',
+          'icon': '🍳',
+          'xp_reward': 4,
+        },
+      ],
+      'assignees': [
+        {
+          'member_id': 'member-id',
+          'user_id': 'user-id',
+          'display_name': 'Lina',
+          'role': 'adventurer',
+        },
+      ],
+    });
+
+    expect(quest.frequencyLabel, 'Hebdomadaire');
+    expect(quest.availableFrom, DateTime.utc(2026, 7, 17, 18, 30));
+    expect(quest.skillRewards.single.skillId, 'cuisine');
+    expect(quest.skillRewards.single.xpReward, 4);
+    expect(quest.assignees.single.displayName, 'Lina');
+    expect(quest.assignees.single.role, 'adventurer');
+  });
 }

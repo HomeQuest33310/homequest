@@ -34,7 +34,10 @@ class AppTheme {
   static const radiusXl = 16.0;
   static const radius2xl = 24.0;
 
-  static ThemeData build(AppAppearance appearance) {
+  static ThemeData build(
+    AppAppearance appearance, {
+    bool useGoogleFonts = true,
+  }) {
     final palette = _ThemePalette.forStyle(
       appearance.style,
     ).withReptilianVision(appearance.reptilianLevel);
@@ -52,10 +55,24 @@ class AppTheme {
         error: errorColor,
       ),
     );
-    final textTheme = GoogleFonts.poppinsTextTheme(base.textTheme).apply(
+    final textTheme = (useGoogleFonts
+            ? GoogleFonts.poppinsTextTheme(base.textTheme)
+            : base.textTheme)
+        .apply(
       bodyColor: palette.onSurface,
       displayColor: palette.onSurface,
     );
+    final titleTextStyle = useGoogleFonts
+        ? GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: palette.onSurface,
+          )
+        : TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: palette.onSurface,
+          );
 
     return base.copyWith(
       scaffoldBackgroundColor: palette.background,
@@ -65,11 +82,7 @@ class AppTheme {
         foregroundColor: palette.onSurface,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.poppins(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: palette.onSurface,
-        ),
+        titleTextStyle: titleTextStyle,
       ),
       cardTheme: CardThemeData(
         color: palette.surface,
