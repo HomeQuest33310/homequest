@@ -242,4 +242,25 @@ class RewardSuggestionsController extends StateNotifier<AsyncValue<void>> {
       return false;
     }
   }
+
+  Future<bool> reorderCollectiveRewards(List<String> rewardIds) async {
+    final family = await _ref.read(currentFamilyProvider.future);
+    if (family == null) return false;
+
+    state = const AsyncLoading();
+    try {
+      await _ref
+          .read(rewardSuggestionsRepositoryProvider)
+          .reorderCollectiveRewards(
+            familyId: family.id,
+            rewardIds: rewardIds,
+          );
+      _ref.invalidate(currentRewardSuggestionsProvider);
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
 }

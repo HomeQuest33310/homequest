@@ -42,16 +42,11 @@ class MyMissionsPage extends ConsumerWidget {
                     ),
                   ],
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) => _MissionCard(
-                    mission: items[index],
-                    isLoading: action.isLoading,
-                    onComplete: () => _submit(context, ref, items[index]),
-                    onLeave: () => _leave(context, ref, items[index]),
-                  ),
+              : _MissionSections(
+                  missions: items,
+                  isLoading: action.isLoading,
+                  onComplete: (mission) => _submit(context, ref, mission),
+                  onLeave: (mission) => _leave(context, ref, mission),
                 ),
         ),
       ),
@@ -150,6 +145,102 @@ class MyMissionsPage extends ConsumerWidget {
         : 'Impossible de quitter la mission : ${state.error}';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
+    );
+  }
+}
+
+class _MissionSections extends StatelessWidget {
+  const _MissionSections({
+    required this.missions,
+    required this.isLoading,
+    required this.onComplete,
+    required this.onLeave,
+  });
+
+  final List<MissionAssignment> missions;
+  final bool isLoading;
+  final ValueChanged<MissionAssignment> onComplete;
+  final ValueChanged<MissionAssignment> onLeave;
+
+  @override
+  Widget build(BuildContext context) {
+    final completedForPeriod = missions.where(_isCompletedForPeriod).toList();
+    final missionsToDo =
+        missions.where((mission) => !_isCompletedForPeriod(mission)).toList();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      children: [
+        if (missionsToDo.isNotEmpty) ...[
+          const _MissionSectionTitle(
+            icon: Icons.task_alt,
+            title: 'Missions à réaliser',
+          ),
+          const SizedBox(height: 10),
+          for (final mission in missionsToDo) ...[
+            _MissionCard(
+              mission: mission,
+              isLoading: isLoading,
+              onComplete: () => onComplete(mission),
+              onLeave: () => onLeave(mission),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ],
+        if (completedForPeriod.isNotEmpty) ...[
+          if (missionsToDo.isNotEmpty) const SizedBox(height: 12),
+          const _MissionSectionTitle(
+            icon: Icons.event_available,
+            title: 'Terminées pour cette période',
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Ces missions reviendront automatiquement au début de leur '
+            'prochaine période.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 10),
+          for (final mission in completedForPeriod) ...[
+            Opacity(
+              opacity: 0.82,
+              child: _MissionCard(
+                mission: mission,
+                isLoading: isLoading,
+                onComplete: () => onComplete(mission),
+                onLeave: () => onLeave(mission),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ],
+      ],
+    );
+  }
+
+  bool _isCompletedForPeriod(MissionAssignment mission) {
+    return !mission.isAvailableNow &&
+        mission.completion?.status == 'approved' &&
+        mission.quest.frequency != 'once';
+  }
+}
+
+class _MissionSectionTitle extends StatelessWidget {
+  const _MissionSectionTitle({
+    required this.icon,
+    required this.title,
+  });
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(title, style: Theme.of(context).textTheme.titleLarge),
+      ],
     );
   }
 }

@@ -40,4 +40,9 @@ abstract class RewardSuggestionsRepository {
   });
 
   Future<void> archiveCollectiveReward(String suggestionId);
+
+  Future<void> reorderCollectiveRewards({
+    required String familyId,
+    required List<String> rewardIds,
+  });
 }

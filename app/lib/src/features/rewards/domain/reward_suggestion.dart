@@ -17,6 +17,7 @@ class RewardSuggestion {
     this.fulfilledAt,
     this.deliveredAt,
     this.archivedAt,
+    this.priorityRank,
   });
 
   factory RewardSuggestion.fromMap(Map<String, dynamic> map) {
@@ -46,6 +47,7 @@ class RewardSuggestion {
       archivedAt: map['archived_at'] == null
           ? null
           : DateTime.parse(map['archived_at'] as String),
+      priorityRank: (map['priority_rank'] as num?)?.toInt(),
     );
   }
 
@@ -66,11 +68,17 @@ class RewardSuggestion {
   final DateTime? fulfilledAt;
   final DateTime? deliveredAt;
   final DateTime? archivedAt;
+  final int? priorityRank;
 
   bool get isCollective => status == 'approved' && !isArchived;
   bool get isFulfilled => fulfilledAt != null;
   bool get isDelivered => deliveredAt != null;
   bool get isArchived => archivedAt != null;
+  bool get isInQuestPriorityQueue =>
+      status == 'approved' &&
+      !isArchived &&
+      guardianQuestCount != null &&
+      completedQuestCount < guardianQuestCount!;
 
   String get statusLabel {
     if (isArchived) return 'Archivée';

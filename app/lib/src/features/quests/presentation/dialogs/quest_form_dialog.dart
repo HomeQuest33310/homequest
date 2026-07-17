@@ -115,7 +115,7 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
                           onPressed: _chooseSuggestion,
                           icon: const Icon(Icons.auto_stories),
                           label: const Text(
-                            'Choisir parmi les 75 propositions héroïques',
+                            'Choisir parmi les 90 propositions héroïques',
                           ),
                         ),
                       ),

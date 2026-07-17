@@ -26,6 +26,7 @@ class SupabaseRewardSuggestionsRepository
           fulfilled_at,
           delivered_at,
           archived_at,
+          priority_rank,
           created_by_guardian,
           created_at,
           proposer:family_members!reward_suggestions_proposed_by_fkey(
@@ -34,13 +35,25 @@ class SupabaseRewardSuggestionsRepository
           )
         ''').eq('family_id', familyId).order('created_at', ascending: false);
 
-    return (data as List)
+    final suggestions = (data as List)
         .map(
           (item) => RewardSuggestion.fromMap(
             Map<String, dynamic>.from(item as Map),
           ),
         )
         .toList();
+    suggestions.sort((left, right) {
+      if (left.isInQuestPriorityQueue != right.isInQuestPriorityQueue) {
+        return left.isInQuestPriorityQueue ? -1 : 1;
+      }
+      if (left.isInQuestPriorityQueue) {
+        final rankComparison = (left.priorityRank ?? 2147483647)
+            .compareTo(right.priorityRank ?? 2147483647);
+        if (rankComparison != 0) return rankComparison;
+      }
+      return right.createdAt.compareTo(left.createdAt);
+    });
+    return suggestions;
   }
 
   @override
@@ -137,6 +150,20 @@ class SupabaseRewardSuggestionsRepository
     await _client.rpc(
       'archive_collective_reward',
       params: {'p_suggestion_id': suggestionId},
+    );
+  }
+
+  @override
+  Future<void> reorderCollectiveRewards({
+    required String familyId,
+    required List<String> rewardIds,
+  }) async {
+    await _client.rpc(
+      'reorder_collective_rewards',
+      params: {
+        'p_family_id': familyId,
+        'p_reward_ids': rewardIds,
+      },
     );
   }
 }
