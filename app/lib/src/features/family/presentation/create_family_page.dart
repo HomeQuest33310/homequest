@@ -67,6 +67,14 @@ class _CreateFamilyPageState extends ConsumerState<CreateFamilyPage> {
     if (mounted) context.go('/');
   }
 
+  void _goBack() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go('/auth');
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(createFamilyControllerProvider);
@@ -124,6 +132,12 @@ class _CreateFamilyPageState extends ConsumerState<CreateFamilyPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    OutlinedButton.icon(
+                      onPressed: isLoading ? null : _goBack,
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Revenir à la page précédente'),
+                    ),
+                    const SizedBox(height: 8),
                     FilledButton.icon(
                       onPressed: isLoading ? null : _create,
                       icon: const Icon(Icons.auto_awesome),
