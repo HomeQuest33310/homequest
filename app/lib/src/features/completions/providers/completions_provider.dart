@@ -57,6 +57,20 @@ class CompletionController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  Future<bool> leave(String questId) async {
+    state = const AsyncLoading();
+    try {
+      await _ref.read(completionsRepositoryProvider).leave(questId);
+      lastReward = null;
+      _refresh();
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
+
   Future<bool> approve(String completionId) async {
     state = const AsyncLoading();
     try {

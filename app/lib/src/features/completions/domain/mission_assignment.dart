@@ -31,12 +31,14 @@ class MissionAssignment {
     required this.assignmentId,
     required this.assignedAt,
     required this.quest,
+    required this.isAvailableNow,
     this.completion,
   });
 
   final String assignmentId;
   final DateTime assignedAt;
   final Quest quest;
+  final bool isAvailableNow;
   final MissionCompletion? completion;
 
   factory MissionAssignment.fromMap(Map<String, dynamic> map) {
@@ -45,6 +47,7 @@ class MissionAssignment {
       assignmentId: map['assignment_id'] as String,
       assignedAt: DateTime.parse(map['assigned_at'] as String),
       quest: Quest.fromMap(Map<String, dynamic>.from(map['quest'] as Map)),
+      isAvailableNow: map['is_available_now'] as bool? ?? true,
       completion: completion == null
           ? null
           : MissionCompletion.fromMap(
