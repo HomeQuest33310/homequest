@@ -8,7 +8,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final skills = const [
+    const skills = [
       ('🍳', 'Cuisine', 3),
       ('📚', 'Savoir', 4),
       ('🌿', 'Nature', 2),
@@ -19,12 +19,15 @@ class ProfileScreen extends StatelessWidget {
     return HqPage(
       title: 'Profil',
       actions: [
-        IconButton(onPressed: () => context.go('/dashboard'), icon: const Icon(Icons.home_outlined)),
+        IconButton(
+            onPressed: () => context.go('/dashboard'),
+            icon: const Icon(Icons.home_outlined)),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Aventurier du Royaume', style: Theme.of(context).textTheme.headlineSmall),
+          Text('Aventurier du Royaume',
+              style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
           const Text('Harmonie : Or'),
           const SizedBox(height: 16),

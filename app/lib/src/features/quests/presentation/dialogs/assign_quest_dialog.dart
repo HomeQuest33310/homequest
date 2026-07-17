@@ -5,7 +5,6 @@ import '../../../family/providers/family_members_provider.dart';
 import '../../domain/quest.dart';
 import '../../providers/quests_provider.dart';
 
-
 class AssignQuestDialog extends ConsumerStatefulWidget {
   const AssignQuestDialog({
     super.key,
@@ -40,28 +39,31 @@ class _AssignQuestDialogState extends ConsumerState<AssignQuestDialog> {
 
             _selectedMemberId ??= members.first.id;
 
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: members
-                  .map(
-                    (member) => RadioListTile<String>(
-                      value: member.id,
-                      groupValue: _selectedMemberId,
-                      onChanged: (value) {
-                        setState(() => _selectedMemberId = value);
-                      },
-                      title: Text(member.displayName),
-                      subtitle: Text(member.role),
-                    ),
-                  )
-                  .toList(),
+            return RadioGroup<String>(
+              groupValue: _selectedMemberId,
+              onChanged: (value) {
+                setState(() => _selectedMemberId = value);
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: members
+                    .map(
+                      (member) => RadioListTile<String>(
+                        value: member.id,
+                        title: Text(member.displayName),
+                        subtitle: Text(member.role),
+                      ),
+                    )
+                    .toList(),
+              ),
             );
           },
         ),
       ),
       actions: [
         TextButton(
-          onPressed: assignState.isLoading ? null : () => Navigator.of(context).pop(),
+          onPressed:
+              assignState.isLoading ? null : () => Navigator.of(context).pop(),
           child: const Text('Annuler'),
         ),
         FilledButton.icon(
