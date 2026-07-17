@@ -23,6 +23,14 @@ class SupabaseCompletionsRepository implements CompletionsRepository {
   }
 
   @override
+  Future<void> leave(String questId) async {
+    await _client.rpc(
+      'leave_quest',
+      params: {'p_quest_id': questId},
+    );
+  }
+
+  @override
   Future<List<PendingCompletion>> listPending(String familyId) async {
     final data = await _client.rpc(
       'list_pending_quest_completions',

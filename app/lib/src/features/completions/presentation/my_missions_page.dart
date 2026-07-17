@@ -50,6 +50,7 @@ class MyMissionsPage extends ConsumerWidget {
                     mission: items[index],
                     isLoading: action.isLoading,
                     onComplete: () => _submit(context, ref, items[index]),
+                    onLeave: () => _leave(context, ref, items[index]),
                   ),
                 ),
         ),
@@ -110,6 +111,47 @@ class MyMissionsPage extends ConsumerWidget {
       SnackBar(content: Text(message)),
     );
   }
+
+  Future<void> _leave(
+    BuildContext context,
+    WidgetRef ref,
+    MissionAssignment mission,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Quitter la mission ?'),
+        content: Text(
+          '« ${mission.quest.title} » ne figurera plus dans vos missions. '
+          'Les accomplissements et récompenses déjà obtenus seront conservés.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton.tonalIcon(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            icon: const Icon(Icons.logout),
+            label: const Text('Quitter la mission'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final success = await ref
+        .read(completionControllerProvider.notifier)
+        .leave(mission.quest.id);
+    if (!context.mounted) return;
+    final state = ref.read(completionControllerProvider);
+    final message = success
+        ? 'Vous avez quitté la mission.'
+        : 'Impossible de quitter la mission : ${state.error}';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 }
 
 class _MissionCard extends StatelessWidget {
@@ -117,11 +159,13 @@ class _MissionCard extends StatelessWidget {
     required this.mission,
     required this.isLoading,
     required this.onComplete,
+    required this.onLeave,
   });
 
   final MissionAssignment mission;
   final bool isLoading;
   final VoidCallback onComplete;
+  final VoidCallback onLeave;
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +173,8 @@ class _MissionCard extends StatelessWidget {
     final isPending = completion?.status == 'pending';
     final isApprovedOnce =
         completion?.status == 'approved' && mission.quest.frequency == 'once';
+    final isCompletedForCurrentPeriod =
+        completion?.status == 'approved' && !mission.isAvailableNow;
 
     return Card(
       child: Padding(
@@ -169,12 +215,29 @@ class _MissionCard extends StatelessWidget {
                 avatar: Icon(Icons.verified, size: 18),
                 label: Text('Mission accomplie'),
               )
+            else if (isCompletedForCurrentPeriod)
+              Chip(
+                avatar: const Icon(Icons.verified, size: 18),
+                label: Text(
+                  mission.quest.frequency == 'daily'
+                      ? 'Accomplie aujourd’hui'
+                      : 'Accomplie cette semaine',
+                ),
+              )
             else
               FilledButton.icon(
                 onPressed: isLoading ? null : onComplete,
                 icon: const Icon(Icons.task_alt),
                 label: const Text('Mission accomplie'),
               ),
+            if (!isPending && !isApprovedOnce) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: isLoading ? null : onLeave,
+                icon: const Icon(Icons.logout),
+                label: const Text('Quitter la mission'),
+              ),
+            ],
           ],
         ),
       ),
