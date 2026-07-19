@@ -5,12 +5,19 @@ import '../../../core/widgets/dashboard_home_button.dart';
 import '../domain/guardian_notification.dart';
 import '../providers/notifications_provider.dart';
 
-class GuardianNotificationsPage extends ConsumerWidget {
+class GuardianNotificationsPage extends ConsumerStatefulWidget {
   const GuardianNotificationsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final notifications = ref.watch(guardianNotificationsProvider);
+  ConsumerState<GuardianNotificationsPage> createState() => _NotificationsPageState();
+}
+
+class _NotificationsPageState extends ConsumerState<GuardianNotificationsPage> {
+  bool unreadOnly = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final notifications = ref.watch(myNotificationsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -29,19 +36,23 @@ class GuardianNotificationsPage extends ConsumerWidget {
                 const SizedBox(height: 12),
                 FilledButton(
                   onPressed: () =>
-                      ref.invalidate(guardianNotificationsProvider),
+                      ref.invalidate(myNotificationsProvider),
                   child: const Text('Réessayer'),
                 ),
               ],
             ),
           ),
         ),
-        data: (items) => RefreshIndicator(
+        data: (items) {
+          final visibleItems = unreadOnly
+              ? items.where((item) => !item.isRead).toList()
+              : items;
+          return RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(guardianNotificationsProvider);
-            await ref.read(guardianNotificationsProvider.future);
+            ref.invalidate(myNotificationsProvider);
+            await ref.read(myNotificationsProvider.future);
           },
-          child: items.isEmpty
+          child: visibleItems.isEmpty
               ? ListView(
                   children: const [
                     SizedBox(height: 160),
@@ -55,18 +66,40 @@ class GuardianNotificationsPage extends ConsumerWidget {
                 )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: items.length,
+                  itemCount: visibleItems.length + 1,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) => _NotificationCard(
-                    notification: items[index],
-                    onTap: items[index].isRead
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return Row(
+                        children: [
+                          FilterChip(
+                            label: const Text('Non lues'),
+                            selected: unreadOnly,
+                            onSelected: (_) => setState(() => unreadOnly = !unreadOnly),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: items.any((item) => !item.isRead)
+                                ? () => ref.read(notificationsControllerProvider.notifier).markAllRead()
+                                : null,
+                            child: const Text('Tout marquer comme lu'),
+                          ),
+                        ],
+                      );
+                    }
+                    final notification = visibleItems[index - 1];
+                    return _NotificationCard(
+                    notification: notification,
+                    onTap: notification.isRead
                         ? null
                         : () => ref
                             .read(notificationsControllerProvider.notifier)
-                            .markRead(items[index].id),
-                  ),
+                            .markRead(notification.id),
+                  );
+                  },
                 ),
-        ),
+        );
+        },
       ),
     );
   }

@@ -52,7 +52,7 @@ class FamilyDashboardPage extends ConsumerWidget {
                 currentKingdom?.membershipRole == 'mercenary') &&
             currentMember?.isActive == true;
     final canSubmitVoluntaryQuest = ref.watch(canSubmitVoluntaryQuestProvider);
-    final unreadNotifications = ref.watch(unreadGuardianNotificationsProvider);
+    final unreadNotifications = ref.watch(unreadNotificationsProvider);
     final pendingInitiatives =
         ref.watch(pendingVoluntaryQuestRequestCountProvider);
 
@@ -67,6 +67,7 @@ class FamilyDashboardPage extends ConsumerWidget {
 
     final navigationMenu = _HomeNavigationMenu(
       canManageQuests: canManageQuests,
+      canSeeNotifications: currentMember?.isActive == true,
       canOpenInitiatives: canManageQuests || canSubmitVoluntaryQuest,
       unreadNotifications: unreadNotifications,
       pendingInitiatives: pendingInitiatives,
@@ -81,7 +82,7 @@ class FamilyDashboardPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('HomeQuest'),
         actions: [
-          if (canManageQuests)
+          if (currentMember?.isActive == true)
             IconButton(
               tooltip: 'Notifications du royaume',
               onPressed: () => context.go('/notifications'),
@@ -225,6 +226,7 @@ enum _AccountAction { profile, appearance, devtools, signOut }
 class _HomeNavigationMenu extends StatelessWidget {
   const _HomeNavigationMenu({
     required this.canManageQuests,
+    required this.canSeeNotifications,
     required this.canOpenInitiatives,
     required this.unreadNotifications,
     required this.pendingInitiatives,
@@ -232,6 +234,7 @@ class _HomeNavigationMenu extends StatelessWidget {
   });
 
   final bool canManageQuests;
+  final bool canSeeNotifications;
   final bool canOpenInitiatives;
   final int unreadNotifications;
   final int pendingInitiatives;
@@ -314,13 +317,14 @@ class _HomeNavigationMenu extends StatelessWidget {
               label: 'Liste de ravitaillement',
               onTap: () => open('/shopping'),
             ),
-            if (canManageQuests) ...[
-              const _MenuSectionTitle('Gestion du gardien'),
-              _MenuItem(
-                icon: Icons.fact_check_outlined,
-                label: 'Validations en attente',
-                onTap: () => open('/validations'),
-              ),
+            if (canSeeNotifications) ...[
+              if (canManageQuests) const _MenuSectionTitle('Gestion du gardien'),
+              if (canManageQuests)
+                _MenuItem(
+                  icon: Icons.fact_check_outlined,
+                  label: 'Validations en attente',
+                  onTap: () => open('/validations'),
+                ),
               _MenuItem(
                 icon: Icons.notifications_outlined,
                 label: 'Notifications',
