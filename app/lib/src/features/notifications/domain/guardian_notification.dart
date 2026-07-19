@@ -6,6 +6,8 @@ class GuardianNotification {
     required this.title,
     required this.body,
     required this.createdAt,
+    this.actionRoute,
+    this.actionLabel,
     this.readAt,
   });
 
@@ -15,6 +17,8 @@ class GuardianNotification {
   final String title;
   final String body;
   final DateTime createdAt;
+  final String? actionRoute;
+  final String? actionLabel;
   final DateTime? readAt;
 
   bool get isRead => readAt != null;
@@ -27,6 +31,8 @@ class GuardianNotification {
       title: map['title'] as String,
       body: map['body'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
+      actionRoute: map['action_route'] as String?,
+      actionLabel: map['action_label'] as String?,
       readAt: map['read_at'] == null
           ? null
           : DateTime.parse(map['read_at'] as String),

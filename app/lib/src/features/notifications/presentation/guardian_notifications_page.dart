@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/dashboard_home_button.dart';
 import '../domain/guardian_notification.dart';
@@ -47,7 +48,11 @@ class _NotificationsPageState extends ConsumerState<GuardianNotificationsPage> {
           final visibleItems = unreadOnly
               ? items.where((item) => !item.isRead).toList()
               : items;
-          return RefreshIndicator(
+          return Column(
+            children: [
+              const _GuidanceBanner(),
+              Expanded(
+                child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(myNotificationsProvider);
             await ref.read(myNotificationsProvider.future);
@@ -89,30 +94,63 @@ class _NotificationsPageState extends ConsumerState<GuardianNotificationsPage> {
                     }
                     final notification = visibleItems[index - 1];
                     return _NotificationCard(
-                    notification: notification,
-                    onTap: notification.isRead
+                      notification: notification,
+                      onTap: notification.isRead
                         ? null
                         : () => ref
                             .read(notificationsControllerProvider.notifier)
                             .markRead(notification.id),
+                      onAction: notification.actionRoute == null
+                          ? null
+                          : () async {
+                              if (!notification.isRead) {
+                                await ref
+                                    .read(notificationsControllerProvider.notifier)
+                                    .markRead(notification.id);
+                              }
+                              if (context.mounted) {
+                                context.go(notification.actionRoute!);
+                              }
+                            },
                   );
                   },
                 ),
-        );
+        ),
+              ),
+            ],
+          );
         },
       ),
     );
   }
 }
 
+class _GuidanceBanner extends StatelessWidget {
+  const _GuidanceBanner();
+
+  @override
+  Widget build(BuildContext context) => Card(
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: const ListTile(
+          leading: Icon(Icons.lightbulb_outline),
+          title: Text('Votre guide du royaume'),
+          subtitle: Text(
+            'Chaque message explique ce qui se passe et vous propose une action pour continuer votre aventure.',
+          ),
+        ),
+      );
+}
+
 class _NotificationCard extends StatelessWidget {
   const _NotificationCard({
     required this.notification,
     required this.onTap,
+    required this.onAction,
   });
 
   final GuardianNotification notification;
   final VoidCallback? onTap;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -141,11 +179,13 @@ class _NotificationCard extends StatelessWidget {
           padding: const EdgeInsets.only(top: 6),
           child: Text(notification.body),
         ),
-        trailing: notification.isRead
-            ? const Icon(Icons.done, size: 18)
-            : const Tooltip(
-                message: 'Toucher pour marquer comme lue',
-                child: Icon(Icons.circle, size: 12),
+        trailing: notification.actionRoute == null
+            ? (notification.isRead
+                ? const Icon(Icons.done, size: 18)
+                : const Icon(Icons.circle, size: 12))
+            : TextButton(
+                onPressed: onAction,
+                child: Text(notification.actionLabel ?? 'Ouvrir'),
               ),
       ),
     );
