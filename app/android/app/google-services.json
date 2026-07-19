@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "144120926716",
+    "project_id": "homequest-33310",
+    "storage_bucket": "homequest-33310.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:144120926716:android:d9c7ea4921ed4cf9a6e279",
+        "android_client_info": {
+          "package_name": "com.example.homequest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6kvmF8lomGGBPYWA43wR8CdhXI-Ia_lw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
