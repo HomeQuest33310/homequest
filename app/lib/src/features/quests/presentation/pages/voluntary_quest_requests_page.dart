@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/nature_animated_icon.dart';
 import '../../../../core/widgets/dashboard_home_button.dart';
 import '../../../kingdom/providers/kingdom_provider.dart';
 import '../../domain/voluntary_quest_request.dart';
@@ -147,7 +148,13 @@ class _RequestCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(request.emoji, style: const TextStyle(fontSize: 28)),
+                NatureAnimatedIcon(
+                  motion: NatureMotion.pop,
+                  child: Text(
+                    request.emoji,
+                    style: const TextStyle(fontSize: 28),
+                  ),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(

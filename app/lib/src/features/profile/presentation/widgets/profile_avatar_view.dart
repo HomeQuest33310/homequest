@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/nature_animated_icon.dart';
 import '../../domain/profile_avatar.dart';
 
 class ProfileAvatarView extends StatelessWidget {
@@ -8,6 +9,8 @@ class ProfileAvatarView extends StatelessWidget {
     required this.size,
     this.borderRadius,
     this.semanticLabel,
+    this.animationKey,
+    this.animate = true,
     super.key,
   });
 
@@ -15,6 +18,8 @@ class ProfileAvatarView extends StatelessWidget {
   final double size;
   final BorderRadius? borderRadius;
   final String? semanticLabel;
+  final Object? animationKey;
+  final bool animate;
 
   @override
   Widget build(BuildContext context) {
@@ -35,13 +40,21 @@ class ProfileAvatarView extends StatelessWidget {
             errorBuilder: (_, __, ___) => fallback,
           );
 
+    final clippedAvatar = ClipRRect(
+      borderRadius: borderRadius ?? BorderRadius.circular(size / 2),
+      child: SizedBox.square(dimension: size, child: content),
+    );
+
     return Semantics(
       image: true,
       label: semanticLabel ?? 'Avatar ${avatar.label}',
-      child: ClipRRect(
-        borderRadius: borderRadius ?? BorderRadius.circular(size / 2),
-        child: SizedBox.square(dimension: size, child: content),
-      ),
+      child: animate
+          ? NatureAnimatedIcon(
+              motion: avatarNatureMotion(avatarKey),
+              replayKey: animationKey,
+              child: clippedAvatar,
+            )
+          : clippedAvatar,
     );
   }
 }

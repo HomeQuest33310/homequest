@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/dashboard_home_button.dart';
+import '../../../core/widgets/nature_animated_icon.dart';
 import '../../domains/domain/domain.dart';
 import '../../domains/providers/domains_provider.dart';
 import '../../family/providers/family_provider.dart';
@@ -445,8 +446,13 @@ class _KingdomStageCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(progress.stage.emoji,
-                    style: const TextStyle(fontSize: 48)),
+                NatureAnimatedIcon(
+                  motion: kingdomNatureMotion(progress.stage.emoji),
+                  child: Text(
+                    progress.stage.emoji,
+                    style: const TextStyle(fontSize: 48),
+                  ),
+                ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/widgets/nature_animated_icon.dart';
 import '../../boss/domain/boss.dart';
 import '../../boss/providers/boss_provider.dart';
 import '../../kingdom/domain/kingdom.dart';
@@ -710,9 +711,12 @@ class _HeroHeader extends StatelessWidget {
               children: [
                 Semantics(
                   label: 'Étape actuelle du Royaume : ${stage.name}',
-                  child: Text(
-                    stage.emoji,
-                    style: const TextStyle(fontSize: 48),
+                  child: NatureAnimatedIcon(
+                    motion: kingdomNatureMotion(stage.emoji),
+                    child: Text(
+                      stage.emoji,
+                      style: const TextStyle(fontSize: 48),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),

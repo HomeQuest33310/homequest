@@ -8,6 +8,7 @@ import '../../features/family/providers/family_stats_provider.dart';
 import '../../features/kingdom/domain/kingdom_progress.dart';
 import '../../features/kingdom/providers/kingdom_provider.dart';
 import '../../features/profile/presentation/widgets/profile_avatar_view.dart';
+import 'nature_animated_icon.dart';
 
 class HomeShell extends ConsumerWidget {
   const HomeShell({required this.child, super.key});
@@ -63,10 +64,14 @@ class HomeShell extends ConsumerWidget {
         },
         destinations: [
           NavigationDestination(
-            icon: Text(
-              kingdomEmoji,
-              style: const TextStyle(fontSize: 23),
-              semanticsLabel: 'Étape actuelle du Royaume',
+            icon: NatureAnimatedIcon(
+              motion: kingdomNatureMotion(kingdomEmoji),
+              replayKey: location,
+              child: Text(
+                kingdomEmoji,
+                style: const TextStyle(fontSize: 23),
+                semanticsLabel: 'Étape actuelle du Royaume',
+              ),
             ),
             label: 'Royaume',
           ),
@@ -84,6 +89,7 @@ class HomeShell extends ConsumerWidget {
             icon: ProfileAvatarView(
               avatarKey: member?.avatarKey,
               size: 26,
+              animationKey: location,
               semanticLabel: 'Avatar du profil',
             ),
             label: 'Profil',
