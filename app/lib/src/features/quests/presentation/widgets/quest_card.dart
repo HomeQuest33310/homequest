@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/nature_animated_icon.dart';
 import '../../domain/quest.dart';
 import '../../domain/quest_suggestion.dart';
 
@@ -95,11 +96,26 @@ class _QuestCardState extends State<QuestCard> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${quest.emoji} ${quest.title}',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              NatureAnimatedIcon(
+                motion: questNatureMotion(quest.regionKey),
+                child: Text(
+                  quest.emoji,
+                  style: theme.textTheme.titleLarge,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  quest.title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           Text('Tâche réelle : ${quest.realTask}'),
@@ -127,9 +143,12 @@ class _QuestCardState extends State<QuestCard> {
                       .withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  quest.emoji,
-                  style: const TextStyle(fontSize: 26),
+                child: NatureAnimatedIcon(
+                  motion: questNatureMotion(quest.regionKey),
+                  child: Text(
+                    quest.emoji,
+                    style: const TextStyle(fontSize: 26),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),

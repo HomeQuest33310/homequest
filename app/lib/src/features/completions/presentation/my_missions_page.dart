@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/widgets/dashboard_home_button.dart';
+import '../../../core/widgets/nature_animated_icon.dart';
 
 import '../domain/mission_assignment.dart';
 import '../providers/completions_provider.dart';
@@ -323,9 +324,24 @@ class _MissionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              mission.quest.title,
-              style: Theme.of(context).textTheme.titleLarge,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                NatureAnimatedIcon(
+                  motion: questNatureMotion(mission.quest.regionKey),
+                  child: Text(
+                    mission.quest.emoji,
+                    style: const TextStyle(fontSize: 26),
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    mission.quest.title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             Text(mission.quest.realTask),
