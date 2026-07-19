@@ -263,9 +263,20 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
                               contentPadding: EdgeInsets.zero,
                               value: _availableFrom != null,
                               title: const Text('Programmer la disponibilité'),
-                              subtitle: const Text(
-                                'La quête restera visible, mais personne ne '
-                                'pourra la prendre avant cette date.',
+                              subtitle: Text(
+                                switch (_frequency) {
+                                  'daily' =>
+                                    'Cette date fixe la première disponibilité. '
+                                        'La quête reviendra ensuite tous les '
+                                        'jours à cette heure.',
+                                  'weekly' =>
+                                    'Cette date fixe la première disponibilité. '
+                                        'La quête reviendra ensuite sept jours '
+                                        'après chaque réalisation.',
+                                  _ =>
+                                    'La quête restera visible, mais personne ne '
+                                        'pourra la prendre avant cette date.',
+                                },
                               ),
                               onChanged: (scheduled) {
                                 setState(() {

@@ -895,7 +895,9 @@ class _QuestsList extends ConsumerWidget {
             (quest) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: QuestCard(
+                key: ValueKey(quest.id),
                 quest: quest,
+                compactOnMobile: true,
                 onSelfAssign: () => _selfAssign(context, ref, quest),
                 onEdit: canManage
                     ? () {
