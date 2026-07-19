@@ -344,6 +344,11 @@ class _HomeNavigationMenu extends StatelessWidget {
               onTap: () => open('/appearance'),
             ),
             _MenuItem(
+              icon: Icons.notifications_active_outlined,
+              label: 'Préférences des notifications',
+              onTap: () => open('/notification-preferences'),
+            ),
+            _MenuItem(
               icon: Icons.logout,
               label: 'Déconnexion',
               onTap: onSignOut,
