@@ -1,16 +1,33 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/widgets/dashboard_home_button.dart';
 
 import '../domain/mission_assignment.dart';
 import '../providers/completions_provider.dart';
 
-class MyMissionsPage extends ConsumerWidget {
+class MyMissionsPage extends ConsumerStatefulWidget {
   const MyMissionsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyMissionsPage> createState() => _MyMissionsPageState();
+}
+
+class _MyMissionsPageState extends ConsumerState<MyMissionsPage> {
+  Timer? _availabilityTimer;
+  DateTime? _scheduledRefreshAt;
+
+  @override
+  void dispose() {
+    _availabilityTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final missions = ref.watch(myMissionsProvider);
     final action = ref.watch(completionControllerProvider);
 
@@ -25,31 +42,63 @@ class MyMissionsPage extends ConsumerWidget {
           error: error,
           onRetry: () => ref.invalidate(myMissionsProvider),
         ),
-        data: (items) => RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(myMissionsProvider);
-            await ref.read(myMissionsProvider.future);
-          },
-          child: items.isEmpty
-              ? ListView(
-                  children: const [
-                    SizedBox(height: 160),
-                    Icon(Icons.explore_outlined, size: 64),
-                    SizedBox(height: 16),
-                    Text(
-                      'Aucune mission assignée.',
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                )
-              : _MissionSections(
-                  missions: items,
-                  isLoading: action.isLoading,
-                  onComplete: (mission) => _submit(context, ref, mission),
-                  onLeave: (mission) => _leave(context, ref, mission),
-                ),
-        ),
+        data: (items) {
+          _scheduleAvailabilityRefresh(items);
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(myMissionsProvider);
+              await ref.read(myMissionsProvider.future);
+            },
+            child: items.isEmpty
+                ? ListView(
+                    children: const [
+                      SizedBox(height: 160),
+                      Icon(Icons.explore_outlined, size: 64),
+                      SizedBox(height: 16),
+                      Text(
+                        'Aucune mission assignée.',
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  )
+                : _MissionSections(
+                    missions: items,
+                    isLoading: action.isLoading,
+                    onComplete: (mission) => _submit(context, ref, mission),
+                    onLeave: (mission) => _leave(context, ref, mission),
+                  ),
+          );
+        },
       ),
+    );
+  }
+
+  void _scheduleAvailabilityRefresh(List<MissionAssignment> missions) {
+    final now = DateTime.now();
+    final futureDates = missions
+        .map((mission) => mission.nextAvailableAt)
+        .whereType<DateTime>()
+        .where((date) => date.isAfter(now))
+        .toList();
+    final nextRefresh = futureDates.isEmpty
+        ? null
+        : futureDates.reduce(
+            (first, second) => first.isBefore(second) ? first : second,
+          );
+
+    if (nextRefresh == _scheduledRefreshAt) return;
+
+    _availabilityTimer?.cancel();
+    _scheduledRefreshAt = nextRefresh;
+    if (nextRefresh == null) return;
+
+    _availabilityTimer = Timer(
+      nextRefresh.difference(now) + const Duration(seconds: 1),
+      () {
+        if (!mounted) return;
+        _scheduledRefreshAt = null;
+        ref.invalidate(myMissionsProvider);
+      },
     );
   }
 
@@ -195,8 +244,9 @@ class _MissionSections extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Ces missions reviendront automatiquement au début de leur '
-            'prochaine période.',
+            'Les missions quotidiennes reviennent chaque jour à l’heure '
+            'prévue. Les missions hebdomadaires reviennent sept jours après '
+            'leur dernière réalisation.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 10),
@@ -307,13 +357,22 @@ class _MissionCard extends StatelessWidget {
                 label: Text('Mission accomplie'),
               )
             else if (isCompletedForCurrentPeriod)
-              Chip(
-                avatar: const Icon(Icons.verified, size: 18),
-                label: Text(
-                  mission.quest.frequency == 'daily'
-                      ? 'Accomplie aujourd’hui'
-                      : 'Accomplie cette semaine',
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Chip(
+                    avatar: Icon(Icons.verified, size: 18),
+                    label: Text('Terminée pour cette période'),
+                  ),
+                  if (mission.nextAvailableAt != null)
+                    Text(
+                      'De nouveau disponible le '
+                      '${DateFormat('dd/MM à HH:mm').format(
+                        mission.nextAvailableAt!.toLocal(),
+                      )}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                ],
               )
             else
               FilledButton.icon(

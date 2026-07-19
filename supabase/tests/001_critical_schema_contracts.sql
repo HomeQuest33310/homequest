@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = extensions, public;
 
-select plan(30);
+select plan(32);
 
 select has_table('public', 'families', 'families table exists');
 select has_table('public', 'family_members', 'family members table exists');
@@ -101,6 +101,18 @@ select has_function(
   'homequest_quest_is_available_for_member',
   array['uuid', 'uuid'],
   'member-specific recurring availability function exists'
+);
+select has_function(
+  'public',
+  'homequest_next_daily_occurrence',
+  array['timestamp with time zone', 'timestamp with time zone'],
+  'daily quests keep their configured local hour'
+);
+select has_function(
+  'public',
+  'homequest_quest_next_available_at',
+  array['uuid', 'uuid'],
+  'member-specific next availability function exists'
 );
 select has_function(
   'public',

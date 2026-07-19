@@ -64,7 +64,9 @@ class QuestsScreen extends ConsumerWidget {
               final quest = quests[index];
 
               return QuestCard(
+                key: ValueKey(quest.id),
                 quest: quest,
+                compactOnMobile: true,
                 onSelfAssign: () async {
                   final success = await ref
                       .read(selfAssignQuestControllerProvider.notifier)

@@ -32,6 +32,7 @@ class MissionAssignment {
     required this.assignedAt,
     required this.quest,
     required this.isAvailableNow,
+    this.nextAvailableAt,
     this.completion,
   });
 
@@ -39,6 +40,7 @@ class MissionAssignment {
   final DateTime assignedAt;
   final Quest quest;
   final bool isAvailableNow;
+  final DateTime? nextAvailableAt;
   final MissionCompletion? completion;
 
   factory MissionAssignment.fromMap(Map<String, dynamic> map) {
@@ -48,6 +50,9 @@ class MissionAssignment {
       assignedAt: DateTime.parse(map['assigned_at'] as String),
       quest: Quest.fromMap(Map<String, dynamic>.from(map['quest'] as Map)),
       isAvailableNow: map['is_available_now'] as bool? ?? true,
+      nextAvailableAt: map['next_available_at'] == null
+          ? null
+          : DateTime.parse(map['next_available_at'] as String),
       completion: completion == null
           ? null
           : MissionCompletion.fromMap(
