@@ -8,6 +8,22 @@ import '../../domain/quest_suggestion.dart';
 import '../../providers/quests_provider.dart';
 import 'quest_suggestions_dialog.dart';
 
+const _questIconOptions = <String, String>{
+  '📜': 'Parchemin',
+  '🧹': 'Nettoyage',
+  '🍳': 'Cuisine',
+  '🧺': 'Lessive',
+  '🧽': 'Vaisselle',
+  '🛒': 'Courses',
+  '🌿': 'Jardin',
+  '🐾': 'Animaux',
+  '📚': 'Savoir',
+  '🎨': 'Créativité',
+  '⚔️': 'Combat',
+  '🛡️': 'Protection',
+  '✨': 'Mission spéciale',
+};
+
 class QuestFormDialog extends ConsumerStatefulWidget {
   const QuestFormDialog({super.key, this.quest});
 
@@ -100,6 +116,8 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
             if (domains.isEmpty) {
               return const Text('Aucun domaine disponible.');
             }
+            final emojiOptions = {..._questIconOptions};
+            emojiOptions.putIfAbsent(_emojiController.text, () => 'Icône actuelle');
             _domainId ??= domains.first.id;
 
             return Form(
@@ -139,12 +157,29 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
                     Row(
                       children: [
                         SizedBox(
-                          width: 100,
-                          child: TextFormField(
-                            controller: _emojiController,
-                            decoration:
-                                const InputDecoration(labelText: 'Emoji'),
-                            validator: _required,
+                          width: 150,
+                          child: DropdownButtonFormField<String>(
+                            key: ValueKey('quest-emoji-${_emojiController.text}'),
+                            initialValue: emojiOptions
+                                    .containsKey(_emojiController.text)
+                                ? _emojiController.text
+                                : emojiOptions.keys.first,
+                            decoration: const InputDecoration(
+                              labelText: 'Icône de la quête',
+                            ),
+                            items: emojiOptions.entries
+                                .map(
+                                  (entry) => DropdownMenuItem(
+                                    value: entry.key,
+                                    child: Text('${entry.key} ${entry.value}'),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => _emojiController.text = value);
+                              }
+                            },
                           ),
                         ),
                         const SizedBox(width: 12),
