@@ -130,8 +130,8 @@ class _GuidanceBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Card(
-        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-        child: const ListTile(
+        margin: EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: ListTile(
           leading: Icon(Icons.lightbulb_outline),
           title: Text('Votre guide du royaume'),
           subtitle: Text(
