@@ -7,6 +7,7 @@ import '../../../family/providers/family_members_provider.dart';
 import '../../../kingdom/providers/kingdom_provider.dart';
 import '../../providers/quests_provider.dart';
 import '../../providers/voluntary_quest_requests_provider.dart';
+import '../../domain/quest.dart';
 import '../dialogs/assign_quest_dialog.dart';
 import '../dialogs/quest_form_dialog.dart';
 import '../dialogs/voluntary_quest_request_dialog.dart';
@@ -84,12 +85,7 @@ class QuestsScreen extends ConsumerWidget {
                   );
                 },
                 onEdit: canManage
-                    ? () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => QuestFormDialog(quest: quest),
-                        );
-                      }
+                    ? () => _openQuestForm(context, ref, quest: quest)
                     : null,
                 onAssign: canManage
                     ? () {
@@ -113,12 +109,7 @@ class QuestsScreen extends ConsumerWidget {
       ),
       floatingActionButton: canManage
           ? FloatingActionButton.extended(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => const QuestFormDialog(),
-                );
-              },
+              onPressed: () => _openQuestForm(context, ref),
               icon: const Icon(Icons.add),
               label: const Text('Nouvelle mission'),
             )
@@ -143,5 +134,22 @@ class QuestsScreen extends ConsumerWidget {
                 )
               : null,
     );
+  }
+
+  Future<void> _openQuestForm(
+    BuildContext context,
+    WidgetRef ref, {
+    Quest? quest,
+  }) async {
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (_) => QuestFormDialog(quest: quest),
+    );
+    if (saved != true || !context.mounted) return;
+
+    // Safari can keep the previous provider snapshot after a dialog closes.
+    // Refresh and await the new result so the quest appears immediately.
+    ref.invalidate(currentFamilyQuestsProvider);
+    await ref.read(currentFamilyQuestsProvider.future);
   }
 }

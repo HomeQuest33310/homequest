@@ -63,6 +63,7 @@ class FamilyDashboardPage extends ConsumerWidget {
       ref.invalidate(currentFamilyBossesProvider);
       ref.invalidate(currentRewardSuggestionsProvider);
       ref.invalidate(guardianNotificationsProvider);
+      await ref.read(currentFamilyQuestsProvider.future);
     }
 
     final navigationMenu = _HomeNavigationMenu(
