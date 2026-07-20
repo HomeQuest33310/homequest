@@ -316,13 +316,18 @@ class _ProgressCard extends StatelessWidget {
             const SizedBox(height: 20),
             Row(
               children: [
-                Text(
-                  'Progression vers le niveau ${profile.level + 1}',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Expanded(
+                  child: Text(
+                    'Progression vers le niveau ${profile.level + 1}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Text(
                   '${profile.xpInCurrentLevel}/${profile.xpNeededForLevel} XP',
+                  style: Theme.of(context).textTheme.labelMedium,
                 ),
               ],
             ),
