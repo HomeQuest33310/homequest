@@ -275,4 +275,12 @@ class SupabaseFamilyRepository implements FamilyRepository {
       params: {'p_token': token},
     );
   }
+
+  @override
+  Future<void> leaveKingdom(String kingdomId) async {
+    await _client.rpc(
+      'leave_kingdom',
+      params: {'p_kingdom_id': kingdomId},
+    );
+  }
 }

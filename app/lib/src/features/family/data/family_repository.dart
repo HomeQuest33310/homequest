@@ -41,4 +41,6 @@ abstract class FamilyRepository {
   Future<void> cancelInvitation(String invitationId);
 
   Future<void> acceptInvitation(String token);
+
+  Future<void> leaveKingdom(String kingdomId);
 }

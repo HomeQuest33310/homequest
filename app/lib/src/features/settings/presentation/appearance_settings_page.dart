@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/dashboard_home_button.dart';
 import '../../../core/theme/app_appearance.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/appearance_provider.dart';
+import '../../family/providers/family_provider.dart';
+import '../../kingdom/providers/kingdom_provider.dart';
 
 class AppearanceSettingsPage extends ConsumerWidget {
   const AppearanceSettingsPage({super.key});
@@ -13,6 +16,15 @@ class AppearanceSettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appearance = ref.watch(appearanceProvider);
     final controller = ref.read(appearanceProvider.notifier);
+    final kingdom = ref.watch(currentKingdomProvider).valueOrNull;
+    final kingdoms =
+        ref.watch(availableKingdomsProvider).valueOrNull ?? const [];
+    final canCreateKingdom = kingdoms.any(
+      (available) =>
+          available.membershipRole == 'guardian' ||
+          available.membershipRole == 'adventurer',
+    );
+    final leaveState = ref.watch(leaveKingdomControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -31,6 +43,16 @@ class AppearanceSettingsPage extends ConsumerWidget {
           const SizedBox(height: 6),
           const Text(
             'Le moteur de thèmes pourra accueillir de nouveaux univers sans modifier les écrans.',
+          ),
+          const SizedBox(height: 18),
+          _AccountKingdomActions(
+            kingdomName: kingdom?.name,
+            canCreateKingdom: canCreateKingdom,
+            isLeaving: leaveState.isLoading,
+            onCreateKingdom: () => _confirmCreateKingdom(context),
+            onLeaveKingdom: kingdom == null
+                ? null
+                : () => _confirmLeaveKingdom(context, ref, kingdom.id),
           ),
           const SizedBox(height: 18),
           LayoutBuilder(
@@ -107,6 +129,137 @@ class AppearanceSettingsPage extends ConsumerWidget {
           const SizedBox(height: 18),
           const _LivePreview(),
         ],
+      ),
+    );
+  }
+
+  Future<void> _confirmCreateKingdom(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Créer un nouveau Royaume ?'),
+        content: const Text(
+          'Attention : créer un Royaume signifie également devoir gérer les quêtes, les membres et les responsabilités qui lui sont liés.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Continuer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      context.push('/create-family');
+    }
+  }
+
+  Future<void> _confirmLeaveKingdom(
+    BuildContext context,
+    WidgetRef ref,
+    String kingdomId,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Quitter le Royaume ?'),
+        content: const Text(
+          'Attention : vous êtes sur le point de quitter le Royaume. Vous ne pourrez pas récupérer vos bonus ni vos gains liés à ce Royaume.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Quitter le Royaume'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    await ref
+        .read(leaveKingdomControllerProvider.notifier)
+        .leaveKingdom(kingdomId);
+    if (!context.mounted) return;
+
+    final state = ref.read(leaveKingdomControllerProvider);
+    if (state.hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Impossible de quitter le Royaume : ${state.error}'),
+        ),
+      );
+      return;
+    }
+    context.go('/');
+  }
+}
+
+class _AccountKingdomActions extends StatelessWidget {
+  const _AccountKingdomActions({
+    required this.kingdomName,
+    required this.canCreateKingdom,
+    required this.isLeaving,
+    required this.onCreateKingdom,
+    required this.onLeaveKingdom,
+  });
+
+  final String? kingdomName;
+  final bool canCreateKingdom;
+  final bool isLeaving;
+  final VoidCallback onCreateKingdom;
+  final VoidCallback? onLeaveKingdom;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Gestion du compte',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(kingdomName == null
+                ? 'Actions liées à votre aventure.'
+                : 'Royaume actif : $kingdomName'),
+            const SizedBox(height: 16),
+            if (canCreateKingdom)
+              FilledButton.tonalIcon(
+                onPressed: onCreateKingdom,
+                icon: const Icon(Icons.add_business_outlined),
+                label: const Text('Créer un nouveau Royaume'),
+              ),
+            if (canCreateKingdom) const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: isLeaving ? null : onLeaveKingdom,
+              icon: isLeaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.exit_to_app_outlined),
+              label: const Text('Quitter le Royaume'),
+            ),
+          ],
+        ),
       ),
     );
   }
