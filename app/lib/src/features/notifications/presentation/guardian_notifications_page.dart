@@ -129,7 +129,7 @@ class _GuidanceBanner extends StatelessWidget {
   const _GuidanceBanner();
 
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => const Card(
         margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         child: const ListTile(
           leading: Icon(Icons.lightbulb_outline),
