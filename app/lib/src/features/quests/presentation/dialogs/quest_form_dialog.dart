@@ -53,6 +53,7 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
   int _difficulty = 1;
   bool _requiresApproval = true;
   DateTime? _availableFrom;
+  int _recurrenceWeekday = DateTime.tuesday;
   late final List<String> _selectedSkillIds;
 
   @override
@@ -76,6 +77,8 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
     _difficulty = quest?.difficulty ?? 1;
     _requiresApproval = quest?.requiresApproval ?? true;
     _availableFrom = quest?.availableFrom?.toLocal();
+    _recurrenceWeekday = quest?.recurrenceWeekday ??
+        (quest?.availableFrom?.toLocal().weekday ?? DateTime.tuesday);
     _selectedSkillIds = quest?.skillRewards
             .map((reward) => reward.skillId)
             .where((id) => heroicSkills.any((skill) => skill.id == id))
@@ -284,7 +287,14 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
                         ),
                       ],
                       onChanged: (value) {
-                        if (value != null) setState(() => _frequency = value);
+                        if (value != null) {
+                          setState(() {
+                            _frequency = value;
+                            if (value == 'weekly' && _availableFrom != null) {
+                              _availableFrom = _anchorForWeekday(_recurrenceWeekday);
+                            }
+                          });
+                        }
                       },
                     ),
                     const SizedBox(height: 12),
@@ -301,13 +311,11 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
                               subtitle: Text(
                                 switch (_frequency) {
                                   'daily' =>
-                                    'Cette date fixe la première disponibilité. '
-                                        'La quête reviendra ensuite tous les '
-                                        'jours à cette heure.',
+                                    'Choisissez uniquement l’heure. La quête '
+                                        'reviendra chaque jour à cette heure.',
                                   'weekly' =>
-                                    'Cette date fixe la première disponibilité. '
-                                        'La quête reviendra ensuite sept jours '
-                                        'après chaque réalisation.',
+                                    'Choisissez le jour et l’heure. La quête '
+                                        'reviendra chaque semaine à ce moment.',
                                   _ =>
                                     'La quête restera visible, mais personne ne '
                                         'pourra la prendre avant cette date.',
@@ -316,46 +324,60 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
                               onChanged: (scheduled) {
                                 setState(() {
                                   _availableFrom = scheduled
-                                      ? DateTime.now()
-                                          .add(const Duration(hours: 1))
-                                          .copyWith(second: 0, millisecond: 0)
+                                      ? (_frequency == 'weekly'
+                                          ? _anchorForWeekday(_recurrenceWeekday)
+                                          : DateTime.now()
+                                              .add(const Duration(hours: 1))
+                                              .copyWith(second: 0, millisecond: 0))
                                       : null;
                                 });
                               },
                             ),
                             if (_availableFrom != null) ...[
                               const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: _chooseAvailableDate,
-                                      icon: const Icon(Icons.calendar_today),
-                                      label: Text(
-                                        DateFormat('dd/MM/yyyy')
-                                            .format(_availableFrom!),
-                                      ),
-                                    ),
+                              if (_frequency == 'weekly')
+                                DropdownButtonFormField<int>(
+                                  value: _recurrenceWeekday,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Jour de la semaine',
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: _chooseAvailableTime,
-                                      icon: const Icon(Icons.schedule),
-                                      label: Text(
-                                        DateFormat('HH:mm')
-                                            .format(_availableFrom!),
-                                      ),
-                                    ),
+                                  items: const [
+                                    DropdownMenuItem(value: 1, child: Text('Lundi')),
+                                    DropdownMenuItem(value: 2, child: Text('Mardi')),
+                                    DropdownMenuItem(value: 3, child: Text('Mercredi')),
+                                    DropdownMenuItem(value: 4, child: Text('Jeudi')),
+                                    DropdownMenuItem(value: 5, child: Text('Vendredi')),
+                                    DropdownMenuItem(value: 6, child: Text('Samedi')),
+                                    DropdownMenuItem(value: 7, child: Text('Dimanche')),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setState(() {
+                                      _recurrenceWeekday = value;
+                                      _availableFrom = _anchorForWeekday(value);
+                                    });
+                                  },
+                                ),
+                              if (_frequency == 'weekly') const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: OutlinedButton.icon(
+                                  onPressed: _chooseAvailableTime,
+                                  icon: const Icon(Icons.schedule),
+                                  label: Text(
+                                    'Heure : ${DateFormat('HH:mm').format(_availableFrom!)}',
                                   ),
-                                ],
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Align(
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  'Disponible le '
-                                  '${DateFormat('dd/MM/yyyy à HH:mm').format(_availableFrom!)}',
+                                  _frequency == 'daily'
+                                      ? 'Tous les jours à ${DateFormat('HH:mm').format(_availableFrom!)}'
+                                      : _frequency == 'weekly'
+                                          ? 'Chaque ${_weekdayLabel(_recurrenceWeekday)} à ${DateFormat('HH:mm').format(_availableFrom!)}'
+                                          : 'Disponible le ${DateFormat('dd/MM/yyyy à HH:mm').format(_availableFrom!)}',
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
@@ -497,6 +519,26 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
     });
   }
 
+  DateTime _anchorForWeekday(int weekday) {
+    final now = DateTime.now();
+    final current = _availableFrom ?? now;
+    var days = (weekday - now.weekday) % 7;
+    var candidate = DateTime(now.year, now.month, now.day, current.hour,
+        current.minute);
+    if (days == 0 && !candidate.isAfter(now)) days = 7;
+    return candidate.add(Duration(days: days));
+  }
+
+  String _weekdayLabel(int weekday) => const {
+        1: 'lundi',
+        2: 'mardi',
+        3: 'mercredi',
+        4: 'jeudi',
+        5: 'vendredi',
+        6: 'samedi',
+        7: 'dimanche',
+      }[weekday]!;
+
   Future<void> _chooseAvailableDate() async {
     final current = _availableFrom;
     if (current == null) return;
@@ -527,13 +569,11 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
     );
     if (selected == null || !mounted) return;
     setState(() {
-      _availableFrom = DateTime(
-        current.year,
-        current.month,
-        current.day,
-        selected.hour,
-        selected.minute,
-      );
+      _availableFrom = _frequency == 'weekly'
+          ? _anchorForWeekday(_recurrenceWeekday).copyWith(
+              hour: selected.hour, minute: selected.minute)
+          : DateTime(current.year, current.month, current.day, selected.hour,
+              selected.minute);
     });
   }
 

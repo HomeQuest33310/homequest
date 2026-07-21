@@ -14,6 +14,7 @@ class Quest {
     required this.createdAt,
     this.description,
     this.availableFrom,
+    this.recurrenceWeekday,
     this.regionKey,
     this.domainId,
     this.emoji = '📜',
@@ -30,6 +31,8 @@ class Quest {
   final String realTask;
   final String? description;
   final DateTime? availableFrom;
+  /// ISO weekday (1 = Monday … 7 = Sunday) for weekly quests.
+  final int? recurrenceWeekday;
   final String? regionKey;
   final String? domainId;
   final String emoji;
@@ -69,6 +72,7 @@ class Quest {
       availableFrom: map['available_from'] == null
           ? null
           : DateTime.parse(map['available_from'] as String),
+      recurrenceWeekday: (map['recurrence_weekday'] as num?)?.toInt(),
       regionKey: map['region_key'] as String?,
       domainId: map['domain_id'] as String?,
       emoji: map['emoji'] as String? ?? '📜',
