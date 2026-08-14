@@ -9,7 +9,10 @@ abstract class CompletionsRepository {
     required String questId,
     String? note,
   });
-  Future<CompletionReward> approve(String completionId);
+  Future<CompletionReward> approve(
+    String completionId, {
+    List<String>? participantIds,
+  });
   Future<void> reject({
     required String completionId,
     required String reason,

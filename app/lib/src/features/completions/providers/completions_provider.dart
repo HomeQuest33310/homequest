@@ -73,11 +73,17 @@ class CompletionController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<bool> approve(String completionId) async {
+  Future<bool> approve(
+    String completionId, {
+    List<String>? participantIds,
+  }) async {
     state = const AsyncLoading();
     try {
       lastReward =
-          await _ref.read(completionsRepositoryProvider).approve(completionId);
+          await _ref.read(completionsRepositoryProvider).approve(
+                completionId,
+                participantIds: participantIds,
+              );
       _refresh();
       state = const AsyncData(null);
       return true;

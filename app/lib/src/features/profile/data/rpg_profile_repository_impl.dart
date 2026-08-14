@@ -10,23 +10,36 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
   final SupabaseClient _client;
 
   @override
-  Future<RpgProfile> getMyProfile(String familyId) async {
+  Future<RpgProfile> getMyProfile({
+    required String familyId,
+    required String kingdomId,
+  }) async {
     final user = _client.auth.currentUser;
     if (user == null) throw StateError('Utilisateur non connecté.');
 
-    return _getProfile(familyId: familyId, userId: user.id);
+    return _getProfile(
+      familyId: familyId,
+      kingdomId: kingdomId,
+      userId: user.id,
+    );
   }
 
   @override
   Future<RpgProfile> getMemberProfile({
     required String familyId,
+    required String kingdomId,
     required String memberId,
   }) {
-    return _getProfile(familyId: familyId, targetMemberId: memberId);
+    return _getProfile(
+      familyId: familyId,
+      kingdomId: kingdomId,
+      targetMemberId: memberId,
+    );
   }
 
   Future<RpgProfile> _getProfile({
     required String familyId,
+    required String kingdomId,
     String? userId,
     String? targetMemberId,
   }) async {
@@ -64,6 +77,15 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
 
     final memberData = Map<String, dynamic>.from(memberResponse);
     final memberId = memberData['id'] as String;
+    final kingdomMembership = await _client
+        .from('kingdom_members')
+        .select('role, is_active, expires_at')
+        .eq('kingdom_id', kingdomId)
+        .eq('member_id', memberId)
+        .maybeSingle();
+    if (kingdomMembership == null || kingdomMembership['is_active'] != true) {
+      throw StateError('Membre absent du royaume sélectionné.');
+    }
 
     final results = await Future.wait<dynamic>([
       _client.from('skills').select().order('name'),
@@ -168,7 +190,7 @@ class SupabaseRpgProfileRepository implements RpgProfileRepository {
       userId: memberData['user_id'] as String,
       displayName: profileData['display_name'] as String,
       avatarKey: profileData['avatar_key'] as String?,
-      role: memberData['role'] as String,
+      role: kingdomMembership['role'] as String,
       level: (memberData['level'] as num).toInt(),
       xp: (memberData['xp'] as num).toInt(),
       gold: (memberData['gold'] as num).toInt(),

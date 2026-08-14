@@ -57,14 +57,14 @@ class QuestsScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: quests.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final quest = quests[index];
+          final activeQuests = quests
+              .where((quest) => !quest.isCompletedForPeriod)
+              .toList();
+          final completedQuests = quests
+              .where((quest) => quest.isCompletedForPeriod)
+              .toList();
 
-              return QuestCard(
+          Widget buildQuestCard(Quest quest) => QuestCard(
                 key: ValueKey(quest.id),
                 quest: quest,
                 compactOnMobile: true,
@@ -85,15 +85,16 @@ class QuestsScreen extends ConsumerWidget {
                   );
                 },
                 onEdit: canManage
-                    ? () => _openQuestForm(context, ref, quest: quest)
+                    ? () => showDialog(
+                          context: context,
+                          builder: (_) => QuestFormDialog(quest: quest),
+                        )
                     : null,
                 onAssign: canManage
-                    ? () {
-                        showDialog(
+                    ? () => showDialog(
                           context: context,
                           builder: (_) => AssignQuestDialog(quest: quest),
-                        );
-                      }
+                        )
                     : null,
                 onArchive: canManage
                     ? () async {
@@ -103,13 +104,43 @@ class QuestsScreen extends ConsumerWidget {
                       }
                     : null,
               );
-            },
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              if (activeQuests.isNotEmpty) ...[
+                const _QuestSectionHeader(
+                  title: 'Quêtes actives',
+                  icon: Icons.explore_outlined,
+                ),
+                for (final quest in activeQuests) ...[
+                  buildQuestCard(quest),
+                  const SizedBox(height: 12),
+                ],
+              ],
+              if (completedQuests.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                const _QuestSectionHeader(
+                  title: 'Terminées pour cette période',
+                  icon: Icons.check_circle_outline,
+                ),
+                for (final quest in completedQuests) ...[
+                  buildQuestCard(quest),
+                  const SizedBox(height: 12),
+                ],
+              ],
+            ],
           );
         },
       ),
       floatingActionButton: canManage
           ? FloatingActionButton.extended(
-              onPressed: () => _openQuestForm(context, ref),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => const QuestFormDialog(),
+                );
+              },
               icon: const Icon(Icons.add),
               label: const Text('Nouvelle mission'),
             )
@@ -135,21 +166,25 @@ class QuestsScreen extends ConsumerWidget {
               : null,
     );
   }
+}
 
-  Future<void> _openQuestForm(
-    BuildContext context,
-    WidgetRef ref, {
-    Quest? quest,
-  }) async {
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (_) => QuestFormDialog(quest: quest),
+class _QuestSectionHeader extends StatelessWidget {
+  const _QuestSectionHeader({required this.title, required this.icon});
+
+  final String title;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 21),
+          const SizedBox(width: 8),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+        ],
+      ),
     );
-    if (saved != true || !context.mounted) return;
-
-    // Safari can keep the previous provider snapshot after a dialog closes.
-    // Refresh and await the new result so the quest appears immediately.
-    ref.invalidate(currentFamilyQuestsProvider);
-    await ref.read(currentFamilyQuestsProvider.future);
   }
 }

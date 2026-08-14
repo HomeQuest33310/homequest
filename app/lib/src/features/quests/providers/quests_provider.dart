@@ -182,6 +182,9 @@ class AssignQuestController extends StateNotifier<AsyncValue<void>> {
           );
 
       _ref.invalidate(currentFamilyQuestsProvider);
+      // Reload the list before closing the assignment dialog so the newly
+      // assigned member is immediately visible in the dashboard card.
+      await _ref.read(currentFamilyQuestsProvider.future);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);

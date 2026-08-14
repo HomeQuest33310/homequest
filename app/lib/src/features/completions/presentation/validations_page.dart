@@ -60,9 +60,15 @@ class ValidationsPage extends ConsumerWidget {
     WidgetRef ref,
     PendingCompletion completion,
   ) async {
+    List<String>? participantIds;
+    if (completion.frequency == 'once' &&
+        completion.assignedMembers.length > 1) {
+      participantIds = await _chooseParticipants(context, completion);
+      if (participantIds == null || !context.mounted) return;
+    }
     final success = await ref
         .read(completionControllerProvider.notifier)
-        .approve(completion.id);
+        .approve(completion.id, participantIds: participantIds);
     if (!context.mounted) return;
     final controller = ref.read(completionControllerProvider.notifier);
     final state = ref.read(completionControllerProvider);
@@ -73,7 +79,60 @@ class ValidationsPage extends ConsumerWidget {
           success && reward != null
               ? 'Validée : +${reward.xp} XP, +${reward.gold} or, '
                   '${reward.bossDamage} dégâts.'
+                  '${reward.participantsCount > 1 ? ' Récompenses réparties entre ${reward.participantsCount} participants.' : ''}'
               : 'Validation impossible : ${state.error}',
+        ),
+      ),
+    );
+  }
+
+  Future<List<String>?> _chooseParticipants(
+    BuildContext context,
+    PendingCompletion completion,
+  ) {
+    final selected = <String>{completion.completedBy};
+    return showDialog<List<String>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Qui a réalisé cette quête ?'),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: completion.assignedMembers.map((participant) {
+                  final isCompleter = participant.memberId == completion.completedBy;
+                  return CheckboxListTile(
+                    value: selected.contains(participant.memberId),
+                    onChanged: isCompleter
+                        ? null
+                        : (checked) => setState(() {
+                              if (checked == true) {
+                                selected.add(participant.memberId);
+                              } else {
+                                selected.remove(participant.memberId);
+                              }
+                            }),
+                    title: Text(participant.displayName),
+                    subtitle: isCompleter
+                        ? const Text('Personne ayant soumis la réalisation')
+                        : null,
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, selected.toList()),
+              child: const Text('Valider et répartir'),
+            ),
+          ],
         ),
       ),
     );

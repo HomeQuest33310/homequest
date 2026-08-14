@@ -14,7 +14,6 @@ class Quest {
     required this.createdAt,
     this.description,
     this.availableFrom,
-    this.recurrenceWeekday,
     this.regionKey,
     this.domainId,
     this.emoji = '📜',
@@ -22,6 +21,8 @@ class Quest {
     this.difficulty = 1,
     this.skillRewards = const [],
     this.assignees = const [],
+    this.isCompletedForPeriod = false,
+    this.recurrenceWeekday,
   });
 
   final String id;
@@ -31,8 +32,6 @@ class Quest {
   final String realTask;
   final String? description;
   final DateTime? availableFrom;
-  /// ISO weekday (1 = Monday … 7 = Sunday) for weekly quests.
-  final int? recurrenceWeekday;
   final String? regionKey;
   final String? domainId;
   final String emoji;
@@ -60,6 +59,8 @@ class Quest {
   final DateTime createdAt;
   final List<QuestSkillReward> skillRewards;
   final List<QuestAssignee> assignees;
+  final bool isCompletedForPeriod;
+  final int? recurrenceWeekday;
 
   factory Quest.fromMap(Map<String, dynamic> map) {
     return Quest(
@@ -72,7 +73,6 @@ class Quest {
       availableFrom: map['available_from'] == null
           ? null
           : DateTime.parse(map['available_from'] as String),
-      recurrenceWeekday: (map['recurrence_weekday'] as num?)?.toInt(),
       regionKey: map['region_key'] as String?,
       domainId: map['domain_id'] as String?,
       emoji: map['emoji'] as String? ?? '📜',
@@ -99,6 +99,8 @@ class Quest {
             ),
           )
           .toList(),
+      isCompletedForPeriod: map['is_completed_for_period'] as bool? ?? false,
+      recurrenceWeekday: (map['recurrence_weekday'] as num?)?.toInt(),
     );
   }
 }

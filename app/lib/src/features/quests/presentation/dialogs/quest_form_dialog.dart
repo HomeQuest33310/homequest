@@ -337,7 +337,7 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
                               const SizedBox(height: 8),
                               if (_frequency == 'weekly')
                                 DropdownButtonFormField<int>(
-                                  value: _recurrenceWeekday,
+                                  initialValue: _recurrenceWeekday,
                                   decoration: const InputDecoration(
                                     labelText: 'Jour de la semaine',
                                   ),
@@ -538,27 +538,6 @@ class _QuestFormDialogState extends ConsumerState<QuestFormDialog> {
         6: 'samedi',
         7: 'dimanche',
       }[weekday]!;
-
-  Future<void> _chooseAvailableDate() async {
-    final current = _availableFrom;
-    if (current == null) return;
-    final selected = await showDatePicker(
-      context: context,
-      initialDate: current,
-      firstDate: DateTime(DateTime.now().year - 1),
-      lastDate: DateTime(DateTime.now().year + 10),
-    );
-    if (selected == null || !mounted) return;
-    setState(() {
-      _availableFrom = DateTime(
-        selected.year,
-        selected.month,
-        selected.day,
-        current.hour,
-        current.minute,
-      );
-    });
-  }
 
   Future<void> _chooseAvailableTime() async {
     final current = _availableFrom;

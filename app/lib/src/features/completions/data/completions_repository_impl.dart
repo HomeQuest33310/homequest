@@ -65,13 +65,17 @@ class SupabaseCompletionsRepository implements CompletionsRepository {
   }
 
   @override
-  Future<CompletionReward> approve(String completionId) async {
+  Future<CompletionReward> approve(
+    String completionId, {
+    List<String>? participantIds,
+  }) async {
     final data = await _client.rpc(
-      'review_quest_completion',
+      'review_quest_completion_with_participants',
       params: {
         'p_completion_id': completionId,
         'p_approve': true,
         'p_rejection_reason': null,
+        'p_participant_ids': participantIds ?? const <String>[],
       },
     );
     return CompletionReward.fromMap(Map<String, dynamic>.from(data as Map));

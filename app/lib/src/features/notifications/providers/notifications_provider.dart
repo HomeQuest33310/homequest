@@ -15,20 +15,21 @@ final myNotificationsProvider =
     FutureProvider<List<GuardianNotification>>((ref) async {
   final family = await ref.watch(currentFamilyProvider.future);
   final member = await ref.watch(currentFamilyMemberProvider.future);
-  if (family == null || member == null || !member.isActive) return const [];
-
+  if (family == null || member?.isActive != true) return const [];
   return ref.watch(notificationsRepositoryProvider).listForMember(family.id);
 });
 
-final unreadNotificationsProvider = Provider<int>((ref) {
+// Compatibility aliases used by the dashboard, realtime listener and older
+// notification screens.
+final kingdomNotificationsProvider = myNotificationsProvider;
+final guardianNotificationsProvider = myNotificationsProvider;
+
+final unreadKingdomNotificationsProvider = Provider<int>((ref) {
   return ref.watch(myNotificationsProvider).maybeWhen(
         data: (items) => items.where((item) => !item.isRead).length,
         orElse: () => 0,
       );
 });
-
-final guardianNotificationsProvider = myNotificationsProvider;
-final unreadGuardianNotificationsProvider = unreadNotificationsProvider;
 
 final notificationsControllerProvider =
     StateNotifierProvider<NotificationsController, AsyncValue<void>>(
@@ -57,7 +58,7 @@ class NotificationsController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       final family = await _ref.read(currentFamilyProvider.future);
-      if (family == null) throw StateError('Royaume introuvable');
+      if (family == null) return false;
       await _ref.read(notificationsRepositoryProvider).markAllRead(family.id);
       _ref.invalidate(myNotificationsProvider);
       state = const AsyncData(null);

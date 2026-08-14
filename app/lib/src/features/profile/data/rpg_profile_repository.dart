@@ -1,10 +1,14 @@
 import '../domain/rpg_profile.dart';
 
 abstract class RpgProfileRepository {
-  Future<RpgProfile> getMyProfile(String familyId);
+  Future<RpgProfile> getMyProfile({
+    required String familyId,
+    required String kingdomId,
+  });
 
   Future<RpgProfile> getMemberProfile({
     required String familyId,
+    required String kingdomId,
     required String memberId,
   });
 
