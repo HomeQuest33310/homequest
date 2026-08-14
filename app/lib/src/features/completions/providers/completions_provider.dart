@@ -51,6 +51,7 @@ class CompletionController extends StateNotifier<AsyncValue<void>> {
             note: note,
           );
       _refresh();
+      await _ref.read(currentFamilyQuestsProvider.future);
       state = const AsyncData(null);
       return true;
     } catch (error, stackTrace) {

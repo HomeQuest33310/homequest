@@ -52,7 +52,7 @@ class FamilyDashboardPage extends ConsumerWidget {
                 currentKingdom?.membershipRole == 'mercenary') &&
             currentMember?.isActive == true;
     final canSubmitVoluntaryQuest = ref.watch(canSubmitVoluntaryQuestProvider);
-    final unreadNotifications = ref.watch(unreadNotificationsProvider);
+    final unreadNotifications = ref.watch(unreadKingdomNotificationsProvider);
     final pendingInitiatives =
         ref.watch(pendingVoluntaryQuestRequestCountProvider);
 
@@ -62,13 +62,11 @@ class FamilyDashboardPage extends ConsumerWidget {
       ref.invalidate(currentFamilyQuestsProvider);
       ref.invalidate(currentFamilyBossesProvider);
       ref.invalidate(currentRewardSuggestionsProvider);
-      ref.invalidate(guardianNotificationsProvider);
-      await ref.read(currentFamilyQuestsProvider.future);
+      ref.invalidate(kingdomNotificationsProvider);
     }
 
     final navigationMenu = _HomeNavigationMenu(
       canManageQuests: canManageQuests,
-      canSeeNotifications: currentMember?.isActive == true,
       canOpenInitiatives: canManageQuests || canSubmitVoluntaryQuest,
       unreadNotifications: unreadNotifications,
       pendingInitiatives: pendingInitiatives,
@@ -83,16 +81,15 @@ class FamilyDashboardPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('HomeQuest'),
         actions: [
-          if (currentMember?.isActive == true)
-            IconButton(
-              tooltip: 'Notifications du royaume',
-              onPressed: () => context.go('/notifications'),
-              icon: Badge(
-                isLabelVisible: unreadNotifications > 0,
-                label: Text('$unreadNotifications'),
-                child: const Icon(Icons.notifications_outlined),
-              ),
+          IconButton(
+            tooltip: 'Notifications du royaume',
+            onPressed: () => context.go('/notifications'),
+            icon: Badge(
+              isLabelVisible: unreadNotifications > 0,
+              label: Text('$unreadNotifications'),
+              child: const Icon(Icons.notifications_outlined),
             ),
+          ),
           PopupMenuButton<_AccountAction>(
             tooltip: 'Compte et réglages',
             icon: const Icon(Icons.account_circle_outlined),
@@ -227,7 +224,6 @@ enum _AccountAction { profile, appearance, devtools, signOut }
 class _HomeNavigationMenu extends StatelessWidget {
   const _HomeNavigationMenu({
     required this.canManageQuests,
-    required this.canSeeNotifications,
     required this.canOpenInitiatives,
     required this.unreadNotifications,
     required this.pendingInitiatives,
@@ -235,7 +231,6 @@ class _HomeNavigationMenu extends StatelessWidget {
   });
 
   final bool canManageQuests;
-  final bool canSeeNotifications;
   final bool canOpenInitiatives;
   final int unreadNotifications;
   final int pendingInitiatives;
@@ -314,23 +309,22 @@ class _HomeNavigationMenu extends StatelessWidget {
             ),
             const _MenuSectionTitle('Foyer'),
             _MenuItem(
+              icon: Icons.notifications_outlined,
+              label: 'Notifications',
+              badgeCount: unreadNotifications,
+              onTap: () => open('/notifications'),
+            ),
+            _MenuItem(
               icon: Icons.shopping_basket_outlined,
               label: 'Liste de ravitaillement',
               onTap: () => open('/shopping'),
             ),
-            if (canSeeNotifications) ...[
-              if (canManageQuests) const _MenuSectionTitle('Gestion du gardien'),
-              if (canManageQuests)
-                _MenuItem(
-                  icon: Icons.fact_check_outlined,
-                  label: 'Validations en attente',
-                  onTap: () => open('/validations'),
-                ),
+            if (canManageQuests) ...[
+              const _MenuSectionTitle('Gestion du gardien'),
               _MenuItem(
-                icon: Icons.notifications_outlined,
-                label: 'Notifications',
-                badgeCount: unreadNotifications,
-                onTap: () => open('/notifications'),
+                icon: Icons.fact_check_outlined,
+                label: 'Validations en attente',
+                onTap: () => open('/validations'),
               ),
             ],
             const Divider(),
@@ -343,11 +337,6 @@ class _HomeNavigationMenu extends StatelessWidget {
               icon: Icons.palette_outlined,
               label: 'Apparence',
               onTap: () => open('/appearance'),
-            ),
-            _MenuItem(
-              icon: Icons.notifications_active_outlined,
-              label: 'Préférences des notifications',
-              onTap: () => open('/notification-preferences'),
             ),
             _MenuItem(
               icon: Icons.logout,
@@ -891,7 +880,14 @@ class _QuestsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (quests.isEmpty) {
+    // The dashboard only shows missions that can still be acted on. Missions
+    // completed for the current period remain available in the Grand Register
+    // under "Terminées pour cette période".
+    final activeQuests = quests
+        .where((quest) => !quest.isCompletedForPeriod)
+        .toList();
+
+    if (activeQuests.isEmpty) {
       return const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -904,7 +900,7 @@ class _QuestsList extends ConsumerWidget {
     }
 
     return Column(
-      children: quests
+      children: activeQuests
           .map(
             (quest) => Padding(
               padding: const EdgeInsets.only(bottom: 12),

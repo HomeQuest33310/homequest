@@ -21,6 +21,8 @@ class Quest {
     this.difficulty = 1,
     this.skillRewards = const [],
     this.assignees = const [],
+    this.isCompletedForPeriod = false,
+    this.recurrenceWeekday,
   });
 
   final String id;
@@ -57,6 +59,8 @@ class Quest {
   final DateTime createdAt;
   final List<QuestSkillReward> skillRewards;
   final List<QuestAssignee> assignees;
+  final bool isCompletedForPeriod;
+  final int? recurrenceWeekday;
 
   factory Quest.fromMap(Map<String, dynamic> map) {
     return Quest(
@@ -95,6 +99,8 @@ class Quest {
             ),
           )
           .toList(),
+      isCompletedForPeriod: map['is_completed_for_period'] as bool? ?? false,
+      recurrenceWeekday: (map['recurrence_weekday'] as num?)?.toInt(),
     );
   }
 }

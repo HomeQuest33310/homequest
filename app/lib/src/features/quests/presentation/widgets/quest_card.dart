@@ -59,7 +59,8 @@ class _QuestCardState extends State<QuestCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSummary(context, compact: compact),
-                if (compact && widget.onSelfAssign != null) ...[
+                if (compact && widget.onSelfAssign != null &&
+                    !widget.quest.isCompletedForPeriod) ...[
                   const SizedBox(height: 10),
                   _QuestSelfAssignButton(
                     availableFrom: widget.quest.availableFrom,
@@ -281,7 +282,9 @@ class _QuestCardState extends State<QuestCard> {
           spacing: 12,
           runSpacing: 12,
           children: [
-            if (includeSelfAssign && widget.onSelfAssign != null)
+            if (includeSelfAssign &&
+                widget.onSelfAssign != null &&
+                !quest.isCompletedForPeriod)
               _QuestSelfAssignButton(
                 availableFrom: quest.availableFrom,
                 onPressed: widget.onSelfAssign!,
