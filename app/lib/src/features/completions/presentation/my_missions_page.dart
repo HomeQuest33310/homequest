@@ -215,8 +215,10 @@ class _MissionSections extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final completedForPeriod = missions.where(_isCompletedForPeriod).toList();
-    final missionsToDo =
-        missions.where((mission) => !_isCompletedForPeriod(mission)).toList();
+    final missionsToDo = missions
+        .where((mission) =>
+            !_isCompletedForPeriod(mission) && !_isCompletedOnce(mission))
+        .toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -272,6 +274,11 @@ class _MissionSections extends StatelessWidget {
     return !mission.isAvailableNow &&
         mission.completion?.status == 'approved' &&
         mission.quest.frequency != 'once';
+  }
+
+  bool _isCompletedOnce(MissionAssignment mission) {
+    return mission.completion?.status == 'approved' &&
+        mission.quest.frequency == 'once';
   }
 }
 
