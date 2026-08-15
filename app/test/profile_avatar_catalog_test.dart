@@ -6,11 +6,20 @@ void main() {
     final premium =
         profileAvatarCatalog.where((avatar) => avatar.isPremium).toList();
 
-    expect(premium, hasLength(4));
+    expect(premium, hasLength(8));
     expect(premium.map((avatar) => avatar.goldPrice), everyElement(100));
     expect(
       premium.map((avatar) => avatar.key),
-      ['akatsuki_ninja', 'warrior_queen', 'totoro', 'meerkat'],
+      [
+        'akatsuki_ninja',
+        'warrior_queen',
+        'totoro',
+        'pirate_captain',
+        'violet_professor',
+        'french_scout',
+        'crystal_sword_guardian',
+        'meerkat',
+      ],
     );
     expect(premium.map((avatar) => avatar.assetPath), everyElement(isNotNull));
   });
