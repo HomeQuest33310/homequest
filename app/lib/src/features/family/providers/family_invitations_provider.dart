@@ -71,6 +71,33 @@ class FamilyInvitationsController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  Future<FamilyInvitation?> resend(FamilyInvitation invitation) async {
+    state = const AsyncLoading();
+    try {
+      final resent = await _ref
+          .read(familyRepositoryProvider)
+          .resendInvitation(invitation);
+      _ref.invalidate(currentFamilyInvitationsProvider);
+      state = const AsyncData(null);
+      return resent;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return null;
+    }
+  }
+
+  Future<bool> decline(String token) async {
+    state = const AsyncLoading();
+    try {
+      await _ref.read(familyRepositoryProvider).declineInvitation(token);
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
+
   Future<bool> accept(String token) async {
     state = const AsyncLoading();
     try {

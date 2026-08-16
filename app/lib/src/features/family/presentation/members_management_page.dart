@@ -145,6 +145,11 @@ class MembersManagementPage extends ConsumerWidget {
                                   ref,
                                   invitation,
                                 ),
+                                onResend: () => _resendInvitation(
+                                  context,
+                                  ref,
+                                  invitation,
+                                ),
                               ),
                           ],
                         ),
@@ -316,6 +321,34 @@ class MembersManagementPage extends ConsumerWidget {
     final link = InvitationLink.build(invitation.token).toString();
     await Clipboard.setData(ClipboardData(text: link));
   }
+
+  Future<void> _resendInvitation(
+    BuildContext context,
+    WidgetRef ref,
+    FamilyInvitation invitation,
+  ) async {
+    final resent = await ref
+        .read(familyInvitationsControllerProvider.notifier)
+        .resend(invitation);
+    if (!context.mounted) return;
+    if (resent == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Renvoi impossible.')),
+      );
+      return;
+    }
+    await _copyInviteLink(context, resent);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          resent.emailSent
+              ? 'Invitation renvoyée par e-mail et nouveau lien copié.'
+              : 'Invitation recréée. Le nouveau lien a été copié.',
+        ),
+      ),
+    );
+  }
 }
 
 class _MemberCard extends StatelessWidget {
@@ -422,11 +455,13 @@ class _InvitationCard extends StatelessWidget {
     required this.invitation,
     required this.onCopy,
     required this.onCancel,
+    required this.onResend,
   });
 
   final FamilyInvitation invitation;
   final VoidCallback onCopy;
   final VoidCallback onCancel;
+  final VoidCallback onResend;
 
   @override
   Widget build(BuildContext context) {
@@ -444,6 +479,11 @@ class _InvitationCard extends StatelessWidget {
               tooltip: 'Copier le lien',
               onPressed: onCopy,
               icon: const Icon(Icons.link),
+            ),
+            IconButton(
+              tooltip: 'Renvoyer l’invitation',
+              onPressed: onResend,
+              icon: const Icon(Icons.forward_to_inbox_outlined),
             ),
             IconButton(
               tooltip: 'Annuler',

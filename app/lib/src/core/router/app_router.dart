@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/family/presentation/create_family_page.dart';
 import '../../features/family/presentation/family_dashboard_page.dart';
 import '../../features/family/presentation/accept_invitation_page.dart';
+import '../../features/family/presentation/decline_invitation_page.dart';
 import '../../features/family/presentation/members_management_page.dart';
 import '../../features/auth/presentation/auth_page.dart';
 import '../../features/devtools/presentation/devtools_page.dart';
@@ -32,6 +33,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/',
         builder: (context, state) {
           final invitationToken = state.uri.queryParameters['invite'];
+          final declineToken = state.uri.queryParameters['decline_invite'];
+          if (declineToken != null && declineToken.isNotEmpty) {
+            return DeclineInvitationPage(token: declineToken);
+          }
           if (invitationToken != null && invitationToken.isNotEmpty) {
             return AcceptInvitationPage(token: invitationToken);
           }
