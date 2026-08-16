@@ -244,6 +244,7 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
     if (!mounted) return;
     if (success) {
       await PendingInvitationStore.clear();
+      if (!mounted) return;
       ref.invalidate(pendingInvitationTokenProvider);
       context.go('/');
     } else {
