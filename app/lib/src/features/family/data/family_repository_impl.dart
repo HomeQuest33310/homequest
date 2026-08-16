@@ -277,6 +277,41 @@ class SupabaseFamilyRepository implements FamilyRepository {
   }
 
   @override
+  Future<FamilyInvitation> resendInvitation(FamilyInvitation invitation) async {
+    final response = await _client.functions.invoke(
+      'send-family-invitation',
+      body: {
+        'family_id': invitation.familyId,
+        'kingdom_id': invitation.kingdomId,
+        'email': invitation.email,
+        'role': invitation.role,
+        'membership_scope': invitation.membershipScope,
+        'domain_id': invitation.domainId,
+        'expires_in_days': 7,
+      },
+    );
+
+    final payload = Map<String, dynamic>.from(response.data as Map);
+    if (payload['error'] != null) {
+      throw AuthException(payload['error'] as String);
+    }
+    final resentInvitation = Map<String, dynamic>.from(
+      payload['invitation'] as Map,
+    );
+    resentInvitation['email_sent'] = payload['email_sent'];
+    resentInvitation['email_error'] = payload['email_error'];
+    return FamilyInvitation.fromMap(resentInvitation);
+  }
+
+  @override
+  Future<void> declineInvitation(String token) async {
+    await _client.rpc(
+      'decline_family_invitation',
+      params: {'p_token': token},
+    );
+  }
+
+  @override
   Future<void> leaveKingdom(String kingdomId) async {
     await _client.rpc(
       'leave_kingdom',

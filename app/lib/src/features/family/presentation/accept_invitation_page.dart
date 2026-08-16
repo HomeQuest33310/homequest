@@ -86,8 +86,8 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
                       ),
                       const SizedBox(height: 8),
                       TextButton(
-                        onPressed: _ignoreInvitation,
-                        child: const Text('Ignorer cette invitation'),
+                        onPressed: _decline,
+                        child: const Text('Refuser cette invitation'),
                       ),
                     ] else ...[
                       Text(
@@ -131,8 +131,8 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
                       ),
                       const SizedBox(height: 8),
                       TextButton(
-                        onPressed: state.isLoading ? null : _ignoreInvitation,
-                        child: const Text('Ignorer cette invitation'),
+                        onPressed: state.isLoading ? null : _decline,
+                        child: const Text('Refuser cette invitation'),
                       ),
                       if (_localError != null || state.hasError) ...[
                         const SizedBox(height: 12),
@@ -215,10 +215,44 @@ class _AcceptInvitationPageState extends ConsumerState<AcceptInvitationPage> {
     }
   }
 
-  Future<void> _ignoreInvitation() async {
-    await PendingInvitationStore.clear();
-    ref.invalidate(pendingInvitationTokenProvider);
-    if (mounted) context.go('/');
+  Future<void> _decline() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Refuser l’invitation ?'),
+        content: const Text(
+          'Cette invitation sera marquée comme refusée et le lien ne pourra '
+          'plus être accepté.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Refuser'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final success = await ref
+        .read(familyInvitationsControllerProvider.notifier)
+        .decline(widget.token);
+    if (!mounted) return;
+    if (success) {
+      await PendingInvitationStore.clear();
+      if (!mounted) return;
+      ref.invalidate(pendingInvitationTokenProvider);
+      context.go('/');
+    } else {
+      setState(() {
+        _localError =
+            'Impossible de refuser cette invitation. Le lien est peut-être déjà utilisé.';
+      });
+    }
   }
 
   bool _requiresInitialPassword(User? user) {
